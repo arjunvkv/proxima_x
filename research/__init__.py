@@ -1,4 +1,4 @@
-﻿from research.memory_field import MemoryFieldResearch
+from research.memory_field import MemoryFieldResearch
 from research.temporal_dna import TemporalDNAResearch
 from research.information_pressure import InformationPressureResearch
 from research.liquidity_migration import LiquidityMigrationResearch
@@ -35,3 +35,7 @@ __all__ = [
     "NovelStateGenerator",
     "ResearchPipeline",
 ]
+
+
+
+

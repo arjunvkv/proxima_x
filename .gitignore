@@ -161,6 +161,10 @@ tests/
 # Reality and regime analysis (standalone)
 reality/
 
+# Generated HTML reports (research)
+research/fsv/dashboard/fsv_full_verification_report.html
+research/fsv/dashboard/fsv_verification_report.html
+
 # Specific research report markdown files (keep AGENTS.md)
 ASSET_BIAS_REPORT.md
 DAILY_STOP_AUDIT.md
