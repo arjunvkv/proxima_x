@@ -1,0 +1,1257 @@
+{
+  "rq1_persistence_drivers": {
+    "asset": "EURJPY",
+    "n_events": 48,
+    "duration_stats": {
+      "mean": 7.3125,
+      "std": 9.971117143195809,
+      "min": 1.0,
+      "max": 39.0,
+      "median": 3.0
+    },
+    "ranked_by_entry_correlation": [
+      "energy_storage",
+      "memory_density",
+      "adaptive_time",
+      "regime_change_probability",
+      "state_mutation_rate",
+      "residual_energy",
+      "memory_conflict",
+      "memory_gradient",
+      "energy_creation",
+      "energy_release"
+    ],
+    "top_entry_layer": "energy_storage",
+    "top_entry_score": 0.4863616100078089,
+    "layer_details": {
+      "residual_energy": {
+        "entry": {
+          "pearson": 0.16961476475480297,
+          "spearman": 0.043494280953823974,
+          "mutual_info": 0.0
+        },
+        "mean": {
+          "pearson": 0.21793755467156817,
+          "spearman": 0.27932258757037526,
+          "mutual_info": 0.0
+        },
+        "delta": {
+          "pearson": -0.15351542138374363,
+          "spearman": 0.108699843810259,
+          "mutual_info": 0.1674640074997411
+        }
+      },
+      "energy_storage": {
+        "entry": {
+          "pearson": 0.281348643129138,
+          "spearman": 0.20501296687867093,
+          "mutual_info": 0.0
+        },
+        "mean": {
+          "pearson": 0.3573944516125451,
+          "spearman": 0.2596977916013495,
+          "mutual_info": 0.10221706058077729
+        },
+        "delta": {
+          "pearson": 0.2539969720597023,
+          "spearman": 0.002270348240560682,
+          "mutual_info": 0.462820711035977
+        }
+      },
+      "adaptive_time": {
+        "entry": {
+          "pearson": -0.20438255206672507,
+          "spearman": -0.15644710943846954,
+          "mutual_info": 0.0
+        },
+        "mean": {
+          "pearson": -0.1880312167369153,
+          "spearman": -0.15644710943846954,
+          "mutual_info": 0.0
+        },
+        "delta": {
+          "pearson": 0.9957941813946432,
+          "spearman": 0.9864386233499511,
+          "mutual_info": 1.7497348253767695
+        }
+      },
+      "memory_density": {
+        "entry": {
+          "pearson": 0.2735618704249881,
+          "spearman": 0.1508242746383554,
+          "mutual_info": 0.01839383525090632
+        },
+        "mean": {
+          "pearson": 0.27425738763030416,
+          "spearman": 0.12579714719471016,
+          "mutual_info": 0.02204038828087862
+        },
+        "delta": {
+          "pearson": -0.057898728655357834,
+          "spearman": -0.58752182517924,
+          "mutual_info": 0.6627489597418443
+        }
+      },
+      "state_mutation_rate": {
+        "entry": {
+          "pearson": -0.11431578007138309,
+          "spearman": -0.1577528003763993,
+          "mutual_info": 0.004680148132188311
+        },
+        "mean": {
+          "pearson": -0.12691667549119967,
+          "spearman": -0.1053596849357036,
+          "mutual_info": 0.0
+        },
+        "delta": {
+          "pearson": -0.21100848304487155,
+          "spearman": 0.12369881918740155,
+          "mutual_info": 0.13670726531620625
+        }
+      },
+      "regime_change_probability": {
+        "entry": {
+          "pearson": -0.17059022359186166,
+          "spearman": -0.1373212137722591,
+          "mutual_info": 0.0
+        },
+        "mean": {
+          "pearson": -0.23763398679797942,
+          "spearman": -0.169379001562904,
+          "mutual_info": 0.046806280128313116
+        },
+        "delta": {
+          "pearson": -0.19424652975320747,
+          "spearman": -0.18983324756748304,
+          "mutual_info": 0.22142407517854945
+        }
+      },
+      "memory_conflict": {
+        "entry": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        },
+        "mean": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        },
+        "delta": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        }
+      },
+      "memory_gradient": {
+        "entry": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        },
+        "mean": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        },
+        "delta": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        }
+      },
+      "energy_creation": {
+        "entry": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        },
+        "mean": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        },
+        "delta": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        }
+      },
+      "energy_release": {
+        "entry": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        },
+        "mean": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        },
+        "delta": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        }
+      },
+      "energy_dissipation": {
+        "entry": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        },
+        "mean": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        },
+        "delta": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        }
+      },
+      "compression": {
+        "entry": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        },
+        "mean": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        },
+        "delta": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        }
+      },
+      "information_pressure": {
+        "entry": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        },
+        "mean": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        },
+        "delta": {
+          "pearson": NaN,
+          "spearman": NaN,
+          "mutual_info": 0.0
+        }
+      }
+    },
+    "cross_layer_correlation": {
+      "residual_energy_vs_energy_storage": 0.5700671776651922,
+      "residual_energy_vs_adaptive_time": -0.006752411349247867,
+      "residual_energy_vs_memory_density": 0.4517162854276515,
+      "residual_energy_vs_state_mutation_rate": 0.03536460703684023,
+      "residual_energy_vs_regime_change_probability": 0.09338139586610192,
+      "residual_energy_vs_memory_conflict": NaN,
+      "residual_energy_vs_memory_gradient": NaN,
+      "residual_energy_vs_energy_creation": NaN,
+      "residual_energy_vs_energy_release": NaN,
+      "residual_energy_vs_energy_dissipation": NaN,
+      "residual_energy_vs_compression": NaN,
+      "residual_energy_vs_information_pressure": NaN,
+      "energy_storage_vs_adaptive_time": 0.44156952864178045,
+      "energy_storage_vs_memory_density": 0.90426353252151,
+      "energy_storage_vs_state_mutation_rate": -0.15546652434112795,
+      "energy_storage_vs_regime_change_probability": -0.18051905980726057,
+      "energy_storage_vs_memory_conflict": NaN,
+      "energy_storage_vs_memory_gradient": NaN,
+      "energy_storage_vs_energy_creation": NaN,
+      "energy_storage_vs_energy_release": NaN,
+      "energy_storage_vs_energy_dissipation": NaN,
+      "energy_storage_vs_compression": NaN,
+      "energy_storage_vs_information_pressure": NaN,
+      "adaptive_time_vs_memory_density": 0.4124054972757083,
+      "adaptive_time_vs_state_mutation_rate": -0.22134224159868676,
+      "adaptive_time_vs_regime_change_probability": -0.2990086971393585,
+      "adaptive_time_vs_memory_conflict": NaN,
+      "adaptive_time_vs_memory_gradient": NaN,
+      "adaptive_time_vs_energy_creation": NaN,
+      "adaptive_time_vs_energy_release": NaN,
+      "adaptive_time_vs_energy_dissipation": NaN,
+      "adaptive_time_vs_compression": NaN,
+      "adaptive_time_vs_information_pressure": NaN,
+      "memory_density_vs_state_mutation_rate": 0.030277197579344522,
+      "memory_density_vs_regime_change_probability": -0.11379157043045456,
+      "memory_density_vs_memory_conflict": NaN,
+      "memory_density_vs_memory_gradient": NaN,
+      "memory_density_vs_energy_creation": NaN,
+      "memory_density_vs_energy_release": NaN,
+      "memory_density_vs_energy_dissipation": NaN,
+      "memory_density_vs_compression": NaN,
+      "memory_density_vs_information_pressure": NaN,
+      "state_mutation_rate_vs_regime_change_probability": 0.495382428866431,
+      "state_mutation_rate_vs_memory_conflict": NaN,
+      "state_mutation_rate_vs_memory_gradient": NaN,
+      "state_mutation_rate_vs_energy_creation": NaN,
+      "state_mutation_rate_vs_energy_release": NaN,
+      "state_mutation_rate_vs_energy_dissipation": NaN,
+      "state_mutation_rate_vs_compression": NaN,
+      "state_mutation_rate_vs_information_pressure": NaN,
+      "regime_change_probability_vs_memory_conflict": NaN,
+      "regime_change_probability_vs_memory_gradient": NaN,
+      "regime_change_probability_vs_energy_creation": NaN,
+      "regime_change_probability_vs_energy_release": NaN,
+      "regime_change_probability_vs_energy_dissipation": NaN,
+      "regime_change_probability_vs_compression": NaN,
+      "regime_change_probability_vs_information_pressure": NaN,
+      "memory_conflict_vs_memory_gradient": NaN,
+      "memory_conflict_vs_energy_creation": NaN,
+      "memory_conflict_vs_energy_release": NaN,
+      "memory_conflict_vs_energy_dissipation": NaN,
+      "memory_conflict_vs_compression": NaN,
+      "memory_conflict_vs_information_pressure": NaN,
+      "memory_gradient_vs_energy_creation": NaN,
+      "memory_gradient_vs_energy_release": NaN,
+      "memory_gradient_vs_energy_dissipation": NaN,
+      "memory_gradient_vs_compression": NaN,
+      "memory_gradient_vs_information_pressure": NaN,
+      "energy_creation_vs_energy_release": NaN,
+      "energy_creation_vs_energy_dissipation": NaN,
+      "energy_creation_vs_compression": NaN,
+      "energy_creation_vs_information_pressure": NaN,
+      "energy_release_vs_energy_dissipation": NaN,
+      "energy_release_vs_compression": NaN,
+      "energy_release_vs_information_pressure": NaN,
+      "energy_dissipation_vs_compression": NaN,
+      "energy_dissipation_vs_information_pressure": NaN,
+      "compression_vs_information_pressure": NaN
+    }
+  },
+  "rq2_survival_curves": {
+    "asset": "EURJPY",
+    "regime_results": {
+      "2018-2020": {
+        "n_events": 1,
+        "error": "insufficient events",
+        "mean_duration": 0.0,
+        "median_duration": 0.0,
+        "half_life": 0.0,
+        "kaplan_meier_bins": [],
+        "hazard_bins": []
+      },
+      "2020-2022": {
+        "n_events": 18,
+        "mean_duration": 9.5,
+        "median_duration": 3.0,
+        "std_duration": 12.672147936846908,
+        "min_duration": 1.0,
+        "max_duration": 39.0,
+        "half_life": 4.0,
+        "kaplan_meier_binned": [
+          1.0,
+          0.6944444444444444,
+          0.4444444444444444,
+          0.38888888888888884,
+          0.3055555555555556,
+          0.25,
+          0.16666666666666666,
+          0.16666666666666666,
+          0.16666666666666666,
+          0.16666666666666666,
+          0.16666666666666666,
+          0.16666666666666666,
+          0.16666666666666666,
+          0.16666666666666666,
+          0.16666666666666666,
+          0.16666666666666666,
+          0.16666666666666666,
+          0.16666666666666666,
+          0.1111111111111111,
+          0.05555555555555555
+        ],
+        "hazard_binned": [
+          0.2222222222222222,
+          0.2435064935064935,
+          0.0,
+          0.125,
+          0.08333333333333333,
+          0.225,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.16666666666666666,
+          0.25,
+          0.5
+        ]
+      },
+      "2022-2024": {
+        "n_events": 19,
+        "mean_duration": 7.421052631578948,
+        "median_duration": 3.0,
+        "std_duration": 9.028118586270134,
+        "min_duration": 1.0,
+        "max_duration": 32.0,
+        "half_life": 4.0,
+        "kaplan_meier_binned": [
+          1.0,
+          0.6578947368421053,
+          0.42105263157894735,
+          0.39473684210526316,
+          0.3421052631578947,
+          0.2631578947368421,
+          0.23684210526315788,
+          0.15789473684210525,
+          0.15789473684210525,
+          0.15789473684210525,
+          0.15789473684210525,
+          0.15789473684210525,
+          0.15789473684210525,
+          0.13157894736842105,
+          0.10526315789473684,
+          0.10526315789473684,
+          0.10526315789473684,
+          0.05263157894736842,
+          0.05263157894736842,
+          0.05263157894736842
+        ],
+        "hazard_binned": [
+          0.21052631578947367,
+          0.26666666666666666,
+          0.0,
+          0.0625,
+          0.15476190476190477,
+          0.0,
+          0.225,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.16666666666666666,
+          0.0,
+          0.0,
+          0.25,
+          0.0,
+          0.0,
+          0.5
+        ]
+      },
+      "2024-2026": {
+        "n_events": 10,
+        "mean_duration": 2.8,
+        "median_duration": 2.0,
+        "std_duration": 1.7204650534085253,
+        "min_duration": 1.0,
+        "max_duration": 6.0,
+        "half_life": 3.0,
+        "kaplan_meier_binned": [
+          0.0,
+          1.0,
+          0.8,
+          0.3,
+          0.3,
+          0.3,
+          0.1
+        ],
+        "hazard_binned": [
+          0.0,
+          0.2,
+          0.625,
+          0.0,
+          0.0,
+          0.6666666666666666,
+          1.0
+        ]
+      }
+    },
+    "half_life_trajectory": {
+      "2018-2020": 0.0,
+      "2020-2022": 4.0,
+      "2022-2024": 4.0,
+      "2024-2026": 3.0
+    },
+    "structural_breakpoints": [],
+    "persistence_decay_type": "smooth_decay"
+  },
+  "rq3_threshold_mapping": {
+    "asset": "EURJPY",
+    "thresholds": [
+      0.7,
+      0.75,
+      0.8,
+      0.85,
+      0.9,
+      0.95,
+      0.97,
+      0.99
+    ],
+    "results": {
+      "0.7": {
+        "n_events": 48,
+        "mean_duration": 7.3125,
+        "median_duration": 3.0,
+        "max_duration": 39.0,
+        "frequency_annual": 13.277716794731065,
+        "pp_h20": 0.5,
+        "pp_baseline": 0.6312594840667678,
+        "sharpe_h20": 2.036953119875295
+      },
+      "0.75": {
+        "n_events": 42,
+        "mean_duration": 6.976190476190476,
+        "median_duration": 2.0,
+        "max_duration": 37.0,
+        "frequency_annual": 11.618002195389682,
+        "pp_h20": 0.5714285714285714,
+        "pp_baseline": 0.6312594840667678,
+        "sharpe_h20": 3.9122915267897276
+      },
+      "0.8": {
+        "n_events": 31,
+        "mean_duration": 7.548387096774194,
+        "median_duration": 2.0,
+        "max_duration": 37.0,
+        "frequency_annual": 8.575192096597146,
+        "pp_h20": 0.6451612903225806,
+        "pp_baseline": 0.6312594840667678,
+        "sharpe_h20": 6.653514281395684
+      },
+      "0.85": {
+        "n_events": 26,
+        "mean_duration": 6.615384615384615,
+        "median_duration": 4.0,
+        "max_duration": 37.0,
+        "frequency_annual": 7.192096597145993,
+        "pp_h20": 0.6923076923076923,
+        "pp_baseline": 0.6312594840667678,
+        "sharpe_h20": 7.4578866466830736
+      },
+      "0.9": {
+        "n_events": 22,
+        "mean_duration": 4.7272727272727275,
+        "median_duration": 2.0,
+        "max_duration": 37.0,
+        "frequency_annual": 6.0856201975850714,
+        "pp_h20": 0.6818181818181818,
+        "pp_baseline": 0.6312594840667678,
+        "sharpe_h20": 9.98464963851689
+      },
+      "0.95": {
+        "n_events": 10,
+        "mean_duration": 6.3,
+        "median_duration": 4.0,
+        "max_duration": 17.0,
+        "frequency_annual": 2.7661909989023052,
+        "pp_h20": 0.8,
+        "pp_baseline": 0.6312594840667678,
+        "sharpe_h20": 15.046545680696005
+      },
+      "0.97": {
+        "n_events": 9,
+        "mean_duration": 4.777777777777778,
+        "median_duration": 3.0,
+        "max_duration": 17.0,
+        "frequency_annual": 2.4895718990120748,
+        "pp_h20": 0.7777777777777778,
+        "pp_baseline": 0.6312594840667678,
+        "sharpe_h20": 11.197043195705044
+      },
+      "0.99": {
+        "n_events": 11,
+        "mean_duration": 2.0,
+        "median_duration": 2.0,
+        "max_duration": 4.0,
+        "frequency_annual": 3.0428100987925357,
+        "pp_h20": 0.45454545454545453,
+        "pp_baseline": 0.6312594840667678,
+        "sharpe_h20": 4.522677460792306
+      }
+    },
+    "elasticity_by_threshold_pair": [
+      -0.6438746438746432,
+      1.2303203787294943,
+      -1.9776462853385972,
+      -4.852008456659613,
+      5.988461538461544,
+      -11.477072310405632,
+      -28.197674418604624
+    ],
+    "mean_elasticity": -5.704213456813153,
+    "interpretation": "Elasticity > 1 means duration is highly sensitive to threshold changes. Elasticity < 1 means duration is inelastic to threshold."
+  },
+  "rq4_residual_lifespan": {
+    "asset": "EURJPY",
+    "n_events_fit": 25,
+    "total_events": 48,
+    "best_decay_model": "exponential",
+    "aggregate_fits": {
+      "exponential": {
+        "rate_mean": 0.12367128767644271,
+        "rate_std": 1.9168002556106243,
+        "r2_mean": 0.4180626542414505
+      },
+      "power_law": {
+        "exponent_mean": 0.005171800689509651,
+        "exponent_std": 0.025247580002808277,
+        "r2_mean": 0.3181486411699875
+      },
+      "linear": {
+        "slope_mean": -0.025448887362856602,
+        "slope_std": 0.441960719356495,
+        "r2_mean": 0.3818514630832503
+      }
+    },
+    "decay_rate_interpretation": "If exponential rate > 0, residual energy decays exponentially. If power-law exponent > 0, decay follows power law. If linear slope < 0, steady linear decay."
+  },
+  "rq5_delayed_alpha": {
+    "asset": "EURJPY",
+    "n_events": 48,
+    "duration_quartiles": {
+      "q25": 2.0,
+      "q50": 3.0,
+      "q75": 8.0
+    },
+    "delay_results_by_duration_group": {
+      "0": {
+        "short": {
+          "pp": 0.5217391304347826,
+          "sharpe": 0.38594692424569077,
+          "mean_ret": 0.0026303804640027827,
+          "n": 23
+        },
+        "medium": {
+          "pp": 0.4,
+          "sharpe": 0.010365911927834032,
+          "mean_ret": 0.00013080544428074604,
+          "n": 5
+        },
+        "long": {
+          "pp": 0.5,
+          "sharpe": 0.7659157391557432,
+          "mean_ret": 0.005390031437534715,
+          "n": 20
+        }
+      },
+      "1": {
+        "short": {
+          "pp": 0.5652173913043478,
+          "sharpe": 0.006437032016099018,
+          "mean_ret": 4.430249435992828e-05,
+          "n": 23
+        },
+        "medium": {
+          "pp": 0.4,
+          "sharpe": 0.08135758515444755,
+          "mean_ret": 0.0009419507912362235,
+          "n": 5
+        },
+        "long": {
+          "pp": 0.65,
+          "sharpe": 1.1223468361037896,
+          "mean_ret": 0.0077038041905137964,
+          "n": 20
+        }
+      },
+      "2": {
+        "short": {
+          "pp": 0.43478260869565216,
+          "sharpe": -0.533137225827438,
+          "mean_ret": -0.0037201780332602923,
+          "n": 23
+        },
+        "medium": {
+          "pp": 0.4,
+          "sharpe": -0.040194025909013144,
+          "mean_ret": -0.0004351498922371633,
+          "n": 5
+        },
+        "long": {
+          "pp": 0.65,
+          "sharpe": 0.9475438718523411,
+          "mean_ret": 0.006544577496730897,
+          "n": 20
+        }
+      },
+      "5": {
+        "short": {
+          "pp": 0.43478260869565216,
+          "sharpe": -0.6670889776945966,
+          "mean_ret": -0.005556124040238361,
+          "n": 23
+        },
+        "medium": {
+          "pp": 0.4,
+          "sharpe": 0.5354009074592205,
+          "mean_ret": 0.004261175815040197,
+          "n": 5
+        },
+        "long": {
+          "pp": 0.65,
+          "sharpe": 0.6672583053584416,
+          "mean_ret": 0.004112985417861115,
+          "n": 20
+        }
+      },
+      "10": {
+        "short": {
+          "pp": 0.5217391304347826,
+          "sharpe": 0.23217577435352477,
+          "mean_ret": 0.0016903438567281424,
+          "n": 23
+        },
+        "medium": {
+          "pp": 0.6,
+          "sharpe": 2.6556058536502514,
+          "mean_ret": 0.011152691536833714,
+          "n": 5
+        },
+        "long": {
+          "pp": 0.75,
+          "sharpe": 1.9192560015795488,
+          "mean_ret": 0.009452880718360302,
+          "n": 20
+        }
+      },
+      "15": {
+        "short": {
+          "pp": 0.782608695652174,
+          "sharpe": 1.2930720702365404,
+          "mean_ret": 0.00663757018913898,
+          "n": 23
+        },
+        "medium": {
+          "pp": 0.8,
+          "sharpe": 3.983097186842209,
+          "mean_ret": 0.016273050368784146,
+          "n": 5
+        },
+        "long": {
+          "pp": 0.75,
+          "sharpe": 1.2991544944527145,
+          "mean_ret": 0.008569834279528177,
+          "n": 20
+        }
+      },
+      "20": {
+        "short": {
+          "pp": 0.8260869565217391,
+          "sharpe": 1.7960158169073062,
+          "mean_ret": 0.008951382869201791,
+          "n": 23
+        },
+        "medium": {
+          "pp": 1.0,
+          "sharpe": 6.88750018052652,
+          "mean_ret": 0.01205193423804669,
+          "n": 5
+        },
+        "long": {
+          "pp": 0.65,
+          "sharpe": 1.2111452781316472,
+          "mean_ret": 0.009128357078714,
+          "n": 20
+        }
+      }
+    },
+    "optimal_delay_by_group": {
+      "short": {
+        "best_delay": 20,
+        "best_sharpe": 1.7960158169073062
+      },
+      "medium": {
+        "best_delay": 20,
+        "best_sharpe": 6.88750018052652
+      },
+      "long": {
+        "best_delay": 10,
+        "best_sharpe": 1.9192560015795488
+      }
+    },
+    "persistence_to_delay_correlation": {
+      "pearson": -0.9952607296457507
+    },
+    "interpretation": "If longer persistence -> longer optimal delay, then persistence determines optimal entry timing. If optimal delay is uniform across groups, duration does not matter for entry timing."
+  },
+  "rq6_cross_asset": {
+    "assets_tested": [
+      "EURJPY",
+      "USDJPY",
+      "GBPJPY",
+      "XAUUSD",
+      "NAS100"
+    ],
+    "asset_statistics": {
+      "EURJPY": {
+        "mean_duration": 7.3125,
+        "median_duration": 3.0,
+        "std_duration": 9.971117143195809,
+        "n_events": 48,
+        "half_life": 21.0,
+        "max_duration": 39.0
+      },
+      "USDJPY": {
+        "mean_duration": 7.2745098039215685,
+        "median_duration": 3.0,
+        "std_duration": 10.603511130239811,
+        "n_events": 51,
+        "half_life": 23.0,
+        "max_duration": 46.0
+      },
+      "GBPJPY": {
+        "mean_duration": 6.0576923076923075,
+        "median_duration": 3.0,
+        "std_duration": 9.363212510709669,
+        "n_events": 52,
+        "half_life": 12.0,
+        "max_duration": 49.0
+      },
+      "XAUUSD": {
+        "mean_duration": 3.5,
+        "median_duration": 2.0,
+        "std_duration": 3.9833429775247504,
+        "n_events": 94,
+        "half_life": 6.0,
+        "max_duration": 17.0
+      },
+      "NAS100": {
+        "mean_duration": 3.1171171171171173,
+        "median_duration": 2.0,
+        "std_duration": 2.890614631916116,
+        "n_events": 111,
+        "half_life": 5.0,
+        "max_duration": 14.0
+      }
+    },
+    "pairwise_similarity": {
+      "EURJPY_vs_USDJPY": {
+        "wasserstein_distance": 1.4375,
+        "pearson_correlation": 0.010660771297923213,
+        "half_life_ratio": 0.9130434782608695,
+        "mean_duration_ratio": 1.005222371967655
+      },
+      "EURJPY_vs_GBPJPY": {
+        "wasserstein_distance": 2.0625,
+        "pearson_correlation": -0.04119074837002103,
+        "half_life_ratio": 1.75,
+        "mean_duration_ratio": 1.207142857142857
+      },
+      "EURJPY_vs_XAUUSD": {
+        "wasserstein_distance": 4.25,
+        "pearson_correlation": -0.06976536956679684,
+        "half_life_ratio": 3.5,
+        "mean_duration_ratio": 2.0892857142857144
+      },
+      "EURJPY_vs_NAS100": {
+        "wasserstein_distance": 4.020833333333333,
+        "pearson_correlation": 0.18509933788626887,
+        "half_life_ratio": 4.2,
+        "mean_duration_ratio": 2.3459176300578033
+      },
+      "USDJPY_vs_GBPJPY": {
+        "wasserstein_distance": 1.9607843137254903,
+        "pearson_correlation": 0.26446675651974894,
+        "half_life_ratio": 1.9166666666666667,
+        "mean_duration_ratio": 1.2008714596949892
+      },
+      "USDJPY_vs_XAUUSD": {
+        "wasserstein_distance": 4.333333333333333,
+        "pearson_correlation": -0.2220264174776033,
+        "half_life_ratio": 3.8333333333333335,
+        "mean_duration_ratio": 2.0784313725490198
+      },
+      "USDJPY_vs_NAS100": {
+        "wasserstein_distance": 4.11764705882353,
+        "pearson_correlation": -0.18244727300001828,
+        "half_life_ratio": 4.6,
+        "mean_duration_ratio": 2.333730023801428
+      },
+      "GBPJPY_vs_XAUUSD": {
+        "wasserstein_distance": 3.115384615384615,
+        "pearson_correlation": 0.033809391019603646,
+        "half_life_ratio": 2.0,
+        "mean_duration_ratio": 1.7307692307692306
+      },
+      "GBPJPY_vs_NAS100": {
+        "wasserstein_distance": 2.884615384615384,
+        "pearson_correlation": 0.11866326375342376,
+        "half_life_ratio": 2.4,
+        "mean_duration_ratio": 1.9433637172076477
+      },
+      "XAUUSD_vs_NAS100": {
+        "wasserstein_distance": 0.5957446808510639,
+        "pearson_correlation": 0.03689416858813737,
+        "half_life_ratio": 1.2,
+        "mean_duration_ratio": 1.1228323699421965
+      }
+    },
+    "persistence_clusters": {
+      "2": {
+        "0": [
+          "EURJPY",
+          "USDJPY"
+        ],
+        "1": [
+          "GBPJPY",
+          "XAUUSD",
+          "NAS100"
+        ]
+      },
+      "3": {
+        "0": [
+          "EURJPY",
+          "USDJPY"
+        ],
+        "1": [
+          "XAUUSD",
+          "NAS100"
+        ],
+        "2": [
+          "GBPJPY"
+        ]
+      }
+    },
+    "persistence_transferability": "Similarity measured via Wasserstein distance. Lower distance = more transferable persistence."
+  },
+  "rq7_walk_forward": {
+    "asset": "EURJPY",
+    "window_results": [
+      {
+        "train": "2020-2022",
+        "test": "2022-2024",
+        "n_train": 499,
+        "n_test": 520,
+        "r2": 0.46471253495356823,
+        "mae": 2.3060673980864776,
+        "directional_accuracy": 0.626204238921002,
+        "coef": [
+          1.1199215457173368,
+          1.1199215457173437,
+          0.515288358120557,
+          -3.794705079475317,
+          1.4066400059175863,
+          -0.2864031540652
+        ],
+        "intercept": 0.00045168634800369853
+      },
+      {
+        "train": "2022-2024",
+        "test": "2024-2026",
+        "n_train": 520,
+        "n_test": 520,
+        "r2": 0.999700993981729,
+        "mae": 0.07197406510636932,
+        "directional_accuracy": 0.7090558766859345,
+        "coef": [
+          1.201493125341757,
+          -0.013586406650821531,
+          -0.20206820187639093,
+          -0.1834752770035828,
+          25.315951496515428,
+          19.64977199004102
+        ],
+        "intercept": -0.007258920986641826
+      }
+    ],
+    "mean_r2": 0.7322067644676487,
+    "mean_directional_accuracy": 0.6676300578034682,
+    "forecastable": true,
+    "interpretation": "R2 > 0 means persistence has predictable structure. Directional accuracy > 0.55 means trend forecastable."
+  },
+  "rq8_threshold_drift_order": {
+    "asset": "EURJPY",
+    "peak_lag": 0,
+    "peak_correlation": 0.6991053515817457,
+    "mean_correlation_positive_lags": 0.6147140519520595,
+    "mean_correlation_negative_lags": 0.6485870837382263,
+    "causal_direction": "mutual_or_unknown",
+    "break_ordering": "threshold_breaks_first",
+    "lag_correlations": {
+      "-100": 0.5807416547878382,
+      "-99": 0.5825493240510915,
+      "-98": 0.5843474266858598,
+      "-97": 0.5861353144800936,
+      "-96": 0.5879121227719886,
+      "-95": 0.5896760361887343,
+      "-94": 0.591424083947973,
+      "-93": 0.593153169794721,
+      "-92": 0.5948615666840166,
+      "-91": 0.5965493890954148,
+      "-90": 0.5982169452139426,
+      "-89": 0.5998638658240818,
+      "-88": 0.6014900876209128,
+      "-87": 0.6030985333252609,
+      "-86": 0.6046903276418923,
+      "-85": 0.6062664129422435,
+      "-84": 0.607827934400935,
+      "-83": 0.6093758385591879,
+      "-82": 0.610910156500855,
+      "-81": 0.6124309052841478,
+      "-80": 0.6139379492015149,
+      "-79": 0.6154310638427024,
+      "-78": 0.616910348903482,
+      "-77": 0.6183758123443523,
+      "-76": 0.6198272043572781,
+      "-75": 0.6212643846858508,
+      "-74": 0.6226872638692259,
+      "-73": 0.6240956269739348,
+      "-72": 0.6254894880256182,
+      "-71": 0.6268689997900396,
+      "-70": 0.6282344333032317,
+      "-69": 0.6295861464085715,
+      "-68": 0.6309241743596967,
+      "-67": 0.6322486638572294,
+      "-66": 0.6335600629635332,
+      "-65": 0.6348593447548255,
+      "-64": 0.6361466566898709,
+      "-63": 0.6374222273487079,
+      "-62": 0.638686624959326,
+      "-61": 0.6399400022874893,
+      "-60": 0.6411800351660722,
+      "-59": 0.6424076489082987,
+      "-58": 0.6436248442528811,
+      "-57": 0.6448341822060225,
+      "-56": 0.6460385982964433,
+      "-55": 0.6472390860702147,
+      "-54": 0.6484345913298457,
+      "-53": 0.6496240780732713,
+      "-52": 0.650806753662248,
+      "-51": 0.6519813531356009,
+      "-50": 0.6531478215279807,
+      "-49": 0.6543058987964245,
+      "-48": 0.655455645213281,
+      "-47": 0.6565976618883453,
+      "-46": 0.6577321504875883,
+      "-45": 0.6588589040380396,
+      "-44": 0.6599777656041506,
+      "-43": 0.6610885005407404,
+      "-42": 0.6621905786243615,
+      "-41": 0.6632841120601402,
+      "-40": 0.6643698568095824,
+      "-39": 0.6654483488796111,
+      "-38": 0.6665196477844322,
+      "-37": 0.6675839058175516,
+      "-36": 0.6686412776400903,
+      "-35": 0.6696916112444272,
+      "-34": 0.6707345082265482,
+      "-33": 0.6717695978546494,
+      "-32": 0.6727964779340031,
+      "-31": 0.6738145665900499,
+      "-30": 0.6748227792995889,
+      "-29": 0.6758208465428731,
+      "-28": 0.6768089176740238,
+      "-27": 0.6777867239314368,
+      "-26": 0.6787536561474141,
+      "-25": 0.6797095247862688,
+      "-24": 0.6806540717003949,
+      "-23": 0.6815874735370528,
+      "-22": 0.6825093622179383,
+      "-21": 0.6834190087887992,
+      "-20": 0.6843158128005792,
+      "-19": 0.6851988186143437,
+      "-18": 0.6860674314671077,
+      "-17": 0.6869222188287174,
+      "-16": 0.6877644350463499,
+      "-15": 0.688595025524012,
+      "-14": 0.6894153860025027,
+      "-13": 0.6902249039024818,
+      "-12": 0.691022341555913,
+      "-11": 0.6918066106488814,
+      "-10": 0.6925769075500742,
+      "-9": 0.6933321234757219,
+      "-8": 0.6940708319802443,
+      "-7": 0.6947910035155048,
+      "-6": 0.6954909337766055,
+      "-5": 0.6961684233914345,
+      "-4": 0.6968198939262209,
+      "-3": 0.6974410891675765,
+      "-2": 0.6980296012541339,
+      "-1": 0.6985846333778646,
+      "0": 0.6991053515817457,
+      "1": 0.6981244653697061,
+      "2": 0.6971195088461684,
+      "3": 0.6960913000471575,
+      "4": 0.6950408567793127,
+      "5": 0.6939691365769252,
+      "6": 0.6928772474656207,
+      "7": 0.6917664456879336,
+      "8": 0.6906374268398345,
+      "9": 0.689490775828454,
+      "10": 0.6883270514049971,
+      "11": 0.6871464116422268,
+      "12": 0.685948858056429,
+      "13": 0.6847237562166655,
+      "14": 0.6834712077140644,
+      "15": 0.6821914418868075,
+      "16": 0.6808853415921243,
+      "17": 0.6795531134239143,
+      "18": 0.67819508376263,
+      "19": 0.6768112484384867,
+      "20": 0.6754019592297191,
+      "21": 0.6739675747378474,
+      "22": 0.6725092541631332,
+      "23": 0.6710291589705516,
+      "24": 0.6695285260699957,
+      "25": 0.6680085643200774,
+      "26": 0.6664700477845426,
+      "27": 0.6649132531854943,
+      "28": 0.6633378988729016,
+      "29": 0.6617449275972718,
+      "30": 0.6601350243405777,
+      "31": 0.6585100143314851,
+      "32": 0.656872847124356,
+      "33": 0.655224855534141,
+      "34": 0.6535666282586842,
+      "35": 0.6518990356458603,
+      "36": 0.650221314245922,
+      "37": 0.6485312226098346,
+      "38": 0.6468257004943957,
+      "39": 0.6451004727326487,
+      "40": 0.6433542607168488,
+      "41": 0.6415866088032045,
+      "42": 0.6397969885662206,
+      "43": 0.637984694933141,
+      "44": 0.636149944732792,
+      "45": 0.634292821739947,
+      "46": 0.6324132220890497,
+      "47": 0.630510946009486,
+      "48": 0.6285863414887769,
+      "49": 0.6266393960175677,
+      "50": 0.6246701588751364,
+      "51": 0.6226788521973087,
+      "52": 0.6206655889473537,
+      "53": 0.6186302641225008,
+      "54": 0.6165723583949678,
+      "55": 0.6144913793510398,
+      "56": 0.61238708514318,
+      "57": 0.6102591323327233,
+      "58": 0.6081068674006215,
+      "59": 0.6059299851944178,
+      "60": 0.6037277506947184,
+      "61": 0.6014998542002107,
+      "62": 0.5992464522673718,
+      "63": 0.596967488035496,
+      "64": 0.5946624842537233,
+      "65": 0.5923308143170722,
+      "66": 0.5899719509372616,
+      "67": 0.5875856079154042,
+      "68": 0.585171997531469,
+      "69": 0.5827319840681893,
+      "70": 0.5802657676752504,
+      "71": 0.5777747035328147,
+      "72": 0.5752601748723256,
+      "73": 0.5727223735038989,
+      "74": 0.5701618651283813,
+      "75": 0.5675794579259427,
+      "76": 0.5649773671896926,
+      "77": 0.5623674195820981,
+      "78": 0.5597489339487142,
+      "79": 0.5571184566254734,
+      "80": 0.5544737071913716,
+      "81": 0.5518235528618441,
+      "82": 0.5491616719556218,
+      "83": 0.5464799560661244,
+      "84": 0.5437807680887442,
+      "85": 0.5410647386534833,
+      "86": 0.5383230171504184,
+      "87": 0.5355544204977916,
+      "88": 0.5327575108778798,
+      "89": 0.529930751914405,
+      "90": 0.527073948006538,
+      "91": 0.5241870352175735,
+      "92": 0.5212706033825699,
+      "93": 0.5183251180011742,
+      "94": 0.5153507921114988,
+      "95": 0.5123484664938515,
+      "96": 0.509318471951184,
+      "97": 0.506261222934866,
+      "98": 0.5031769813832166,
+      "99": 0.5000658865417874,
+      "100": 0.4969278148333104
+    },
+    "interpretation": {
+      "persistence_leads_threshold": "Persistence collapse causes threshold drift",
+      "threshold_leads_persistence": "Threshold drift causes persistence collapse",
+      "mutual_or_unknown": "No clear causal direction"
+    }
+  },
+  "rq9_regime_classifier": {
+    "asset": "EURJPY",
+    "n_samples": 786,
+    "persistence_classifier": {
+      "f1_macro": 1.0,
+      "f1_weighted": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "accuracy": 1.0
+    },
+    "feature_importance": {
+      "mean_duration": 0.1882675599860008,
+      "std_duration": 0.2482040093597632,
+      "duration_entropy": 0.19371218665692796,
+      "median_duration": 0.19079421344924477,
+      "max_duration": 0.12106163309954683,
+      "min_duration": 0.0579603974485164
+    },
+    "top_feature": "std_duration",
+    "benchmark_f1": 0.997863225912495,
+    "persistence_beats_benchmark": true,
+    "interpretation": "F1 > 0.7 means persistence alone classifies regimes well. If persistence F1 > benchmark F1, persistence is better regime classifier than existing detector."
+  },
+  "rq10_adjudication": {
+    "classification": "MIXED_CAUSALITY",
+    "confidence": 0.625,
+    "evidence": {
+      "threshold_drift_causes_failure": {
+        "causal_direction": "mutual_or_unknown",
+        "threshold_leads_persistence": false,
+        "peak_lag": 0,
+        "score": 0.0,
+        "summary": "Threshold drift does NOT cause persistence collapse"
+      },
+      "persistence_collapse_causes_failure": {
+        "causal_direction": "mutual_or_unknown",
+        "persistence_leads_threshold": false,
+        "persistence_breaks_first": false,
+        "forecastable": true,
+        "r2": 0.7322067644676487,
+        "score": 0.3,
+        "summary": "Persistence collapse does NOT cause threshold drift"
+      },
+      "residual_energy_collapse_causes_failure": {
+        "best_decay_model": "exponential",
+        "decay_rate": 0.12367128767644271,
+        "re_is_top_driver": false,
+        "re_driver_score": 0.4863616100078089,
+        "score": 0.5,
+        "summary": "Residual energy decays via exponential model"
+      }
+    },
+    "scores": {
+      "threshold_drift": 0.0,
+      "persistence_collapse": 0.3,
+      "residual_energy_collapse": 0.5
+    },
+    "rq8_causal_direction": "mutual_or_unknown",
+    "rq1_top_driver": "energy_storage",
+    "rq2_half_life_trajectory": {
+      "2018-2020": 0.0,
+      "2020-2022": 4.0,
+      "2022-2024": 4.0,
+      "2024-2026": 3.0
+    },
+    "rq2_structural_breakpoints": [],
+    "rq3_elasticity": -5.704213456813153,
+    "rq4_best_decay": "exponential",
+    "rq7_r2": 0.7322067644676487,
+    "rq9_f1": 1.0
+  }
+}

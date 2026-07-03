@@ -1,0 +1,15 @@
+{
+  "capture": "capture_live_15min_181625.json",
+  "date": "2026-06-22",
+  "live_ticks": 17050,
+  "live_cycles": 32,
+  "replay_ticks": 17050,
+  "replay_cycles": 16,
+  "tick_overlap_pct": 100.0,
+  "cycle_match_pct": 100.0,
+  "price_fidelity_pct": 100.0,
+  "composite_score": 100.0,
+  "grade": "PRODUCTION",
+  "common_timestamps": 1508,
+  "perfect_price_matches": 1508
+}

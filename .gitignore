@@ -1,0 +1,194 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OpenCode
+.opencode/
+
+# Runtime logs
+*.log
+logs/
+demo_pid.txt
+
+# Runtime state
+state/
+runtime_state/
+
+# DuckDB databases
+*.duckdb
+*.duckdb.wal
+
+# Data - parquet, numpy, model files
+*.parquet
+*.npy
+*.npz
+*.joblib
+*.pkl
+
+# Cache
+.tpi_cache/
+.tick_cache/
+.pytest_cache/
+
+# Reports and output
+reports/
+exports/
+outputs/
+
+# Temporary
+tmp/
+temp_*.py
+mt5_query_tmp.py
+quick_test.py
+replay_output.txt
+replay_raw.txt
+start_background.ps1
+start_demo.ps1
+
+# Graph visualization output
+graphify-out/
+
+# Research data (non-source)
+research/*/data/
+
+# Analysis and tools (not part of core)
+analysis/
+backtesting/
+ci/
+docs/
+tools/
+ml/
+utils/
+paper_trading/
+
+# Standalone experiment run scripts
+run_adaptive_alpha.py
+run_alpha_extraction.py
+run_alpha_reality.py
+run_causal_reality_attack.py
+run_compression_physics.py
+run_controlled_actuation.py
+run_cpe.py
+run_direction_lab.py
+run_ecs_phase1.py
+run_energy_reality.py
+run_etv.py
+run_eurjpy_cycle.py
+run_eurjpy_live.py
+run_eurjpy_monitor.py
+run_gbpjpy_monitor.py
+run_gbpjpy_simple.py
+run_governor_demo.py
+run_interaction_asymmetry.py
+run_memory_physics.py
+run_minimal_validation.py
+run_phase2.py
+run_phase2_validation.py
+run_phase3.py
+run_phase4.py
+run_phase5.py
+run_proxima_v1.py
+run_proxima_v2.py
+run_proxima_v2_calibration.py
+run_reality_gap.py
+run_residual_energy.py
+run_rq7_analysis.py
+run_rsev.py
+run_sbrt.py
+run_scalp_engine.py
+run_shadow_bridge_monitor.py
+run_shadow_mirror_observation.py
+run_signal_reality_fusion_test.py
+run_simple_trade.py
+run_spl.py
+run_temporal_reality.py
+run_threshold_reachability.py
+run_tidv.py
+run_trading_relevance.py
+run_usdjpy_live.py
+run_wave10_validation.py
+run_wave11_validation.py
+run_wave12_validation.py
+run_wave2_validation.py
+run_wave3_validation.py
+run_wave4_validation.py
+run_wave5_validation.py
+run_wave6_validation.py
+run_wave7_validation.py
+run_wave8_validation.py
+run_wave9_validation.py
+
+# Standalone test scripts
+test_integration.py
+test_replay.py
+test_replay_loop.py
+test_sl_tp_enforcement.py
+_check_eurjpy.py
+_check_mt5.py
+_check_signals.py
+_diag_classifier.py
+_global_oss_sweep.py
+_regime_audit.py
+_scan_symbols.py
+ab_validate_direction.py
+edge_reality_audit.py
+
+# Version directories
+proxima_v1/
+proxima_v2/
+
+# Tests
+tests/
+
+# Reality and regime analysis (standalone)
+reality/
+
+# Specific research report markdown files (keep AGENTS.md)
+ASSET_BIAS_REPORT.md
+DAILY_STOP_AUDIT.md
+ERL_REPORT.md
+FINAL_REPORT.md
+FREQUENCY_FILTER_REALITY.md
+H20_COMPLIANCE_REPORT.md
+LIFECYCLE_INTEGRITY_REPORT.md
+LIVE_OBSERVABILITY_REPORT.md
+LIVE_OUTCOME_AUDIT.md
+METRIC_STABILITY_REPORT.md
+PHASE5_REPORT.md
+POSITION_SIZING_VERIFICATION.md
+PROXIMA_V1_1_STABILIZATION_REPORT.md
+PROXIMA_V1_ARCHITECTURE.md
+PROXIMA_V1_RESULTS.md
+RESEARCH_REALITY_ALIGNMENT.md
+RESIDUAL_ENERGY_REPORT.md
+RISK_ENGINE_AUDIT.md
+RISK_HARDENING_REPORT.md
+RISK_HARDENING_VALIDATION.md
+SUMMARY.md
+TRADE_AGE_AUDIT.md
+TRADE_COUNT_RECONCILIATION.md
+
+# Specific log/report JSON files
+position_registry.json
+risk_hardening_results.json
+threshold_reachability_report.json
+ab_validation_divergences.json
+ab_validation_report.txt
+live_outcome_audit_results.json
+phase5_report.md
+

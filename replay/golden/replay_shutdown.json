@@ -1,0 +1,15 @@
+{
+  "H_ticks": "f6b99edd730ba057c2302cc8d5bb72e770e99ac5b427d04d904a471ef86236b5",
+  "H_signals": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "H_trades": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "H_state": "344a41b886df1769a5695c8f2c9faba2838b8ff45d24963395f0fc277e258d75",
+  "tick_count": 5005,
+  "signal_count": 0,
+  "trade_count": 0,
+  "_meta": {
+    "engine_version": "tick-time-machine-1.0",
+    "git_sha": "204cff7fa483b764d0ca51f2500ceceb6cfd1999",
+    "archive_hash": "af4aacee04c6edabb304032deaa52b94b0ee4a40ee328a55e129babf72ddb642",
+    "generated_at": "2026-07-03T06:23:34.048053"
+  }
+}

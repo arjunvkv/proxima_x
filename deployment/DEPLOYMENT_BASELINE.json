@@ -1,0 +1,64 @@
+{
+  "freeze_date": "2026-06-17T00:00:00Z",
+  "version": "V2.6",
+  "activation": {
+    "mode": "PER_SYMBOL_ECDF",
+    "fix": "NORMALIZATION_BIAS_CORRECTION",
+    "prior_version": "V2.5",
+    "prior_freeze": "2026-06-16T13:35:00Z"
+  },
+  "hashes": {
+    "settings.py": "MODIFIED_PER_SYMBOL_THRESHOLDS",
+    "run_proxima_demo.py": "MODIFIED_TRIGGER_LOGIC",
+    "global_rank_engine.py": "MODIFIED_QUALIFIED_ASSETS"
+  },
+  "settings": {
+    "deployment_mode": "GLOBAL_ALL_QUALIFIED",
+    "activation_mode": "PER_SYMBOL_ECDF",
+    "symbol_thresholds": {
+      "EURJPY": 0.8611,
+      "GBPJPY": 0.8571,
+      "USDJPY": 0.9405,
+      "XAUUSD": 0.8266,
+      "EURUSD": 0.9524
+    },
+    "global_rank_threshold": 80.0,
+    "threshold": 0.80,
+    "frequency_target": 30,
+    "risk_per_trade": 0.0025,
+    "max_positions_total": 5,
+    "max_positions_per_symbol": 1,
+    "symbols": ["EURJPY", "USDJPY", "GBPJPY", "XAUUSD", "EURUSD"],
+    "max_spread_points": {"EURJPY": 30, "USDJPY": 30, "GBPJPY": 40, "XAUUSD": 100, "EURUSD": 20}
+  },
+  "stop_distance": {
+    "source": "get_risk_stop_distance()",
+    "EURUSD": {"stop_pips": 50, "pip_size": 0.0001},
+    "EURJPY": {"stop_pips": 50, "pip_size": 0.01},
+    "USDJPY": {"stop_pips": 50, "pip_size": 0.01},
+    "GBPJPY": {"stop_pips": 70, "pip_size": 0.01},
+    "XAUUSD": {"stop_pips": 500, "pip_size": 0.01}
+  },
+  "risk": {
+    "pip_value_jpy": "1000.0 / price",
+    "pip_value_non_jpy": 10.0,
+    "volume_rounding": "round(lots, 2)",
+    "volume_min": 0.01,
+    "volume_max": 1.0,
+    "verifier_tolerance": 1.05,
+    "budget_source": "account_balance * risk_pct"
+  },
+  "guards": {
+    "sample_integrity": "DEPLOYMENT_CLASSIFICATION",
+    "research_alignment_target": 5,
+    "exception_dashboard": "ACTIVE"
+  },
+  "paper_trading": {
+    "account_size": 25000,
+    "risk_pct": 0.0025,
+    "activation_mode": "PER_SYMBOL_ECDF",
+    "assets": 5,
+    "nas100": "NOT_IN_DEPLOYMENT"
+  }
+}
+}

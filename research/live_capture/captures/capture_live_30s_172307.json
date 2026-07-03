@@ -1,0 +1,6272 @@
+[
+ {
+  "type": "tick",
+  "ts": 1782129157.301516,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.237,
+   "ask": 185.239,
+   "spread": 2,
+   "time": 1782139955
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129157.3035238,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.757,
+   "ask": 161.758,
+   "spread": 1,
+   "time": 1782139956
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129157.4063067,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.237,
+   "ask": 185.239,
+   "spread": 2,
+   "time": 1782139955
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129157.4083095,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.757,
+   "ask": 161.758,
+   "spread": 1,
+   "time": 1782139956
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129157.5110004,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.237,
+   "ask": 185.239,
+   "spread": 2,
+   "time": 1782139955
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129157.5129972,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.758,
+   "ask": 161.758,
+   "spread": 0,
+   "time": 1782139957
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129157.616654,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.237,
+   "ask": 185.239,
+   "spread": 2,
+   "time": 1782139955
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129157.6186583,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.758,
+   "ask": 161.758,
+   "spread": 0,
+   "time": 1782139957
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129157.7217252,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.236,
+   "ask": 185.239,
+   "spread": 3,
+   "time": 1782139957
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129157.724756,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.758,
+   "ask": 161.758,
+   "spread": 0,
+   "time": 1782139957
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129157.8273609,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.237,
+   "ask": 185.24,
+   "spread": 3,
+   "time": 1782139957
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129157.8283637,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.758,
+   "ask": 161.758,
+   "spread": 0,
+   "time": 1782139957
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129157.9319942,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.237,
+   "ask": 185.24,
+   "spread": 3,
+   "time": 1782139957
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129157.9329815,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.758,
+   "ask": 161.758,
+   "spread": 0,
+   "time": 1782139957
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.036848,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.237,
+   "ask": 185.24,
+   "spread": 3,
+   "time": 1782139957
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.040411,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.758,
+   "ask": 161.758,
+   "spread": 0,
+   "time": 1782139957
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.1429708,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.237,
+   "ask": 185.24,
+   "spread": 3,
+   "time": 1782139957
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.144481,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.758,
+   "ask": 161.758,
+   "spread": 0,
+   "time": 1782139957
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.248319,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.237,
+   "ask": 185.239,
+   "spread": 2,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.249833,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.758,
+   "ask": 161.758,
+   "spread": 0,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.3532062,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.236,
+   "ask": 185.238,
+   "spread": 2,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.355745,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.756,
+   "ask": 161.756,
+   "spread": 0,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.4581256,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.236,
+   "ask": 185.238,
+   "spread": 2,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.4617724,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.755,
+   "ask": 161.756,
+   "spread": 1,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.564334,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.236,
+   "ask": 185.238,
+   "spread": 2,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.5663834,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.755,
+   "ask": 161.756,
+   "spread": 1,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.6698022,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.236,
+   "ask": 185.238,
+   "spread": 2,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.6718116,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.756,
+   "ask": 161.756,
+   "spread": 0,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.7749166,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.236,
+   "ask": 185.238,
+   "spread": 2,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.7769647,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.756,
+   "ask": 161.756,
+   "spread": 0,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.878642,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.236,
+   "ask": 185.238,
+   "spread": 2,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.8812091,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.756,
+   "ask": 161.756,
+   "spread": 0,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.9848042,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.236,
+   "ask": 185.238,
+   "spread": 2,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129158.986945,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.756,
+   "ask": 161.756,
+   "spread": 0,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129159.0903378,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.236,
+   "ask": 185.238,
+   "spread": 2,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129159.0923471,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.756,
+   "ask": 161.756,
+   "spread": 0,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129159.195759,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.236,
+   "ask": 185.238,
+   "spread": 2,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129159.1987696,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.756,
+   "ask": 161.756,
+   "spread": 0,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129159.3017447,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.238,
+   "ask": 185.24,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129159.304703,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.756,
+   "ask": 161.756,
+   "spread": 0,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129159.408215,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.238,
+   "ask": 185.24,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129159.4108229,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.756,
+   "ask": 161.756,
+   "spread": 0,
+   "time": 1782139958
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129159.513223,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.237,
+   "ask": 185.24,
+   "spread": 3,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129159.5147588,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.755,
+   "ask": 161.756,
+   "spread": 1,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129159.6180043,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.237,
+   "ask": 185.24,
+   "spread": 3,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129159.6190124,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.756,
+   "ask": 161.756,
+   "spread": 0,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129159.72203,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.237,
+   "ask": 185.24,
+   "spread": 3,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129159.7240505,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.756,
+   "ask": 161.756,
+   "spread": 0,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129159.8271008,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.237,
+   "ask": 185.237,
+   "spread": 0,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129159.8290772,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.754,
+   "ask": 161.754,
+   "spread": 0,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129159.9322157,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129159.934748,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.752,
+   "spread": 0,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.0375283,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.0410595,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.143576,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.1465955,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.2489512,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.2514646,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.354429,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.357446,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.4603949,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.4634445,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.5663335,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.568345,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.672426,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.6744523,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.752,
+   "spread": 0,
+   "time": 1782139960
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.7769794,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.7786274,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139960
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.8832407,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.884787,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.752,
+   "spread": 0,
+   "time": 1782139960
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.989952,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129160.9923317,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.752,
+   "spread": 0,
+   "time": 1782139960
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129161.0959904,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129161.0969934,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.752,
+   "spread": 0,
+   "time": 1782139960
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129161.200171,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129161.2017562,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.752,
+   "spread": 0,
+   "time": 1782139961
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129161.3058913,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129161.3078847,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139961
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129161.410993,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129161.4130092,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.752,
+   "spread": 0,
+   "time": 1782139961
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129161.515262,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129161.5187118,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139961
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129161.6217477,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129161.6247604,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139961
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129161.727184,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129161.729168,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139961
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129161.832487,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129161.8350902,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139961
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129161.9374478,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129161.9409616,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139961
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.0435035,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.045855,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139961
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.148119,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.150128,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.754,
+   "spread": 1,
+   "time": 1782139962
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.253177,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.2547543,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.754,
+   "spread": 1,
+   "time": 1782139962
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.3581755,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.3607068,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139962
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.4639325,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.465408,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139962
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.5686376,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.5711555,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139962
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.6747222,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.6768217,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139962
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.7805033,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.7825031,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139962
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.886317,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.888353,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139962
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.9917977,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129162.9937997,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139962
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129163.097064,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129163.0990787,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139962
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129163.20214,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129163.2051427,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139962
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129163.308374,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129163.310893,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139962
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129163.4139361,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139959
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129163.416429,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139962
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129163.5185459,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.236,
+   "spread": 1,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129163.5210807,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139962
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129163.6242616,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.237,
+   "spread": 2,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129163.6267886,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.752,
+   "spread": 0,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129163.7302601,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.237,
+   "spread": 2,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129163.732288,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.752,
+   "spread": 1,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129163.8358047,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.237,
+   "spread": 2,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129163.838804,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.752,
+   "spread": 1,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129163.9423199,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.236,
+   "spread": 1,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129163.9433599,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.0471463,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139964
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.0491638,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.15183,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139964
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.154362,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.2581239,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139964
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.2612178,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.3630176,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139964
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.3656082,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.4689796,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139964
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.4715073,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.5751948,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139964
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.577207,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.6802826,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139964
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.6817997,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.7846014,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139964
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.7877192,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.89088,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139964
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.8928354,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.9967782,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139964
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129164.9987752,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129165.102314,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139964
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129165.1033127,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129165.2078593,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139964
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129165.2111623,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129165.3133757,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139964
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129165.3159726,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129165.4184344,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.236,
+   "spread": 2,
+   "time": 1782139964
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129165.4219716,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139963
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129165.5250018,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.236,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129165.5271635,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129165.6310668,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.236,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129165.6330848,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.751,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129165.7360854,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.236,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129165.7381084,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129165.842063,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.236,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129165.843054,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.751,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129165.9472241,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.236,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129165.9492214,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.751,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.0521467,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.236,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.0531178,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.751,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.1573565,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.236,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.1583622,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.751,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.2614796,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.236,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.263085,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.751,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.367167,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.236,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.3691552,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.751,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.4729397,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.236,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.4749327,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.751,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.5774863,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.234,
+   "spread": 1,
+   "time": 1782139966
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.5799997,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.751,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.6822286,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.234,
+   "spread": 1,
+   "time": 1782139966
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.684242,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.751,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.7868154,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.234,
+   "spread": 1,
+   "time": 1782139966
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.78881,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.751,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.8912535,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.234,
+   "spread": 1,
+   "time": 1782139966
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.89329,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.751,
+   "spread": 1,
+   "time": 1782139965
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.995855,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.234,
+   "spread": 1,
+   "time": 1782139966
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129166.9988484,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129167.1010756,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.234,
+   "spread": 1,
+   "time": 1782139966
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129167.1040738,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129167.2062628,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.234,
+   "spread": 1,
+   "time": 1782139966
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129167.208246,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129167.3109925,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.234,
+   "spread": 1,
+   "time": 1782139966
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129167.3130248,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129167.4163692,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.234,
+   "spread": 1,
+   "time": 1782139966
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129167.418368,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129167.5210228,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.234,
+   "spread": 1,
+   "time": 1782139966
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129167.5230215,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129167.6261153,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.237,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129167.6281173,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129167.7312887,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.237,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129167.7332938,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129167.8365893,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.237,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129167.8385942,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129167.9421604,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129167.9451904,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.0481584,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.0507107,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.1522624,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.1542625,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.2580452,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.2600648,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.3626573,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.3651695,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.4698899,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.47251,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.5742764,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.5773172,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.679854,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.6818745,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.786943,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.789953,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.8937294,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.8960395,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129168.9988167,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.0013824,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.1052263,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.1072564,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.2104654,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.212492,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.3161342,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.3190053,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.4229944,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.4245095,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.5277522,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.530238,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.6323872,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.6359375,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.738622,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.741145,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.844504,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.235,
+   "spread": 1,
+   "time": 1782139969
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.8467462,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.9487195,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139969
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129169.9522395,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129170.0550375,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.235,
+   "spread": 1,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129170.057803,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129170.1610277,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.235,
+   "spread": 1,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129170.1630347,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129170.2655523,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.235,
+   "spread": 1,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129170.2690954,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129170.372393,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.235,
+   "spread": 1,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129170.3749073,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129170.4789705,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.235,
+   "spread": 1,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129170.4811873,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129170.5845933,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.234,
+   "ask": 185.235,
+   "spread": 1,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129170.5866995,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129170.6903083,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129170.6933506,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129170.7947145,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129170.7982678,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129170.9011126,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129170.9031591,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.006987,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.0079775,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.1111052,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.114136,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.216631,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.2186,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.751,
+   "spread": 0,
+   "time": 1782139967
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.323266,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.3248203,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.752,
+   "spread": 0,
+   "time": 1782139971
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.42817,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.4307094,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.752,
+   "spread": 0,
+   "time": 1782139971
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.5332398,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.5357687,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.752,
+   "spread": 1,
+   "time": 1782139971
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.6398962,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.642186,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139971
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.7448652,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.74743,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.752,
+   "spread": 1,
+   "time": 1782139971
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.8511083,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.85315,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139971
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.955726,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129171.9577315,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.752,
+   "spread": 1,
+   "time": 1782139971
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129172.061325,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129172.0633538,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129172.1657522,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129172.1677525,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129172.271612,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129172.2741015,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.752,
+   "spread": 1,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129172.3769355,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129172.3789408,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129172.4824364,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129172.4836862,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129172.5883708,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139970
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129172.5899146,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.752,
+   "spread": 1,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129172.6939194,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.232,
+   "ask": 185.235,
+   "spread": 3,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129172.69645,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.752,
+   "spread": 1,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129172.8009112,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129172.8024402,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129172.9061642,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129172.9086857,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.752,
+   "spread": 0,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.0119703,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.0132916,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139973
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.1180487,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.1210616,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139973
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.2237372,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.2262511,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.752,
+   "spread": 0,
+   "time": 1782139973
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.3290093,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.331274,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.752,
+   "spread": 1,
+   "time": 1782139973
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.4345996,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.4363725,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139973
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.540122,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.5421507,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139973
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.645799,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.233,
+   "ask": 185.235,
+   "spread": 2,
+   "time": 1782139972
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.647794,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.752,
+   "spread": 1,
+   "time": 1782139973
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.750981,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.231,
+   "ask": 185.234,
+   "spread": 3,
+   "time": 1782139973
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.7528179,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.752,
+   "spread": 0,
+   "time": 1782139973
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.8556666,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.226,
+   "ask": 185.227,
+   "spread": 1,
+   "time": 1782139973
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.857645,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.753,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139973
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.9603186,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.226,
+   "ask": 185.227,
+   "spread": 1,
+   "time": 1782139973
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129173.963367,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139973
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129174.065561,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129174.069005,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129174.1711407,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129174.172947,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129174.2753994,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.227,
+   "spread": 3,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129174.2774935,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129174.380675,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.227,
+   "spread": 3,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129174.38269,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.754,
+   "spread": 2,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129174.486172,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129174.4882405,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129174.5902274,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129174.5924747,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.753,
+   "spread": 0,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129174.6961682,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.227,
+   "spread": 3,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129174.698209,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129174.8012085,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.227,
+   "spread": 3,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129174.8032598,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.754,
+   "spread": 1,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129174.9048955,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.227,
+   "spread": 3,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129174.9073756,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.754,
+   "spread": 1,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.011042,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.225,
+   "spread": 1,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.0130575,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.754,
+   "spread": 1,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.1163545,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.225,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.1183503,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.754,
+   "spread": 1,
+   "time": 1782139974
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.2234013,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.225,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.2249115,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.754,
+   "spread": 2,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.3279424,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.225,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.3309736,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.754,
+   "spread": 2,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.4344974,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.225,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.4365492,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.754,
+   "spread": 2,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.5400333,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.225,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.541621,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.754,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.644726,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.225,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.6460078,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.754,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.7503912,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.227,
+   "spread": 3,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.7534435,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.752,
+   "ask": 161.754,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.8555295,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.227,
+   "spread": 3,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.857888,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.9600341,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.227,
+   "spread": 3,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129175.9623814,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129176.0662692,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.227,
+   "spread": 3,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129176.0683005,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129176.17176,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.227,
+   "spread": 3,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129176.1727598,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129176.2767928,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.227,
+   "spread": 3,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129176.2788079,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129176.3821251,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.227,
+   "spread": 3,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129176.3846445,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129176.4885821,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.227,
+   "spread": 3,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129176.4911103,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129176.5935907,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.227,
+   "spread": 3,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129176.5957313,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129176.6992152,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.224,
+   "ask": 185.227,
+   "spread": 3,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129176.7012708,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129176.804725,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139976
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129176.8070993,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129176.9100144,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139976
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129176.9120243,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.015615,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139976
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.0176105,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.1200478,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139976
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.1220558,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.2261705,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139976
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.2281525,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.3310666,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139976
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.33307,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.436928,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139976
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.4399536,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.5428338,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139976
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.5448608,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.6492765,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139976
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.650826,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.753669,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139976
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.7562213,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.860023,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139976
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.8621254,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.964086,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139976
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129177.966455,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129178.06897,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139976
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129178.0715017,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129178.1746204,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139976
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129178.17626,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129178.2798147,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139976
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129178.2833319,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.753,
+   "spread": 1,
+   "time": 1782139975
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129178.3864233,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.223,
+   "ask": 185.226,
+   "spread": 2,
+   "time": 1782139976
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129178.3884594,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.751,
+   "ask": 161.752,
+   "spread": 1,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129178.4925642,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.225,
+   "ask": 185.227,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129178.4949768,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.749,
+   "ask": 161.752,
+   "spread": 3,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129178.5983214,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.225,
+   "ask": 185.227,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129178.5998292,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129178.7028165,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.225,
+   "ask": 185.227,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129178.7048075,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129178.8080287,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.225,
+   "ask": 185.227,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129178.8100278,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129178.913112,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.225,
+   "ask": 185.227,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129178.9146245,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.0181053,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.225,
+   "ask": 185.227,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.0201046,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.1231797,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.225,
+   "ask": 185.227,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.1257553,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.2290175,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.225,
+   "ask": 185.227,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.2315674,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.3347113,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.225,
+   "ask": 185.227,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.3372202,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.4400008,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.225,
+   "ask": 185.227,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.4429588,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.5465727,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.225,
+   "ask": 185.227,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.548587,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.6515095,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.225,
+   "ask": 185.227,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.6550775,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.7579796,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.225,
+   "ask": 185.227,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.7589872,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.862614,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.225,
+   "ask": 185.227,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.8661458,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.9689617,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.225,
+   "ask": 185.227,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129179.9704635,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129180.0733774,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.225,
+   "ask": 185.227,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129180.0753772,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129180.1778426,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.225,
+   "ask": 185.227,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129180.1788416,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139978
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129180.281739,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.226,
+   "ask": 185.227,
+   "spread": 1,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129180.2832484,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129180.386741,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129180.3887322,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129180.4907343,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129180.4917574,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129180.594878,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129180.5968816,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129180.6998928,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129180.7019076,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129180.8046348,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129180.8065057,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129180.9093068,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129180.9103231,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.0135205,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.0155184,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.1182363,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.1204784,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.224735,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.2257597,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.3281085,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.3300943,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.433434,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.4354334,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.539076,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.5400763,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.6438248,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.644825,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.7470667,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.749303,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.8525913,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.8545923,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.9571342,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129181.9601476,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129182.0618656,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129182.0648797,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129182.1654346,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129182.1669624,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129182.2697523,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129182.2722838,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129182.3756557,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129182.3771663,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129182.48002,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129182.481541,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129182.5847375,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129182.586729,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129182.6896908,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129182.6921978,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139980
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129182.7961507,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.229,
+   "ask": 185.23,
+   "spread": 0,
+   "time": 1782139982
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129182.7981741,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.749,
+   "ask": 161.752,
+   "spread": 3,
+   "time": 1782139982
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129182.9016027,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.229,
+   "spread": 2,
+   "time": 1782139982
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129182.9038284,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139982
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.0061827,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.225,
+   "ask": 185.228,
+   "spread": 3,
+   "time": 1782139982
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.0086784,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139982
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.111539,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.226,
+   "ask": 185.228,
+   "spread": 2,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.1135664,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139982
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.2155533,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.226,
+   "ask": 185.228,
+   "spread": 2,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.2180846,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.752,
+   "spread": 2,
+   "time": 1782139982
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.320802,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.226,
+   "ask": 185.228,
+   "spread": 2,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.3233132,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.425743,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.226,
+   "ask": 185.228,
+   "spread": 2,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.429264,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.5335605,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.226,
+   "ask": 185.228,
+   "spread": 2,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.5355613,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.6382663,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.639268,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.741973,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.7449892,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.848256,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.227,
+   "ask": 185.23,
+   "spread": 2,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.8502703,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.9520168,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.228,
+   "ask": 185.231,
+   "spread": 2,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129183.9550457,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129184.0568862,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.228,
+   "ask": 185.231,
+   "spread": 2,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129184.0599396,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129184.1629035,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.228,
+   "ask": 185.231,
+   "spread": 2,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129184.164899,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129184.2681284,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.229,
+   "ask": 185.231,
+   "spread": 1,
+   "time": 1782139984
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129184.2701313,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129184.3725758,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.229,
+   "ask": 185.231,
+   "spread": 1,
+   "time": 1782139984
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129184.3745894,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129184.4778945,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.229,
+   "ask": 185.231,
+   "spread": 1,
+   "time": 1782139984
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129184.4798582,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129184.583138,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.229,
+   "ask": 185.231,
+   "spread": 1,
+   "time": 1782139984
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129184.5851514,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129184.6889243,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.229,
+   "ask": 185.231,
+   "spread": 1,
+   "time": 1782139984
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129184.6909263,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129184.7934656,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.229,
+   "ask": 185.231,
+   "spread": 1,
+   "time": 1782139984
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129184.7958546,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129184.899323,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.229,
+   "ask": 185.231,
+   "spread": 1,
+   "time": 1782139984
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129184.901698,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.004489,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.006998,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.1093404,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.1118996,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.2144125,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.216901,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.3198607,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.3214095,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.424484,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.4268992,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.5321565,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.5352387,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.6381652,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.641731,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.7456334,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.7481341,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.850305,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.8518624,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.9556649,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129185.9581873,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129186.0603735,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129186.0638971,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129186.1657963,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129186.16832,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129186.2719953,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129186.274031,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129186.3768914,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129186.3793144,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129186.483244,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129186.4852576,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129186.588327,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129186.5903225,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129186.6941469,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129186.697147,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129186.799614,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129186.8006046,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129186.9044242,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129186.906949,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129187.009467,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129187.011988,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129187.1153712,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129187.1179125,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129187.2201009,
+  "data": {
+   "symbol": "EURJPY",
+   "bid": 185.23,
+   "ask": 185.232,
+   "spread": 2,
+   "time": 1782139985
+  }
+ },
+ {
+  "type": "tick",
+  "ts": 1782129187.2227056,
+  "data": {
+   "symbol": "USDJPY",
+   "bid": 161.75,
+   "ask": 161.75,
+   "spread": 0,
+   "time": 1782139983
+  }
+ }
+]

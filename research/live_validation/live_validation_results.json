@@ -1,0 +1,151 @@
+{
+  "signal_tracker": {
+    "total_signals": 315,
+    "avg_per_day": 6.1,
+    "avg_per_week": 39.4,
+    "avg_per_month": 105.0,
+    "days_active": 52,
+    "state_distribution": {
+      "WATCH": 86,
+      "NONE": 160,
+      "LONG": 28,
+      "STRONG_LONG": 41
+    }
+  },
+  "threshold_monitor": {
+    "current": 0.8,
+    "rolling": 0.7999999999999996,
+    "baseline": 0.7999999999999996,
+    "velocity": -1.9222223960772474e-17,
+    "deviation": 5.551115123125786e-16,
+    "n_alerts": 0
+  },
+  "drift_detector": {
+    "features_tracked": 3,
+    "stable": 2,
+    "drifting": 0,
+    "broken": 1,
+    "details": {
+      "es_percentile": {
+        "feature": "es_percentile",
+        "classification": "BROKEN",
+        "ks_distance": 0.6333333333333333,
+        "psi": 0.25163757192115477,
+        "overlap": 0.3666666666666667,
+        "mean_today": 0.6475247524752475,
+        "mean_30": 0.46693069306930696,
+        "mean_90": 0.57995599559956
+      },
+      "at_percentile": {
+        "feature": "at_percentile",
+        "classification": "STABLE",
+        "ks_distance": 0.0,
+        "psi": 0.0,
+        "overlap": 1.0,
+        "mean_today": 1.0,
+        "mean_30": 1.0,
+        "mean_90": 1.0
+      },
+      "threshold": {
+        "feature": "threshold",
+        "classification": "STABLE",
+        "ks_distance": 0.0,
+        "psi": 2.7755575615628914e-16,
+        "overlap": 1.0,
+        "mean_today": 0.8,
+        "mean_30": 0.8000000000000003,
+        "mean_90": 0.7999999999999998
+      }
+    }
+  },
+  "persistence_monitor": {
+    "directional_accuracy": 0.5301587301587302,
+    "duration_error": 104.6984126984127,
+    "forecast_decay": 0.07643312101910826,
+    "n_predictions": 315,
+    "n_alerts": 0
+  },
+  "residual_monitor": {
+    "n_trades": 44,
+    "es_predictive_power": -0.106,
+    "residual_predictive_power": -0.298,
+    "ratio": 2.801,
+    "residual_beats_es": false,
+    "es_hypothetical_sharpe": 1.228,
+    "residual_hypothetical_sharpe": 0.033,
+    "mean_es_value": 0.919,
+    "mean_residual_value": 0.0
+  },
+  "frequency_monitor": {
+    "target": 30,
+    "actual_frequency": 23.0,
+    "frequency_cv": 0.371,
+    "on_target": true,
+    "n_months": 3,
+    "n_alerts": 0
+  },
+  "performance_monitor": {
+    "last_7d": {
+      "sharpe": 7.6,
+      "pp": 0.833,
+      "return": 0.0066,
+      "dd": 0.0022,
+      "n": 12
+    },
+    "last_30d": {
+      "sharpe": 1.383,
+      "pp": 0.591,
+      "return": 0.0041,
+      "dd": 0.0069,
+      "n": 44
+    },
+    "last_90d": {
+      "sharpe": 1.383,
+      "pp": 0.591,
+      "return": 0.0041,
+      "dd": 0.0069,
+      "n": 44
+    },
+    "classification": "HEALTHY"
+  },
+  "anomaly_detector": {
+    "total_anomalies": 4,
+    "by_type": {
+      "persistence_collapse": 3,
+      "signal_drought": 1
+    },
+    "by_severity": {
+      "WARNING": 4
+    },
+    "recent": [
+      {
+        "type": "persistence_collapse",
+        "severity": "WARNING",
+        "timestamp": 1504
+      },
+      {
+        "type": "persistence_collapse",
+        "severity": "WARNING",
+        "timestamp": 1604
+      },
+      {
+        "type": "signal_drought",
+        "severity": "WARNING",
+        "timestamp": 1704
+      },
+      {
+        "type": "persistence_collapse",
+        "severity": "WARNING",
+        "timestamp": 1704
+      }
+    ]
+  },
+  "deployment_score": {
+    "current_score": 0.716,
+    "classification": "LIVE_WARNING",
+    "trend": "STABLE",
+    "mean_30d": 0.0,
+    "min_90d": 0.0,
+    "n_updates": 1
+  }
+}

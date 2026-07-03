@@ -1,0 +1,49 @@
+retail_fx:
+  spread_bps: 0.50
+  latency_ms_mean: 80
+  latency_ms_std: 25
+  fill_probability: 0.92
+  reject_probability: 0.03
+  slippage_bps_mean: 0.08
+  slippage_bps_std: 0.04
+  queue_priority: 0.40
+
+prime_fx:
+  spread_bps: 0.15
+  latency_ms_mean: 20
+  latency_ms_std: 8
+  fill_probability: 0.97
+  reject_probability: 0.01
+  slippage_bps_mean: 0.03
+  slippage_bps_std: 0.02
+  queue_priority: 0.65
+
+ecn_fx:
+  spread_bps: 0.08
+  latency_ms_mean: 8
+  latency_ms_std: 4
+  fill_probability: 0.985
+  reject_probability: 0.005
+  slippage_bps_mean: 0.01
+  slippage_bps_std: 0.01
+  queue_priority: 0.80
+
+cme_fx:
+  spread_bps: 0.02
+  latency_ms_mean: 5
+  latency_ms_std: 2
+  fill_probability: 0.995
+  reject_probability: 0.002
+  slippage_bps_mean: 0.005
+  slippage_bps_std: 0.003
+  queue_priority: 0.90
+
+crypto_perps:
+  spread_bps: 0.03
+  latency_ms_mean: 10
+  latency_ms_std: 5
+  fill_probability: 0.99
+  reject_probability: 0.004
+  slippage_bps_mean: 0.008
+  slippage_bps_std: 0.005
+  queue_priority: 0.85
