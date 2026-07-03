@@ -29,6 +29,9 @@ demo_pid.txt
 state/
 runtime_state/
 
+# Runtime data artifacts
+deployment/vpl_regime_signals.json
+
 # DuckDB databases
 *.duckdb
 *.duckdb.wal
