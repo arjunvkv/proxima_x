@@ -10,9 +10,11 @@ class SignalFusionKernel:
 
     def __init__(self,
                  entropy_flip_threshold: float = 0.65,
-                 coherence_penalty: float = 0.15):
+                 coherence_penalty: float = 0.15,
+                 ucf_field=None):
         self.entropy_flip_threshold = entropy_flip_threshold
         self.coherence_penalty = coherence_penalty
+        self.ucf_field = ucf_field
 
         self._last_signals: Dict[str, int] = {}
         self._exhaustion_hist: Dict[str, dict] = {}
@@ -101,6 +103,20 @@ class SignalFusionKernel:
         # PHASE A: coherence metadata only — no signal overwrite
         # Original signals pass through unchanged
         return signals
+
+    def attach_ucf_hint(self, signal: dict) -> dict:
+        if self.ucf_field is None:
+            return signal
+        hint = {}
+        sym = signal.get("symbol", "")
+        for entry in self.ucf_field.ranked_symbols:
+            if entry["symbol"] == sym:
+                hint["ucf_score"] = entry.get("ucf_score", 0.0)
+                hint["ucf_direction"] = entry.get("direction", 0)
+                hint["ucf_agreement"] = entry.get("agreement", 0.0)
+                break
+        signal["ucf_weighted_hint"] = hint
+        return signal
 
     def generate(self,
                  eval_data: Dict[str, Dict[str, Any]]) -> Dict[str, int]:

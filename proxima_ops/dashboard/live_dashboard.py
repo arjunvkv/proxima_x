@@ -344,6 +344,114 @@ def render_system_health(system_health: dict) -> None:
         print(f"  Last Error:          {GRAY}—{RESET}")
 
 
+def render_shadow_state(shadow_state: dict) -> None:
+    """Panel 7: Shadow Execution Engine — suppression, LKG, conviction deltas."""
+    print()
+    print(f"{BOLD}╔═══ Shadow Diagnostics ═══╗{RESET}")
+
+    if not shadow_state:
+        print(f"  {YELLOW}No shadow data available{RESET}")
+        print(f"{BOLD}╚═════════════════════════╝{RESET}")
+        return
+
+    # Suppression graph
+    sgraph = shadow_state.get("suppression_graph", {})
+    edges = sgraph.get("edges", [])
+    if edges:
+        print(f"  {'Gate Transition':30s} {'Suppression':>12s}")
+        print(f"  {'─' * 42}")
+        for e in edges:
+            u = e.get("source", "?")
+            v = e.get("target", "?")
+            w = e.get("suppression_magnitude", 0)
+            label = f"{u} → {v}"
+            color = RED if w > 0.1 else YELLOW if w > 0.05 else GREEN
+            print(f"  {label:30s} {color}{w:>12.4f}{RESET}")
+
+    # LKG similarity
+    lkg = shadow_state.get("avg_lkg_similarity")
+    if lkg is not None:
+        color = GREEN if lkg > 0.95 else YELLOW if lkg > 0.85 else RED
+        print(f"  {'LKG Similarity':30s} {color}{lkg:>12.4f}{RESET}")
+
+    # Max suppression
+    supp = shadow_state.get("max_suppression")
+    if supp is not None:
+        color = GREEN if supp < 0.05 else YELLOW if supp < 0.15 else RED
+        print(f"  {'Max Suppression':30s} {color}{supp:>12.4f}{RESET}")
+
+    # Per-symbol detail
+    symbols = shadow_state.get("symbols", {})
+    if symbols:
+        print(f"  {'─' * 42}")
+        print(f"  {'Symbol':12s} {'Supp Δ':>10s} {'LKG Sim':>10s}")
+        print(f"  {'─' * 34}")
+        for sym, sdata in sorted(symbols.items()):
+            sd = sdata.get("suppression_delta", 0)
+            lk = sdata.get("lkg_similarity_score", 0)
+            print(f"  {sym:12s} {sd:>10.4f} {lk:>10.4f}")
+
+    # Cycle info
+    cid = shadow_state.get("cycle_id")
+    if cid is not None:
+        print(f"  {'Cycle':30s} {cid:>12}")
+
+    print(f"{BOLD}╚═════════════════════════╝{RESET}")
+
+
+def render_stre_panel(stre_result, gt_suppression) -> None:
+    """Panel 8: STR-E Truth Reconciliation + GT suppression visualization."""
+    print()
+    print(f"{BOLD}╔═══ Truth System Status ═══╗{RESET}")
+
+    if not stre_result:
+        print(f"  {YELLOW}Collecting data (need 10+ samples){RESET}")
+        print(f"{BOLD}╚══════════════════════════╝{RESET}")
+        return
+
+    s = stre_result.get("samples", 0)
+    gt_c = stre_result.get("gt_corr", 0)
+    sy_c = stre_result.get("sy_corr", 0)
+    stas = stre_result.get("stas", 0)
+    winner = stre_result.get("winner", "N/A")
+
+    gt_color = GREEN if gt_c > sy_c else RED
+    sy_color = GREEN if sy_c > gt_c else RED
+    stas_color = GREEN if stas > 0 else YELLOW if stas == 0 else RED
+
+    print(f"  {'Samples':20s} {s:>6}")
+    print(f"  {'GT Correlation':20s} {gt_color}{gt_c:>8.4f}{RESET}")
+    print(f"  {'SY Correlation':20s} {sy_color}{sy_c:>8.4f}{RESET}")
+    print(f"  {'STAS Score':20s} {stas_color}{stas:>8.4f}{RESET}")
+    print(f"  {'Winner':20s} {winner:>8}")
+
+    sof = stre_result.get("SOF")
+    if sof is not None:
+        ee = stre_result.get("execution_efficiency", 0)
+        ep = stre_result.get("edge_preservation", 0)
+        print(f"  {'SOF Score':20s} {sof:>10.6f}")
+        print(f"  {'Edge Preservation':20s} {ep:>10.6f}")
+        print(f"  {'Exec Efficiency':20s} {ee:>10.6f}")
+
+    if stre_result.get("phase2_blocked"):
+        print(f"  {'Phase 2':20s} {RED}BLOCKED{RESET}")
+    else:
+        print(f"  {'Phase 2':20s} {GREEN}ENABLED{RESET}")
+
+    if gt_suppression:
+        flow = gt_suppression.suppression_flow()
+        if flow:
+            print(f"  {'─' * 36}")
+            print(f"  {'Conviction Drop Between Layers':36s}")
+            for f in flow:
+                label = f"{f['source']} → {f['target']}"
+                drop = f.get("drop", 0)
+                color = RED if drop > 0.1 else YELLOW if drop > 0.05 else GREEN
+                print(f"  {label:28s} {color}{drop:>8.4f}{RESET}")
+
+    print(f"{BOLD}╚══════════════════════════╝{RESET}")
+
+
 def render_footer() -> None:
     """Print a closing separator line."""
     print(f"{GRAY}{'─' * 70}{RESET}")
@@ -371,7 +479,10 @@ def render_all(state: dict) -> None:
     print()
     render_performance_state(state.get("performance_state", {}))
     print()
+    _shadow_state = state.get("system_health", {}).get("shadow", {})
     render_system_health(state.get("system_health", {}))
+    render_shadow_state(_shadow_state)
+    render_stre_panel(_shadow_state.get("stre"), None)
     render_footer()
 
 

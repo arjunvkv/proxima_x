@@ -1,0 +1,41 @@
+{
+  "all_pass": true,
+  "results": {
+    "execution_stress": {
+      "alignment": 0.756,
+      "pnl_correlation": 0.74,
+      "gate_pass_rate": 0.92,
+      "alignment_pass": true,
+      "pnl_corr_pass": true,
+      "gate_pass_ok": true,
+      "overall": true
+    },
+    "regime_shock": {
+      "alignment": 0.5845,
+      "pnl_correlation": 0.6364,
+      "gate_pass_rate": 0.94,
+      "alignment_pass": true,
+      "pnl_corr_pass": true,
+      "gate_pass_ok": true,
+      "overall": true
+    },
+    "correlation_break": {
+      "alignment": 0.7014,
+      "pnl_correlation": 0.9405,
+      "gate_pass_rate": 0.92,
+      "alignment_pass": true,
+      "pnl_corr_pass": true,
+      "gate_pass_ok": true,
+      "overall": true
+    },
+    "position_feedback": {
+      "alignment": 0.5133,
+      "pnl_correlation": 0.4028,
+      "gate_pass_rate": 0.9,
+      "alignment_pass": true,
+      "pnl_corr_pass": true,
+      "gate_pass_ok": true,
+      "overall": true
+    }
+  }
+}

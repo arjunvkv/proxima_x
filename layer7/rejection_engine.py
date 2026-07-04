@@ -22,6 +22,7 @@ class RejectionType(str, Enum):
     PASSIVE_MODE = "PASSIVE_MODE"
     RISK_GATE = "RISK_GATE"
     NET_ALPHA = "NET_ALPHA"
+    STR_E_GATE = "STR_E_GATE"
 
 
 @dataclass

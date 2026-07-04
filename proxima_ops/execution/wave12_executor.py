@@ -11,6 +11,7 @@ logger = logging.getLogger("proxima_ops.execution.wave12_executor")
 
 from proxima_x.proxima_ops.execution.mt5_connector import MT5Connector
 from proxima_x.proxima_ops.execution.order_manager import OrderManager
+from proxima_x.proxima_ops.execution.symbol_direction_lock import SymbolDirectionLock
 from proxima_x.proxima_ops.governance.selective_execution_governor import SelectiveExecutionGovernor
 from proxima_x.proxima_ops.governance.execution_state_machine import ExecutionStateMachine, ExecutionState
 from proxima_x.proxima_ops.governance.intent_constraint_layer import IntentConstraintLayer
@@ -96,6 +97,7 @@ class Wave12Executor:
         self.staircase = ValidationStaircase()
         self.exposure_amplifier = ExposureAmplifierLayer()
         self._amplifier_enabled = True
+        self.sdl = SymbolDirectionLock()
         self._symbol_selector = SymbolUniverseSelector() if _HAS_SIL else None
         self._last_heartbeat_cycle = 0
         self._active_symbols = list(FALLBACK_SYMBOLS)
@@ -643,6 +645,7 @@ class Wave12Executor:
                                         final_volume, price=price
                                     )
                                     if result is not None:
+                                        self.sdl.lock(symbol, direction)
                                         self.mt5_watchdog.record_order_result(result)
                                         self.circuit_breaker.record_slippage(0.0)
                                         ticket = result.get("ticket", 0)
@@ -868,6 +871,7 @@ class Wave12Executor:
                         self._trade_entry_price = 0.0
                         self._trade_side = ""
                         for r in results:
+                            self.sdl.release(r.get("symbol", symbol))
                             self._remove_trade_state(r["ticket"])
                             self.trade_lifecycle.close_trade(r["ticket"], {
                                 "exit_price": r.get("exit_price", 0),

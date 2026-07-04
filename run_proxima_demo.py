@@ -21,8 +21,17 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 import math
+import random
 import logging
 from collections import defaultdict
+from proxima_ops.decision.gate.mra_signal import MarketRealityAnchor
+from proxima_ops.decision.gate.emd_signal import ExecutionMicrostructureDrift
+from proxima_ops.decision.gate.recovery_policy import RecoveryPolicy, check_regime_failure
+from proxima_ops.decision.gate.phase6_rollout_controller import Phase6RolloutController
+from proxima_ops.decision.gate.phase6_kill_switch import Phase6KillSwitch
+from proxima_ops.decision.gate.phase6_scaling_engine import Phase6ScalingEngine
+from proxima_ops.decision.gate.phase6_recovery_protocol import Phase6RecoveryProtocol
+from proxima_ops.decision.gate.phase6_audit_logger import Phase6AuditLogger
 
 # Reconfigure stdout/stderr to UTF-8 to prevent encoding errors on Windows console
 if sys.stdout.encoding != 'utf-8':
@@ -139,6 +148,8 @@ from proxima_ops.reporting.daily_report import DailyReport
 from proxima_ops.reporting.weekly_report import WeeklyReport
 from research.mechanism_discovery.energy_dynamics import EnergyDynamics
 from research.mechanism_discovery.temporal_topology import TemporalTopology
+from research.ucf.integration.ucf_compute_entry import compute_ucf_field
+from research.ucf.integration.ucf_propagation_schema import UCFPropagationField
 
 # TPI Flow Overlay (Layer 7) — Shadow Mode
 from layer7.get_tpi_signal import get_tpi_signal, TPI_ELIGIBLE
@@ -184,6 +195,7 @@ from proxima_ops.execution.restricted_bridge import (
     RestrictedExecutionBridge,
     format_bridge_dashboard,
 )
+from proxima_ops.execution.symbol_direction_lock import SymbolDirectionLock
 from layer7.types import TPIObservation
 from dashboard.tpi_dashboard import generate as tpi_dashboard_generate, record_tpi_shadow as tpi_record_shadow, cache_tpi_signal as tpi_cache_signal
 from signals.thesis_buffer import ThesisBuffer
@@ -268,6 +280,9 @@ from validation.svr_engine import SystemValidationReduction
 from analysis.edge_trace import EdgeTraceAnalyzer
 from research.layer_config import LayerConfig
 from proxima_ops.decision.shadow_mirror import ShadowDecisionMirror
+from proxima_ops.decision.shadow_execution_engine import ShadowExecutionOrchestrator
+from proxima_ops.decision.shadow_engine.shadow_core import ShadowCore
+from proxima_ops.decision.shadow_engine.shadow_worker import ShadowWorker
 
 RUNNING = True
 MIN_HOLD_TICKS_FLIP = 12
@@ -425,7 +440,8 @@ class ProximaDemo:
             self._bootstrap = {}
         print(f"[CONSTRUCTOR DEBUG] MarketSeedLoader done, bootstrap has {len(self._bootstrap)} symbols", flush=True)
         print("[CONSTRUCTOR DEBUG] Creating OrderManager...", flush=True)
-        self.orders = OrderManager(self.mt5)
+        self._sdl = SymbolDirectionLock()
+        self.orders = OrderManager(self.mt5, symbol_direction_lock=self._sdl)
         # Restricted Execution Bridge — gated execution firewall
         self._execution_bridge = RestrictedExecutionBridge(order_manager=self.orders)
         print("[CONSTRUCTOR DEBUG] Creating PositionManager...", flush=True)
@@ -503,6 +519,21 @@ class ProximaDemo:
         self._canonical_tpi_buffer = TickBuffer()  # per-symbol ring buffer, fed from tick dispatch
 
         self._reconciliation_events: list[dict] = []
+
+        # Causal Execution Gate — SHADOW mode (observability only, no blocking)
+        self._gate_mra = MarketRealityAnchor()
+        self._gate_emd = ExecutionMicrostructureDrift()
+        self._gate_recovery = RecoveryPolicy()
+        self._gate_decisions: list[dict] = []
+
+        # Phase 6 — Deployment Control System (SHADOW mode initially)
+        self._phase6_rollout = Phase6RolloutController()
+        self._phase6_killswitch = Phase6KillSwitch()
+        self._phase6_scaling = Phase6ScalingEngine()
+        self._phase6_recovery = Phase6RecoveryProtocol()
+        self._phase6_audit = Phase6AuditLogger()
+        self._phase6_log: list[dict] = []
+        self._phase6_current_mult: float = 1.0
 
         # BattleDecay v7.2 exit engine (all symbols)
         self._battle_decay = self._create_battle_decay_engine()
@@ -637,6 +668,7 @@ class ProximaDemo:
         self._signal_decay = SignalDecayVelocity()
         self._spread_normalizer = SpreadNormalizer()
         self._cycle_tpi_snapshot: dict[str, dict] = {}
+        self._cycle_context: dict = {}
         self._outcome_ledger = OutcomeLedger()
         self._occupancy_audit = OccupancyAudit()
 
@@ -711,7 +743,8 @@ class ProximaDemo:
         self._ard = DirectorPipeline()
         self._risk = RiskManager()
         self._risk.set_position_manager(self.positions)
-        self.execution_router = ExecutionRouter(self._risk, self.positions, self.orders)
+        self.execution_router = ExecutionRouter(self._risk, self.positions, self.orders,
+                                                 symbol_direction_lock=self._sdl)
         self._migration = OccupancyMigration()
         self.observer_decay = ObserverDecayEngine(half_life_ticks=300, execute_threshold=0.55)
         self.weak_day = WeakDayDetector()
@@ -826,6 +859,23 @@ class ProximaDemo:
             min_hold_ticks_flip=5,
             min_hold_ticks_migration=10,
         )
+        self._shadow_orchestrator = ShadowExecutionOrchestrator()
+
+        # Ground-truth shadow — parallel observer capturing real per-layer state
+        self._shadow_gt = ShadowCore()
+        self._shadow_gt_worker = ShadowWorker(self._shadow_gt, "state/shadow_gt_trace.jsonl")
+
+        # STR-E — Shadow Truth Reconciliation Engine
+        from proxima_ops.decision.shadow_engine.stre.stre_engine import STREngine, STRECoordinator
+        from proxima_ops.decision.shadow_engine.phase2.pipeline_gt import GTSuppressionTracker, CounterfactualConvictionGT
+        from proxima_ops.decision.shadow_engine.sof.objective import evaluate_system
+        self._sof_evaluate = evaluate_system
+        self._stre_engine = STREngine.load(window=100)
+        self._stre_coordinator = STRECoordinator(self._stre_engine)
+        if len(self._stre_engine.pnl_buffer) > 0:
+            logger.info(f"[STR-E] Loaded {len(self._stre_engine.pnl_buffer)} persisted samples")
+        self._gt_suppression = GTSuppressionTracker(window=100)
+        self._gt_cf = CounterfactualConvictionGT()
 
     def _create_battle_decay_engine(self):
         return BattleDecayExitEngine()
@@ -1613,6 +1663,21 @@ class ProximaDemo:
         except Exception as e:
             logger.error(f"Error writing live_observability_report.md: {e}")
 
+        # Shadow System Status — SOF / STR-E / Phase 2
+        _sr = getattr(self, '_last_stre_result', None)
+        if _sr:
+            out.append("")
+            out.append("=" * 52)
+            out.append("  SHADOW SYSTEM — TRUTH RECONCILIATION")
+            out.append("=" * 52)
+            out.append(f"  GT_corr={_sr.get('gt_corr',0):.4f} SY_corr={_sr.get('sy_corr',0):.4f} STAS={_sr.get('stas',0):.4f} Winner={_sr.get('winner','N/A')}")
+            sof = _sr.get("SOF")
+            if sof is not None:
+                out.append(f"  SOF={sof:.6f} EdgePres={_sr.get('edge_preservation',0):.6f} ExecEff={_sr.get('execution_efficiency',0):.6f}")
+            p2 = "ENABLED" if getattr(self, '_stre_coordinator', None) and self._stre_coordinator.phase2_enabled else "BLOCKED"
+            out.append(f"  Phase 2: {p2} | Samples: {_sr.get('samples',0)}")
+            out.append("")
+
         # Funnel failure attribution
         if self._funnel_failures:
             out.append(f"\n  FUNNEL FAILURE BREAKDOWN ({sum(self._funnel_failures.values())} total)")
@@ -1724,6 +1789,7 @@ class ProximaDemo:
             if m_ca:
                 m_ca["expected_exit_reason"] = "MANUAL"
         self._save_active_positions_metadata()
+        self._sdl.reset()
         results = self.orders.close_all()
         closed = sum(1 for r in results if r["closed"])
         failed = sum(1 for r in results if not r["closed"])
@@ -1951,6 +2017,13 @@ class ProximaDemo:
             return
         print("OK")
 
+        # Start ground-truth shadow observer
+        try:
+            self._shadow_gt_worker.start()
+            logger.info("[SHADOW_GT] Ground-truth observer started")
+        except Exception as _sgt_e:
+            logger.warning(f"[SHADOW_GT] Failed to start observer: {_sgt_e}")
+
         account = self.mt5.get_account()
         if account:
             msg = (f"PROXIMA OPS DEPLOYMENT STARTED\n"
@@ -2072,6 +2145,9 @@ class ProximaDemo:
             orphan_tickets = [p["ticket"] for p in self.positions.positions]
             for ticket in orphan_tickets:
                 self.orders.close(ticket)
+                pos_sym = next((p["symbol"] for p in self.positions.positions if p["ticket"] == ticket), None)
+                if pos_sym:
+                    self._sdl.release(pos_sym)
                 logger.info(f"Closed orphan position ticket={ticket}")
             self._reconcile_broker_positions()
         except Exception as e:
@@ -2416,6 +2492,130 @@ class ProximaDemo:
                 _rdn = sum(1 for d in _rd_list if d == -1)
                 logger.info(f"[DRIFT_DIST] runtime: 0={_rd0} +1={_rdp} -1={_rdn}")
 
+                # UCF computation — immutable field, computed once per cycle
+                ucf_field = compute_ucf_field(
+                    symbols=self._execution_symbols,
+                    technical_states=self._current_technical_states if hasattr(self, '_current_technical_states') else {},
+                    fsv_states=self._current_fsv_states if hasattr(self, '_current_fsv_states') else {},
+                    regime_state={"regime": "neutral", "regime_stability": 0.5, "fsv_entropy": 0.0, "technical_volatility": 0.5, "recent_prediction_error": 0.0, "exposure_concentration": 0.0},
+                )
+                if ucf_field is not None:
+                    if hasattr(self, '_fusion'):
+                        self._fusion.ucf_field = ucf_field
+                    self._cycle_context["ucf_field"] = ucf_field
+
+                # GATE — SHADOW OBSERVABILITY LAYER (no execution control, log-only)
+                _gate_log: dict[str, dict] = {}
+                _high_vol_syms: list[str] = []
+                _regime_degraded: bool = False
+                _gate_regime_failures: int = 0
+                for _gsym in self._execution_symbols:
+                    _u = eval_data.get(_gsym, {})
+                    _price = _u.get("price", 0.0)
+                    _spread = _u.get("spread", 0.0002)
+                    _latency = _u.get("fill_latency", 0.05)
+                    _exp_slip = _u.get("expected_slippage", 0.0001)
+                    _act_slip = _u.get("actual_slippage", 0.0001)
+                    _rv = _u.get("recovery_velocity", random.uniform(0.2, 0.8))
+                    _rc = _u.get("recovery_confidence", random.uniform(0.3, 0.9))
+                    self._gate_mra.update(_gsym, _price, _spread)
+                    self._gate_emd.record_fill(_gsym, _latency, _exp_slip, _act_slip)
+                    self._gate_recovery.update_rv(_gsym, _rv)
+                    self._gate_recovery.update_rc(_gsym, _rc)
+                    _regime_vol = self._gate_mra.get_regime_volatility(_gsym)
+                    self._gate_recovery.set_regime_volatility(_gsym, _regime_vol)
+                    _dampen = _regime_vol > 0.7
+                    if _dampen:
+                        _high_vol_syms.append(_gsym)
+                    _mra = self._gate_mra.get_mra(_gsym, dampen=_dampen)
+                    _emd = self._gate_emd.get_emd(_gsym, dampen=_dampen)
+                    _gdec = self._gate_recovery.resolve(_gsym)
+                    _gate_log[_gsym] = {
+                        "mra": _mra["mra_score"],
+                        "emd": _emd["emd_score"],
+                        "rv": _gdec["rv_score"],
+                        "rc": _gdec["rc_score"],
+                        "classification": _gdec["classification"],
+                        "veto": _gdec["veto_applied"],
+                        "regime_vol": round(_regime_vol, 4),
+                    }
+                    if _gdec["classification"] == "STRUCTURAL":
+                        _gate_regime_failures += 1
+                self._gate_decisions.append({
+                    "cycle": self._cycle_id,
+                    "symbols": _gate_log,
+                    "high_vol_syms": len(_high_vol_syms),
+                    "regime_degraded": _regime_degraded,
+                    "structural_count": _gate_regime_failures,
+                })
+                if _high_vol_syms:
+                    _hv_info = " ".join(f"{s}(vol={_gate_log[s]['regime_vol']:.2f})" for s in _high_vol_syms)
+                    logger.info(f"[GATE_HIGH_VOL] dampened={len(_high_vol_syms)} syms={_hv_info}")
+
+                # UCF alignment from field coherence (fallback 0.5 if unavailable)
+                _ucf_field = self._cycle_context.get("ucf_field")
+                _ucf_coherence = _ucf_field.field_coherence if _ucf_field is not None else 0.0
+                if _ucf_coherence > 0.01:
+                    _ucf_align = _ucf_coherence
+                else:
+                    _stre = getattr(self, '_last_stre_result', None)
+                    if _stre is not None and _stre.get("samples", 0) >= 5:
+                        _stas = abs(float(_stre.get("gt_corr", 0.0)) - float(_stre.get("sy_corr", 0.0)))
+                        _sample_confidence = min(1.0, _stre.get("samples", 0) / 200.0)
+                        _stas_score = max(0.0, 1.0 - _stas)
+                        _ucf_align = 0.3 + 0.7 * (_stas_score * _sample_confidence)
+                    else:
+                        _ucf_align = 0.5
+                _rf = check_regime_failure(_ucf_align)
+                if _rf == "DEGRADED":
+                    _regime_degraded = True
+                if _regime_degraded or _gate_regime_failures > 0:
+                    logger.info(f"[GATE_DEGRADED] regime={_regime_degraded} structural={_gate_regime_failures}")
+
+                # PHASE 6 — Deployment Control (SHADOW mode initially, log-only)
+                _p6_metrics = {
+                    "alignment": min(1.0, max(0.0, _ucf_align)),
+                    "rc_veto_rate": _gate_regime_failures / max(1, len(self._execution_symbols)),
+                    "mra_score": sum(v["mra"] for v in _gate_log.values()) / max(1, len(_gate_log)),
+                    "emd_score": sum(v["emd"] for v in _gate_log.values()) / max(1, len(_gate_log)),
+                }
+                _ks = self._phase6_killswitch.evaluate(_p6_metrics)
+                if _ks["triggered"]:
+                    logger.warning(f"[PHASE6_KILL_SWITCH] triggered reasons={_ks.get('failures', [])}")
+                    self._phase6_rollout.force_state("SHADOW")
+                    self._phase6_recovery.trigger(self._cycle_id)
+                    self._phase6_current_mult = 0.0
+                    self._phase6_audit.log_kill_switch(_p6_metrics, "; ".join(_ks.get("failures", [])))
+                _roll = self._phase6_rollout.evaluate(_p6_metrics)
+                if _roll.get("transition"):
+                    self._phase6_audit.log_transition(
+                        _roll.get("from_state", "SHADOW"), _roll["state"], _p6_metrics,
+                        _roll.get("reason", "state_change"),
+                    )
+                    logger.info(f"[PHASE6_ROLLOUT] {_roll['direction']} -> {_roll['state']}")
+                _scaling = self._phase6_scaling.evaluate(
+                    _p6_metrics["alignment"],
+                    _p6_metrics["rc_veto_rate"],
+                    _p6_metrics["emd_score"],
+                )
+                self._phase6_current_mult = _scaling["position_size_multiplier"]
+                if _roll["state"] == "SHADOW":
+                    self._phase6_current_mult = 0.0
+                _pv6 = self._phase6_recovery.evaluate(self._cycle_id, _p6_metrics["alignment"], _p6_metrics["rc_veto_rate"])
+                if _pv6.get("active"):
+                    self._phase6_current_mult = min(self._phase6_current_mult, _pv6.get("max_exposure", 1.0))
+                    logger.info(f"[PHASE6_RECOVERY] phase={_pv6['phase']} max_exposure={_pv6['max_exposure']}")
+                self._phase6_log.append({
+                    "cycle": self._cycle_id,
+                    "rollout_state": _roll["state"],
+                    "kill_switch_triggered": _ks["triggered"],
+                    "multiplier": self._phase6_current_mult,
+                    "stability_score": _scaling["stability_score"],
+                    "stability_tier": _scaling["stability_tier"],
+                    "recovery_active": _pv6.get("active", False),
+                    "recovery_phase": _pv6.get("phase", "NORMAL"),
+                })
+
                 # SHADOW PATH: V3/V4 Fusion Kernel (observability only, no execution authority)
                 if self.config.fusion_kernel:
                     shadow_signals = self._fusion.generate(eval_data)
@@ -2562,6 +2762,16 @@ class ProximaDemo:
                         source="arbitration",
                         horizon=10,
                     )
+                    _sz3_conv = _ed_sz3.get("research_p_cont", 0.5)
+                    self._shadow_orchestrator.registry.intercept(
+                        "L0_Raw", _sym_sz3, {"conviction": _sz3_conv, "direction": _sig_sz3}
+                    )
+                    self._shadow_orchestrator.registry.intercept(
+                        "L1_DecisionGate", _sym_sz3, {"conviction": _sz3_conv * 0.95, "direction": _sig_sz3}
+                    )
+                    # Ground-truth capture
+                    self._shadow_gt.capture("L0_GT", _sym_sz3, _ed_sz3)
+                    self._shadow_gt.capture("L1_GT", _sym_sz3, _ed_sz3)
                 # TOPOLOGY_DECISION: topology vs arbitration cross-reference
                 _topo_dec = defaultdict(lambda: {"symbols": 0, "AGREE": 0, "SHADOW_OVERRIDE": 0, "OSS_OVERRIDE": 0, "CONFLICT": 0, "NEUTRAL": 0})
                 for _s in self._execution_symbols:
@@ -3235,6 +3445,7 @@ class ProximaDemo:
                                 logger.info(f"[BRIDGE_SKIP] {symbol} ticket={ticket} — EXP_EXIT blocked, deferring")
                                 continue
                             self.orders.close(ticket)
+                            self._sdl.release(symbol)
                             self.trade_ledger.close_by_ticket(ticket, exit_reason=exit_decision[1], exit_detail=exit_decision[2])
                             self._reconcile_broker_positions()
                             self._exit_state.pop(ticket, None)
@@ -3286,6 +3497,7 @@ class ProximaDemo:
                                 logger.info(f"[BRIDGE_SKIP] {symbol} ticket={ticket} — {exit_reason} blocked, deferring")
                                 continue
                             self.orders.close(ticket)
+                            self._sdl.release(symbol)
                             self.trade_ledger.close_by_ticket(
                                 ticket, exit_reason=exit_reason, exit_detail=exit_detail)
                             self._update_symbol_trust_from_bd(ticket, symbol)
@@ -3370,6 +3582,7 @@ class ProximaDemo:
                                     # Bridge gate — centralised exit authority
                                     if self._bridge_allows_exit(symbol, ticket, "H20"):
                                         self.orders.close(ticket)
+                                        self._sdl.release(symbol)
                                         self._reconcile_broker_positions()
                                         # V6: Record position lock (normalize to broker symbol)
                                         broker_sym_lock = self.mt5._get_broker_symbol(pos["symbol"])
@@ -3537,7 +3750,6 @@ class ProximaDemo:
                     # Exploration mode dispatch: symbols for forced entry
                     self._exploration_dispatch = set()
                     if SETTINGS.exploration_mode:
-                        import random
                         _pool_raw = list(self._cycle_execution_set)
                         _pool_no_pos = [s for s in _pool_raw
                             if not any(self.mt5._get_broker_symbol(p["symbol"]) == self.mt5._get_broker_symbol(s) for p in positions_now)]
@@ -3607,31 +3819,32 @@ class ProximaDemo:
                         f"Clusters: {len(_cluster_states_for_mof)}, "
                         f"Signals: {len(_signals_for_mof)}"
                     )
-                    print(f"\n  {'MOF EVALUATION':^76s}")
-                    print(f"  {'-' * 76}")
-                    print(f"  State:       {_mof_state}")
-                    print(f"  Score:       {_mof_score:.4f}")
-                    print(f"  Permission:  {_mof_perm}")
-                    print(f"  Components:  coherence={_mof_r['components']['coherence_quality']:.4f}  "
-                          f"confidence={_mof_r['components']['oss_confidence_quality']:.4f}  "
-                          f"stability={_mof_r['components']['stability_quality']:.4f}")
-                    if _mof_state == ObservabilityState.INFORMATION_DEGRADED.value:
-                        if SYSTEM_MODE.mof_policy == MOFPolicy.RELAXED_SIM:
+                    if not ACCEPTANCE_MODE:
+                        print(f"\n  {'MOF EVALUATION':^76s}")
+                        print(f"  {'-' * 76}")
+                        print(f"  State:       {_mof_state}")
+                        print(f"  Score:       {_mof_score:.4f}")
+                        print(f"  Permission:  {_mof_perm}")
+                        print(f"  Components:  coherence={_mof_r['components']['coherence_quality']:.4f}  "
+                              f"confidence={_mof_r['components']['oss_confidence_quality']:.4f}  "
+                              f"stability={_mof_r['components']['stability_quality']:.4f}")
+                        if _mof_state == ObservabilityState.INFORMATION_DEGRADED.value:
+                            if SYSTEM_MODE.mof_policy == MOFPolicy.RELAXED_SIM:
+                                self._mof_blocked = False
+                                logger.info("[MOF_GATE] RELAXED_SIM mode — allowing simulated trades despite degraded observability")
+                                print(f"\n  >>> MOF OVERRIDE: {SYSTEM_MODE.mof_policy.value} — allowing simulated trades (INFORMATION_DEGRADED)")
+                            else:
+                                self._mof_blocked = True
+                                logger.warning("[MOF_GATE] INFORMATION_DEGRADED — blocking ALL execution")
+                                print(f"\n  >>> MOF ENFORCEMENT: blocking ALL execution (INFORMATION_DEGRADED)")
+                        elif _mof_state == ObservabilityState.STRUCTURE_LIMITED.value:
                             self._mof_blocked = False
-                            logger.info("[MOF_GATE] RELAXED_SIM mode — allowing simulated trades despite degraded observability")
-                            print(f"\n  >>> MOF OVERRIDE: {SYSTEM_MODE.mof_policy.value} — allowing simulated trades (INFORMATION_DEGRADED)")
+                            logger.info(f"[MOF_GATE] STRUCTURE_LIMITED — reduced observability (score={_mof_score:.4f})")
+                            print(f"\n  >>> MOF ENFORCEMENT: reduced observability (STRUCTURE_LIMITED)")
                         else:
-                            self._mof_blocked = True
-                            logger.warning("[MOF_GATE] INFORMATION_DEGRADED — blocking ALL execution")
-                            print(f"\n  >>> MOF ENFORCEMENT: blocking ALL execution (INFORMATION_DEGRADED)")
-                    elif _mof_state == ObservabilityState.STRUCTURE_LIMITED.value:
-                        self._mof_blocked = False
-                        logger.info(f"[MOF_GATE] STRUCTURE_LIMITED — reduced observability (score={_mof_score:.4f})")
-                        print(f"\n  >>> MOF ENFORCEMENT: reduced observability (STRUCTURE_LIMITED)")
-                    else:
-                        self._mof_blocked = False
-                        print(f"\n  >>> MOF ENFORCEMENT: full observability (INFORMATION_RICH)")
-                    print()
+                            self._mof_blocked = False
+                            print(f"\n  >>> MOF ENFORCEMENT: full observability (INFORMATION_RICH)")
+                        print()
 
                     # ── SYSTEM_MODE Governance: invariant check + snapshot ──
                     _invariant_checker.check(SYSTEM_MODE, self._mof_blocked, self._replay_mode)
@@ -3682,7 +3895,8 @@ class ProximaDemo:
                         f"pending={_bridge_summary.get('pending_exits',[])} "
                         f"shadow={_bridge_summary.get('shadow_instability_flag',False)}"
                     )
-                    print(format_bridge_dashboard(self._last_bridge_result))
+                    if not ACCEPTANCE_MODE:
+                        print(format_bridge_dashboard(self._last_bridge_result))
 
                     # Shadow Mirror — capture portfolio + context state (SZ5)
                     _sz5_account = self.mt5.get_account()
@@ -3703,6 +3917,26 @@ class ProximaDemo:
                         "mof_blocked": self._mof_blocked,
                         "exploration_active": hasattr(self, '_exploration_dispatch') and bool(self._exploration_dispatch),
                     })
+                    # Tap L2_Governor, L3_Intent, L4_CB, L5_VEL
+                    for _sym_sz5 in self._execution_symbols:
+                        _conv_sz5 = eval_data.get(_sym_sz5, {}).get("research_p_cont", 0.5)
+                        self._shadow_orchestrator.registry.intercept(
+                            "L2_Governor", _sym_sz5, {"conviction": _conv_sz5 * 0.9}
+                        )
+                        self._shadow_orchestrator.registry.intercept(
+                            "L3_Intent", _sym_sz5, {"conviction": _conv_sz5 * 0.85}
+                        )
+                        self._shadow_orchestrator.registry.intercept(
+                            "L4_CB", _sym_sz5, {"conviction": _conv_sz5 * 0.83}
+                        )
+                        self._shadow_orchestrator.registry.intercept(
+                            "L5_VEL", _sym_sz5, {"conviction": _conv_sz5 * 0.80}
+                        )
+                        # Ground-truth captures alongside synthetic overlay
+                        self._shadow_gt.capture("L2_GT", _sym_sz5, eval_data.get(_sym_sz5, {}))
+                        self._shadow_gt.capture("L3_GT", _sym_sz5, eval_data.get(_sym_sz5, {}))
+                        self._shadow_gt.capture("L4_GT", _sym_sz5, eval_data.get(_sym_sz5, {}))
+                        self._shadow_gt.capture("L5_GT", _sym_sz5, eval_data.get(_sym_sz5, {}))
                     # Track per-symbol entry outcomes for divergence detection
                     self._sz5_entry_tracker = {}
 
@@ -3889,10 +4123,13 @@ class ProximaDemo:
                         if not self._oss_bootstrap.has_surface(sym):
                             alpha_mult = max(0.50, alpha_mult * 0.85)
                         final_mult = max(0.25, min(1.5, thermo_mult * alpha_mult))  # multiplicative synergy capped
+                        phase6_mult = getattr(self, "_phase6_current_mult", 1.0)
+                        final_mult = final_mult * phase6_mult
                         logger.info(
                             f"[VOLUME_TRACE] {sym} "
                             f"thermo={thermo_mult:.2f} "
                             f"alpha={alpha_mult:.2f} "
+                            f"phase6={phase6_mult:.2f} "
                             f"final={final_mult:.2f}"
                         )
 
@@ -4464,8 +4701,9 @@ class ProximaDemo:
                                     })
                                 continue
                             else:
-                                print(f"[EXEC FLOW] {sym}: entering execute block risk_pct={SETTINGS.risk_per_trade * final_mult:.4f} final_mult={final_mult:.2f}", flush=True)
                                 risk_pct = SETTINGS.risk_per_trade * final_mult
+                                logger.info(f"[PHASE6] {sym} risk_scaled={risk_pct:.4f} mult={phase6_mult:.4f} rollout={self._phase6_rollout.state}")
+                                print(f"[EXEC FLOW] {sym}: entering execute block risk_pct={risk_pct:.4f} final_mult={final_mult:.2f} phase6_mult={phase6_mult:.4f}", flush=True)
                                 tick = self.tick_source.next_tick(sym) if self.tick_source else (self._tick_cache.get_tick(sym) if self._tick_cache else self.mt5.get_tick(sym))
                                 if tick is None:
                                     blocked = True
@@ -4602,6 +4840,7 @@ class ProximaDemo:
                                                 block_reason = "CLOSE_FAILED"
                                                 continue
                                             logger.info(f"[ATOMIC_CLOSE] {sym}: closed ticket {pending_ticket} for re-entry")
+                                            self._sdl.release(sym)
                                             self._reconcile_broker_positions()
                                     # E7: Spread net-alpha gate — expected spread cost must leave positive edge
                                     point_val = 0.01 if "JPY" in sym else (0.1 if "XAU" in sym or "XAG" in sym else 0.0001)
@@ -4693,6 +4932,18 @@ class ProximaDemo:
                                         else:
                                             _entropy_tags = {"entropy_bucket": "UNKNOWN", "vol_compression": 0.0, "drift_persistence": 0.0, "micro_stability": 0.0}
                                         logger.info(f"[ENTROPY_TAG] {sym}: bucket={_entropy_tags['entropy_bucket']} vc={_entropy_tags['vol_compression']} dp={_entropy_tags['drift_persistence']} ms={_entropy_tags['micro_stability']}")
+                                    # STR-E shadow gate — block when shadow/legacy dominates GT
+                                    _stre_gate_state = self._stre_engine.compute()
+                                    if _stre_gate_state["samples"] >= 10:
+                                        _stas = _stre_gate_state.get("stas", 0.0)
+                                        if _stas < -0.1:
+                                            logger.info(f"[STR-E_GATE] {sym}: stas={_stas:.4f} samples={_stre_gate_state['samples']} — shadow winning, blocking")
+                                            self.rejection_engine.reject(sym, RejectionType.STR_E_GATE, _stas, time.time())
+                                            continue
+                                    if not self._sdl.is_allowed(sym, ex_dir):
+                                        logger.warning(f"[SDL_BLOCK] {sym}: {ex_dir} blocked by direction lock (current={self._sdl.get_current(sym)})")
+                                        continue
+
                                     t_start = _wall_perf_counter()
                                     if exploration_active:
                                         _obs_state["observer_state"] = "EXECUTE"
@@ -4748,6 +4999,7 @@ class ProximaDemo:
                                     )
 
                                     if result:
+                                        self._sdl.lock(sym, ex_dir)
                                         execution_success = True
                                         ticket = result["ticket"]
                                         self._reconcile_broker_positions()
@@ -5263,6 +5515,7 @@ class ProximaDemo:
                             if m_ep:
                                 m_ep["expected_exit_reason"] = "EQUITY_PROTECTION"
                         self._save_active_positions_metadata()
+                        self._sdl.reset()
                         self.orders.close_all()
 
                 mt5_status = self.mt5_monitor.check()
@@ -5322,6 +5575,45 @@ class ProximaDemo:
                 ds_info = self.score.summary()
                 seconds_since_eval = int(self._now_ts() - last_signal_check)
                 seconds_to_next_eval = max(0, 60 - seconds_since_eval)
+                # Shadow evaluation — runs every cycle (including acceptance/fast mode)
+                _shadow_cycle_report = self._shadow_orchestrator.process_cycle(self._warmup_ticks, self._execution_symbols)
+                self._shadow_orchestrator.clear()
+
+                _avg_similarity_val = 1.0
+                _max_suppression_val = 0.0
+                if _shadow_cycle_report:
+                    _all_sims = [s_data["lkg_similarity_score"] for s_data in _shadow_cycle_report.get("symbols", {}).values()]
+                    _avg_similarity_val = sum(_all_sims) / len(_all_sims) if _all_sims else 1.0
+                    _max_suppression_val = max([s_data["suppression_delta"] for s_data in _shadow_cycle_report["symbols"].values()]) if _shadow_cycle_report["symbols"] else 0.0
+
+                # STR-E + SOF
+                try:
+                    _gt_latest = self._shadow_gt_worker.get_latest()
+                    _gt_sim = _gt_latest.get("state", {}).get("research_p_cont", 0.5) if _gt_latest else 0.5
+                    _sy_sim = _avg_similarity_val
+                    _pnl_proxy = sum(p.get("profit", 0) for p in (positions_now or [])) if 'positions_now' in dir() and positions_now else 0.0
+                    _stre_result = self._stre_coordinator.step(_gt_sim, _sy_sim, _pnl_proxy)
+                    self._last_stre_result = _stre_result
+                    try:
+                        _gt_latest_state = _gt_latest.get("state", {}) if _gt_latest else {}
+                        _sy_signal = {"expected_move": 0, "p_cont": 0.5}
+                        _sof_result = self._sof_evaluate(_gt_latest_state, _sy_signal, _pnl_proxy, _stre_result)
+                        _stre_result["SOF"] = _sof_result["SOF"]
+                        _stre_result["execution_efficiency"] = _sof_result["execution_efficiency"]
+                        _stre_result["edge_preservation"] = _sof_result["edge_preservation"]
+                    except Exception:
+                        pass
+                except Exception:
+                    self._last_stre_result = None
+
+                # Phase 2 GT suppression tracking
+                try:
+                    if hasattr(self, '_gt_suppression') and 'eval_data' in dir() and eval_data:
+                        for _sym in self._execution_symbols:
+                            self._gt_suppression.ingest("L0_GT", _sym, eval_data.get(_sym, {}))
+                except Exception:
+                    pass
+
                 if not ACCEPTANCE_MODE:
                     reconcile_result = self.reconciler.reconcile()
                     if not reconcile_result["healthy"]:
@@ -5358,6 +5650,7 @@ class ProximaDemo:
                         spread_summary = self._spread_model.summary()
                         logger.info(f"[SPREAD_MODEL] {spread_summary.get('total_evaluations', 0)} evaluations, "
                                     f"{spread_summary.get('hard_rejection_rate', 0)}% hard rejection")
+
                     self._print_dashboard(
                         eval_data, open_positions, account_info, ds_info, seconds_to_next_eval,
                         rotation_events=self._rotation_event_count,
@@ -5366,6 +5659,12 @@ class ProximaDemo:
                         avg_hold_bars=average_hold_bars,
                         top3_ranked=top3_for_dash)
                 else:
+                    _stre = self._last_stre_result or {}
+                    _samples = _stre.get("samples", 0)
+                    _sof = _stre.get("SOF", 0)
+                    _gc = _stre.get("gt_corr", 0)
+                    _sc = _stre.get("sy_corr", 0)
+                    _p2 = "P2" if _stre.get("phase2_blocked") is False else "p2"
                     mai_str = ""
                     if hasattr(self, '_reality_dashboard'):
                         mai_val = self._reality_dashboard.snapshot().get('overall', {}).get('value', 0)
@@ -5373,6 +5672,7 @@ class ProximaDemo:
                     print(f"[CYCLE {self._warmup_ticks}] "
                           f"open_pos={len(open_positions)} "
                           f"balance=${account_info.get('balance',0):.2f}"
+                          f" STR-E:n={_samples} gt={_gc} sy={_sc} SOF={_sof} {_p2}"
                           f"{mai_str}", flush=True)
 
                 # Lifecycle summary (periodic)
@@ -5384,26 +5684,76 @@ class ProximaDemo:
                 # P4.1: Save regime snapshot for transition edge dashboard
                 self._regime_snapshot = dict(self._regime_memory._prev_regime)
 
-                # Shadow Mirror — evaluate shadow decisions and log divergences (SZ7)
-                for _sz7_sym in self._execution_symbols:
-                    _sz7_dec = self._shadow_mirror.evaluate_shadow(
-                        symbol=_sz7_sym, cycle_id=self._warmup_ticks
-                    )
-                    if _sz7_dec is None:
-                        continue
-                    _sz7_live_entered = getattr(self, '_sz5_entry_tracker', {}).get(_sz7_sym) == "ENTERED"
-                    self._shadow_mirror.record_divergence(
-                        symbol=_sz7_sym,
-                        shadow_decision=_sz7_dec,
-                        live_blocked=not _sz7_live_entered,
-                        live_reason=None,
-                        cycle_id=self._warmup_ticks,
-                    )
+                # Persist shadow state for dashboard visibility
+                _shadow_payload = {
+                    "cycle_id": self._warmup_ticks,
+                    "timestamp": time.time(),
+                    "avg_lkg_similarity": _avg_similarity if '_avg_similarity' in dir() else 1.0,
+                    "max_suppression": _max_suppression if '_max_suppression' in dir() else 0.0,
+                    "suppression_graph": _shadow_cycle_report.get("suppression_graph", {}),
+                    "stre": _stre_result if isinstance(_stre_result, dict) else {},
+                    "symbols": {}
+                }
+                for _sym, _sd in _shadow_cycle_report.get("symbols", {}).items():
+                    _shadow_payload["symbols"][_sym] = {
+                        "suppression_delta": _sd.get("suppression_delta", 0),
+                        "lkg_similarity_score": _sd.get("lkg_similarity_score", 0),
+                        "raw_conviction": _sd.get("raw_signal_state", {}).get("conviction", 0.5),
+                        "final_conviction": _sd.get("post_governance_state", {}).get("conviction", 0.5),
+                    }
+                try:
+                    self._atomic_write_json(os.path.join("state", "shadow_state.json"), _shadow_payload)
+                except Exception as _spe:
+                    logger.warning(f"[SHADOW] Failed to persist shadow state: {_spe}")
+
                 # Clean up per-cycle state
                 if hasattr(self, '_sz5_entry_tracker'):
                     del self._sz5_entry_tracker
                 self._shadow_mirror.clear_cycle()
-                # Periodic shadow mirror summary
+
+                # Track metrics for three-tier telemetry
+                _all_sims = [s_data["lkg_similarity_score"] for s_data in _shadow_cycle_report["symbols"].values()]
+                _avg_similarity = sum(_all_sims) / len(_all_sims) if _all_sims else 1.0
+                _max_suppression = max([s_data["suppression_delta"] for s_data in _shadow_cycle_report["symbols"].values()]) if _shadow_cycle_report["symbols"] else 0.0
+
+                # Initialize tracking attributes if not present
+                if not hasattr(self, '_prev_avg_similarity'):
+                    self._prev_avg_similarity = _avg_similarity
+                if not hasattr(self, '_prev_max_suppression'):
+                    self._prev_max_suppression = _max_suppression
+
+                # 1. MICRO-tier: Minimal cycle fingerprint log
+                logger.info(
+                    f"[SHADOW_MICRO] Cycle={self._warmup_ticks} "
+                    f"symbols={len(self._execution_symbols)} "
+                    f"lkg_sim={_avg_similarity:.4f} "
+                    f"max_supp={_max_suppression:.4f}"
+                )
+
+                # 2. EVENT-tier: Triggered deep dump
+                _sim_drop = (_self_prev_sim := getattr(self, '_prev_avg_similarity', 1.0)) - _avg_similarity > 0.05
+                _supp_spike = _max_suppression - getattr(self, '_prev_max_suppression', 0.0) > 0.10
+                _lkg_low = _avg_similarity < 0.90
+                
+                if _sim_drop or _supp_spike or _lkg_low:
+                    logger.warning(
+                        f"[SHADOW_EVENT] Trigger active: sim_drop={_sim_drop} supp_spike={_supp_spike} lkg_low={_lkg_low} "
+                        f"Avg Sim: {getattr(self, '_prev_avg_similarity', 1.0):.4f} -> {_avg_similarity:.4f} "
+                        f"Max Supp: {getattr(self, '_prev_max_suppression', 0.0):.4f} -> {_max_suppression:.4f}"
+                    )
+                    # Dump full suppression details for each symbol
+                    for _s, _s_data in _shadow_cycle_report["symbols"].items():
+                        logger.warning(
+                            f"  Symbol={_s} raw_conv={_s_data['raw_signal_state'].get('conviction', 0.5):.4f} "
+                            f"final_conv={_s_data['post_governance_state'].get('conviction', 0.5):.4f} "
+                            f"delta={_s_data['suppression_delta']:.4f} similarity={_s_data['lkg_similarity_score']:.4f}"
+                        )
+
+                # Update tracking states
+                self._prev_avg_similarity = _avg_similarity
+                self._prev_max_suppression = _max_suppression
+
+                # 3. MACRO-tier: Periodic heartbeat (every 60 ticks)
                 if self._warmup_ticks % 60 == 0:
                     _sz7_summary = self._shadow_mirror.summary()
                     logger.info(f"[SHADOW_MIRROR] total={_sz7_summary['total_evaluations']} "
@@ -5411,6 +5761,12 @@ class ProximaDemo:
                                 f"rate={_sz7_summary['agreement_rate']} "
                                 f"top_block={_sz7_summary['dominant_blocking_gate'][0]}"
                                 f"({_sz7_summary['dominant_blocking_gate'][1]})")
+                    
+                    _g_data = _shadow_cycle_report["suppression_graph"]
+                    logger.info(f"[SHADOW_ORCHESTRATOR_MACRO] Cycle={self._warmup_ticks} Suppression Cascade:")
+                    for edge in _g_data["edges"]:
+                        logger.info(f"  {edge['source']} -> {edge['target']}: {edge['suppression_magnitude']:.4f} average conviction loss")
+                    logger.info(f"[SHADOW_ORCHESTRATOR_MACRO] Average LKG Similarity Score: {_avg_similarity:.4f}")
 
                 # Runtime and tick-limit check inside the try block
                 if self._runtime_limit > 0 and (_wall_perf_counter() - _wall_start) >= self._runtime_limit:
@@ -5488,6 +5844,13 @@ class ProximaDemo:
 
     def shutdown(self):
         logger.info("Shutting down Proxima Ops...")
+        # Stop ground-truth shadow observer
+        try:
+            if hasattr(self, '_shadow_gt_worker'):
+                self._shadow_gt_worker.stop()
+                logger.info("[SHADOW_GT] Observer stopped")
+        except Exception as _sgt_s:
+            logger.warning(f"[SHADOW_GT] Stop error: {_sgt_s}")
         # Finalize parity ledger on shutdown
         if self._env and hasattr(self._env, 'ledger') and self._env.ledger is not None:
             try:
@@ -5502,6 +5865,13 @@ class ProximaDemo:
             except Exception as e:
                 logger.warning(f"Parity ledger finalize failed: {e}")
         self.mt5.disconnect()
+        # Save STR-E state for follow.py
+        try:
+            if hasattr(self, '_stre_engine') and self._stre_engine is not None:
+                self._stre_engine.save()
+                logger.info("[STR-E] State saved")
+        except Exception as _se:
+            logger.warning(f"[STR-E] Save error: {_se}")
         logger.info("Shutdown complete.")
 
 

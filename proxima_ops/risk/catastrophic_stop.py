@@ -62,8 +62,11 @@ def catastrophic_sl(symbol: str, entry_price: float, order_type: str) -> float:
 
 
 def catastrophic_tp(symbol: str, entry_price: float, order_type: str) -> float:
-    """Return broker TP price — disabled (research exit = H20 only)."""
-    return 0.0
+    """Return broker TP price at 1.5x the catastrophic SL distance."""
+    sd = get_risk_stop_distance(symbol)
+    p = sd["stop_pips"] * sd["pip_size"] * 1.5
+    tp_price = entry_price + p if order_type == "BUY" else entry_price - p
+    return tp_price
 
 
 def pip_distance(symbol: str, entry: float, current: float) -> float:

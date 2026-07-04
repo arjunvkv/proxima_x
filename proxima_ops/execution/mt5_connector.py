@@ -4,6 +4,7 @@ from typing import Optional
 from datetime import datetime
 import time as _time
 from proxima_ops.config.settings import SETTINGS
+from proxima_ops.execution.magic_resolver import generate_magic, infer_strategy_from_comment
 
 logger = logging.getLogger("proxima_ops.mt5")
 
@@ -336,6 +337,8 @@ class MT5Connector:
         symbol = self._get_broker_symbol(symbol)
         mt5.symbol_select(symbol, True)
         mt5_type = 0 if order_type.upper() == "BUY" else 1
+        strategy_id = infer_strategy_from_comment(comment)
+        magic = generate_magic(strategy_id, order_type.upper())
         request = {
             "action": mt5.TRADE_ACTION_DEAL,
             "symbol": symbol,
@@ -345,7 +348,7 @@ class MT5Connector:
             "sl": sl,
             "tp": tp,
             "deviation": SETTINGS.max_slippage_points,
-            "magic": 202406,
+            "magic": magic,
             "comment": comment,
             "type_time": mt5.ORDER_TIME_GTC,
             "type_filling": self._get_filling_mode(symbol)}
@@ -382,6 +385,8 @@ class MT5Connector:
         if pos.volume is None or pos.volume <= 0:
             self._last_error = f"Invalid volume {pos.volume} for ticket {ticket}"
             return False
+        close_type = "SELL" if mt5_type == 1 else "BUY"
+        close_magic = generate_magic("PROXIMA_V2", close_type, instance=99)
         request = {
             "action": mt5.TRADE_ACTION_DEAL,
             "symbol": symbol,
@@ -390,7 +395,7 @@ class MT5Connector:
             "position": ticket,
             "price": price,
             "deviation": 50,
-            "magic": 202406,
+            "magic": close_magic,
             "comment": "PROXIMA_V2_CLOSE",
             "type_filling": self._get_filling_mode(symbol)}
         logger.info(f"[CLOSE_REQ] ticket={ticket} sym={symbol} vol={pos.volume} type={mt5_type} price={price}")

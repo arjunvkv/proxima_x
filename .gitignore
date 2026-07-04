@@ -161,9 +161,18 @@ tests/
 # Reality and regime analysis (standalone)
 reality/
 
-# Generated HTML reports (research)
+# Generated reports (research)
 research/fsv/dashboard/fsv_full_verification_report.html
 research/fsv/dashboard/fsv_verification_report.html
+research/fsv/dashboard/verification_results.json
+shadow_replay_report.json
+
+# Runtime state data
+proxima_ops/data/str_e_state.json
+
+# Standalone utility scripts
+follow.py
+run_proxima_shadow_replay.py
 
 # Specific research report markdown files (keep AGENTS.md)
 ASSET_BIAS_REPORT.md

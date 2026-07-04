@@ -3,6 +3,7 @@ import math
 from typing import Optional
 from proxima_ops.config.settings import SETTINGS
 from proxima_ops.execution.mt5_connector import MT5Connector
+from proxima_ops.execution.symbol_direction_lock import SymbolDirectionLock
 from proxima_ops.risk.catastrophic_stop import (
     get_risk_stop_distance,
     catastrophic_sl,
@@ -16,10 +17,12 @@ logger = logging.getLogger("proxima_ops.orders")
 class OrderManager:
     MAX_CLOSE_RETRIES = 3
 
-    def __init__(self, mt5: MT5Connector):
+    def __init__(self, mt5: MT5Connector,
+                 symbol_direction_lock: Optional[SymbolDirectionLock] = None):
         self._mt5 = mt5
         self._pending: list[dict] = []
         self._close_attempts: dict[int, int] = {}
+        self._sdl = symbol_direction_lock
 
     def calculate_volume(self, symbol: str, price: float,
                          account_balance: float, risk_pct: float = None) -> float:
@@ -137,6 +140,9 @@ class OrderManager:
                     account_balance: float, risk_pct: float = None,
                     sl: float = 0.0, tp: float = 0.0,
                     volume: float = 0.0, comment: str = "PROXIMA_V2") -> Optional[dict]:
+        if self._sdl is not None and not self._sdl.is_allowed(symbol, "BUY"):
+            logger.warning("[SDL_BLOCK] %s BUY blocked by SymbolDirectionLock", symbol)
+            return None
         if not self._mt5.verify_spread(symbol):
             logger.warning(f"Spread too high for {symbol}, skipping")
             return None
@@ -163,6 +169,9 @@ class OrderManager:
                      account_balance: float, risk_pct: float = None,
                      sl: float = 0.0, tp: float = 0.0,
                      volume: float = 0.0, comment: str = "PROXIMA_V2") -> Optional[dict]:
+        if self._sdl is not None and not self._sdl.is_allowed(symbol, "SELL"):
+            logger.warning("[SDL_BLOCK] %s SELL blocked by SymbolDirectionLock", symbol)
+            return None
         if not self._mt5.verify_spread(symbol):
             logger.warning(f"Spread too high for {symbol}, skipping")
             return None
@@ -188,10 +197,13 @@ class OrderManager:
     def place_order(self, symbol: str, order_type: str, volume: float, price: float,
                      sl: float = 0.0, tp: float = 0.0,
                      comment: str = "PROXIMA_V2") -> Optional[dict]:
+        mt5_type = "BUY" if order_type.lower() == "buy" else "SELL"
+        if self._sdl is not None and not self._sdl.is_allowed(symbol, mt5_type):
+            logger.warning("[SDL_BLOCK] %s %s blocked by SymbolDirectionLock", symbol, mt5_type)
+            return None
         if not self._mt5.verify_symbol(symbol)["available"]:
             logger.warning(f"Symbol {symbol} not available")
             return None
-        mt5_type = "BUY" if order_type.lower() == "buy" else "SELL"
         sl, tp = self._resolve_sl_tp(symbol, price, mt5_type, sl, tp)
         if sl <= 0.0 or tp <= 0.0:
             logger.error(f"[HARD_REJECT] {symbol} {mt5_type}: SL={sl} TP={tp} — order blocked")

@@ -71,3 +71,27 @@ class SignalAggregationLayer:
 
     def vol_tradable(self, sym):
         return self.volgate.tradable(sym)
+
+    def compute_ucf_metrics(self, aggregated: list[dict], ucf_field) -> list[dict]:
+        if ucf_field is None or not hasattr(ucf_field, 'field'):
+            return []
+        feedback = []
+        for signal in aggregated:
+            sym = signal.get("symbol", "")
+            ucf_data = ucf_field.field.get(sym, {})
+            if not ucf_data:
+                continue
+            signal_conf = signal.get("confidence", 0.5)
+            ucf_score = ucf_data.get("conviction_score", 0.0)
+            signal_dir = signal.get("direction", 0)
+            ucf_dir = ucf_data.get("direction", 0)
+            agreement_delta = abs(signal_conf - ucf_score)
+            divergence = 1.0 if signal_dir != 0 and ucf_dir != 0 and signal_dir != ucf_dir else 0.0
+            confidence_tension = abs(signal_conf - ucf_score) / max(signal_conf, ucf_score, 0.01)
+            feedback.append({
+                "symbol": sym,
+                "agreement_delta": round(agreement_delta, 4),
+                "divergence": divergence,
+                "confidence_tension": round(confidence_tension, 4),
+            })
+        return feedback

@@ -595,12 +595,23 @@ class UnifiedStateBuilder:
         """Build the system_health section of the unified state."""
         uptime_cycles = pipeline_trace.get("cycle", 0) if pipeline_trace else 0
 
+        # Read shadow engine state
+        shadow_state = {}
+        shadow_path = os.path.join(self._data_dir, "shadow_state.json")
+        if os.path.isfile(shadow_path):
+            try:
+                with open(shadow_path, "r", encoding="utf-8") as _f:
+                    shadow_state = json.load(_f)
+            except Exception as exc:
+                logger.debug("Failed to read shadow state: %s", exc)
+
         return {
             "mt5_connected": mt5_connected,
             "last_error": self._last_error,
             "uptime_cycles": uptime_cycles,
             "build_timestamp": build_ts,
             "data_sources": data_sources,
+            "shadow": shadow_state,
         }
 
     # ------------------------------------------------------------------

@@ -3,16 +3,19 @@ from __future__ import annotations
 from typing import Dict, Optional
 
 from execution.trigger_provenance import TriggerProvenance
+from proxima_ops.execution.symbol_direction_lock import SymbolDirectionLock
 
 
 class ExecutionRouter:
-    __slots__ = ("provenance", "risk_manager", "position_manager", "order_manager")
+    __slots__ = ("provenance", "risk_manager", "position_manager", "order_manager", "_sdl")
 
-    def __init__(self, risk_manager, position_manager, order_manager) -> None:
+    def __init__(self, risk_manager, position_manager, order_manager,
+                 symbol_direction_lock: Optional[SymbolDirectionLock] = None) -> None:
         self.provenance = TriggerProvenance()
         self.risk_manager = risk_manager
         self.position_manager = position_manager
         self.order_manager = order_manager
+        self._sdl = symbol_direction_lock
 
     def route(self, symbol: str, direction: int, volume: float,
               entry_price: float, sl_price: float, tp_price: float,
@@ -32,6 +35,13 @@ class ExecutionRouter:
                                 f"reality_score={reality_score:.4f} < 0.15")
 
         direction_str = "BUY" if direction > 0 else "SELL"
+
+        if self._sdl is not None and not self._sdl.is_allowed(symbol, direction_str):
+            return self._reject(trade_id, symbol, "SDL", observer_state,
+                                calibration_ok, reality_score,
+                                f"SDL blocks {direction_str} on {symbol} "
+                                f"(current={self._sdl.get_current(symbol)})")
+
         risk_check = self.risk_manager.pre_order_check(
             symbol, volume, entry_price, account_balance,
             open_positions, direction=direction_str

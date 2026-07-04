@@ -46,12 +46,13 @@ class RiskManager:
 
         risk_budget = account_balance * risk_pct
         sl_price = catastrophic_sl(symbol, entry_price, direction)
+        tp_price = catastrophic_tp(symbol, entry_price, direction)
         verify = self.verifier.verify(symbol, volume, entry_price, sl_price,
                                        account_balance, risk_budget, direction)
         if not verify["accepted"]:
             return {"allowed": False, "reason": f"risk_verify:{verify.get('reason', 'failed')}"}
 
-        return {"allowed": True, "reason": "", "sl": sl_price, "tp": 0.0}
+        return {"allowed": True, "reason": "", "sl": sl_price, "tp": tp_price}
 
     def compute_active_risk(self, open_positions: list[dict]) -> dict:
         """Compute true stop-based risk across all open positions."""

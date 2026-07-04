@@ -1,0 +1,27 @@
+{
+  "regimes": {
+    "low_vol": {
+      "alignment": 0.5257,
+      "gate_pass_rate": 0.98,
+      "veto_count": 5,
+      "total_cycles": 50
+    },
+    "high_vol": {
+      "alignment": 0.0,
+      "gate_pass_rate": 0.86,
+      "veto_count": 6,
+      "total_cycles": 50
+    },
+    "mixed": {
+      "alignment": 0.5838,
+      "gate_pass_rate": 0.96,
+      "veto_count": 7,
+      "total_cycles": 50
+    }
+  },
+  "summary": {
+    "mean_alignment": 0.3698333333333333,
+    "mean_gate_pass": 0.9333333333333332,
+    "total_vetoes": 18
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "total_ticks": 5000,
+  "cycles": 50,
+  "avg_confidence": 0.11995795307531776,
+  "regime_distribution": {
+    "neutral": 50
+  },
+  "ucf_alignment_score": 0.6429032258064517,
+  "total_pnl": 0.0154,
+  "win_rate": 0.9032,
+  "sharpe": 16.8711,
+  "trade_count": 31
+}
