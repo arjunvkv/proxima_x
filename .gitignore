@@ -181,7 +181,6 @@ research/ucf/replay/_replay_results.json
 
 # Standalone utility scripts
 follow.py
-run_proxima_shadow_replay.py
 
 # Specific research report markdown files (keep AGENTS.md)
 ASSET_BIAS_REPORT.md
