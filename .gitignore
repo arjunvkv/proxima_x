@@ -170,6 +170,15 @@ shadow_replay_report.json
 # Runtime state data
 proxima_ops/data/str_e_state.json
 
+# Runtime log/data files
+proxima_ops/decision/gate/phase6_audit_log.jsonl
+
+# Research runtime results
+research/ucf/acceptance/mt5/mt5_acceptance_report.json
+research/ucf/gate/acceptance/acceptance_results.json
+research/ucf/gate/calibration/calibration_results.json
+research/ucf/replay/_replay_results.json
+
 # Standalone utility scripts
 follow.py
 run_proxima_shadow_replay.py
