@@ -62,6 +62,15 @@ logging.basicConfig(
 logger = logging.getLogger("proxima_demo")
 
 # Core runtime integration
+from demo.constants import (
+    ACCEPTANCE_MODE, ACCEPTANCE_LOG_PATH, RUNNING, _SHUTDOWN,
+    PROXIMA_MAX_CYCLES, _VALIDATION_ENABLED,
+    MIN_HOLD_TICKS_FLIP, MIN_HOLD_TICKS_MIGRATION, MAX_HOLD_TICKS,
+    EXPLORATION_TTL, MICRO_VOL_LOOKBACK,
+    compute_micro_volatility, signal_handler, logger,
+)
+from demo.classes import DashboardLogHandler, SymbolTrustModel, TickCache
+
 from core_runtime.gate_audit_logger import GateAuditLogger, get_gate_audit
 from core_runtime.spread_model import SpreadModel, get_spread_model
 from core_runtime.position_state_sync import PositionStateSynchronizer, get_position_sync
@@ -75,8 +84,6 @@ from proxima_ops.governance.system_mode_contract import (
 
 # Acceptance mode setup
 import tempfile as _tf
-ACCEPTANCE_MODE = "--acceptance" in sys.argv
-ACCEPTANCE_LOG_PATH = os.path.join(_tf.gettempdir(), "proxima_acceptance_only.log")
 if ACCEPTANCE_MODE:
     _ah = logging.FileHandler(ACCEPTANCE_LOG_PATH, encoding="utf-8", mode="w")
     _ah.setLevel(logging.INFO)
@@ -90,28 +97,6 @@ SYSTEM_MODE = SystemMode()
 _invariant_checker = RuntimeInvariantChecker()
 _mode_snapshot_logger = ModeSnapshotLogger(interval=60)
 
-_SHUTDOWN = False
-PROXIMA_MAX_CYCLES = int(os.environ.get("PROXIMA_MAX_CYCLES", "0"))
-
-
-def compute_micro_volatility(symbol: str, rates: list, lookback: int = None) -> float:
-    if lookback is None:
-        lookback = 20
-    if not rates or len(rates) < lookback:
-        return 0.0001
-    _slice = rates[-lookback:]
-    _deltas = []
-    for i in range(1, len(_slice)):
-        _prev = _slice[i-1].get("close", _slice[i-1].get("open", 0))
-        _cur = _slice[i].get("close", _slice[i].get("open", 0))
-        _deltas.append(abs(_cur - _prev))
-    if not _deltas:
-        return 0.0001
-    _deltas.sort()
-    _med = _deltas[len(_deltas) // 2]
-    point_val = 0.01 if "JPY" in symbol else (0.1 if "XAU" in symbol or "XAG" in symbol else 0.0001)
-    return max(_med / max(point_val, 1e-9), 0.0001)
-
 import time
 import signal
 import argparse
@@ -124,7 +109,6 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-_VALIDATION_ENABLED = os.environ.get("VALIDATION_ENABLED", "1") == "1"
 if _VALIDATION_ENABLED:
     from validation.validation_integration import ValidationIntegration as _ValidationIntegration, OrganismState, DecisionContext, TradeOutcome
 else:
@@ -173,11 +157,6 @@ from layer7.session_conditional import SessionConditionalEngine, get_session
 from layer7.entropy_compression import EntropyCompressionEngine
 from mvs.adaptation.observer_decay import ObserverDecayEngine
 from mvs.adaptation.weak_day_detector import WeakDayDetector
-from mvs.observer.observer_features import (
-    normalize_tpi, persistence_ratio_from_streak,
-    curvature_strength_from_state, compute_entropy_alignment,
-    compute_confidence, state_from_confidence,
-)
 from proxima_ops.reality.outcome_ledger import OutcomeLedger
 from mvs.analysis.battle_decay_exit import BattleDecayExitEngine, get_tpi_threshold
 from mvs.analysis.counterfactual_engine import CounterfactualEngine, DecisionBoundaryLog
@@ -197,7 +176,7 @@ from proxima_ops.execution.restricted_bridge import (
 )
 from proxima_ops.execution.symbol_direction_lock import SymbolDirectionLock
 from layer7.types import TPIObservation
-from dashboard.tpi_dashboard import generate as tpi_dashboard_generate, record_tpi_shadow as tpi_record_shadow, cache_tpi_signal as tpi_cache_signal
+
 from signals.thesis_buffer import ThesisBuffer
 from signals.thesis_rf_trainer import ThesisRfTrainer
 from signals.thesis_graph import ThesisGraph
@@ -283,91 +262,38 @@ from proxima_ops.decision.shadow_mirror import ShadowDecisionMirror
 from proxima_ops.decision.shadow_execution_engine import ShadowExecutionOrchestrator
 from proxima_ops.decision.shadow_engine.shadow_core import ShadowCore
 from proxima_ops.decision.shadow_engine.shadow_worker import ShadowWorker
+from observability.core.shared_memory_telemetry import TelemetryCore
+from observability.extractors.dashboard_extractor import DashboardExtractor
+from observability.extractors.position_extractor import PositionExtractor
+from observability.extractors.research_extractor import ResearchExtractor
+from observability.extractors.engine_harvester import EngineHarvester
+
+# Intelligence & Decision imports
+from intelligence.anomaly_detector import AnomalyDetector as IntelligenceAnomalyDetector
+from intelligence.causal_graph_builder import CausalGraphBuilder
+from intelligence.vector_compressor import VectorCompressor
+from intelligence.system_health import SystemHealthMonitor
+from intelligence.intelligence_bus import IntelligenceBus
+from decision.conflict_resolver import ConflictResolver
+from decision.meta_policy_engine import MetaPolicyEngine
+from decision.decision_synthesizer import DecisionSynthesizer
+from decision.execution_intent import ExecutionIntentTranslator
+from observability.decision_stream import (
+    DecisionStreamWriter,
+    DecisionSnapshot,
+    create_decision_snapshot,
+    DecisionFrameEncoder,
+)
+
+# Execution Governor imports
+from execution.governor.execution_governor import ExecutionGovernor
+from execution.governor.risk_constraint_engine import RiskConstraintEngine
+from execution.governor.regime_execution_matrix import RegimeExecutionMatrix
+from execution.governor.intent_validator import IntentValidator
+from execution.governor.execution_finalizer import ExecutionFinalizer
 
 RUNNING = True
-MIN_HOLD_TICKS_FLIP = 12
-MIN_HOLD_TICKS_MIGRATION = 20
-MAX_HOLD_TICKS = 200  # thesis expiry: force-close if held longer (increased from 48 to allow BattleDecay warmup)
-EXPLORATION_TTL = 24  # fixed observation window for exploration impulse response (ticks)
-MICRO_VOL_LOOKBACK = 20  # ticks for micro-volatility baseline computation
 
-
-def signal_handler(sig, frame):
-    global RUNNING, _SHUTDOWN
-    logger.info("[SHUTDOWN] Signal %s received", sig)
-    RUNNING = False
-    _SHUTDOWN = True
-
-
-class DashboardLogHandler(logging.Handler):
-    def __init__(self, demo_instance):
-        super().__init__()
-        self.demo = demo_instance
-
-    def emit(self, record):
-        try:
-            msg = record.getMessage()
-            self.demo.add_activity(msg)
-        except Exception:
-            self.handleError(record)
-
-
-class SymbolTrustModel:
-    """Online adaptive trust per symbol. Replaces static priors with outcome-driven Bayesian-style EMA."""
-
-    def __init__(self, alpha: float = 0.08, prior: float = 1.0):
-        self.alpha = alpha
-        self.prior = prior
-        self.trust = defaultdict(lambda: prior)
-        self.observations = defaultdict(int)
-
-    def get(self, symbol: str) -> float:
-        return self.trust[symbol]
-
-    def update(self, symbol: str, pnl: float):
-        reward = 1.0 if pnl > 0 else 0.0
-        current = self.trust[symbol]
-        updated = (1 - self.alpha) * current + self.alpha * reward
-        self.trust[symbol] = min(1.2, max(0.05, updated))
-        self.observations[symbol] += 1
-
-
-import threading as _threading
-
-
-class TickCache:
-    def __init__(self, mt5, symbols, poll_interval=0.2):
-        self._mt5 = mt5
-        self._symbols = list(symbols)
-        self._poll_interval = poll_interval
-        self._cache = {}
-        self._lock = _threading.Lock()
-        self._running = True
-        self._thread = _threading.Thread(target=self._poll, daemon=True)
-        self._thread.start()
-
-    def _poll(self):
-        while self._running:
-            for sym in self._symbols:
-                try:
-                    tick = self._mt5.get_tick(sym)
-                    if tick:
-                        with self._lock:
-                            self._cache[sym] = tick
-                except Exception:
-                    pass
-            _threading.Event().wait(self._poll_interval)
-
-    def get_tick(self, sym):
-        with self._lock:
-            return self._cache.get(sym)
-
-    def get_all(self):
-        with self._lock:
-            return dict(self._cache)
-
-    def stop(self):
-        self._running = False
 
 
 class ProximaDemo:
@@ -423,20 +349,72 @@ class ProximaDemo:
         else:
             self.mt5 = MT5Connector()
         print("[CONSTRUCTOR DEBUG] MT5Connector created", flush=True)
+
+        # Start WebSocket server in a daemon thread
+        self._ws_server = None
+        try:
+            import threading, asyncio, time
+            from observability.ws.websocket_server import TelemetryWebSocketServer
+            self._running = True
+
+            async def _run_ws():
+                _srv = TelemetryWebSocketServer(
+                    host="0.0.0.0", port=8765, shm_name="proxima_telemetry"
+                )
+                try:
+                    await _srv.start()
+                    print("[WS_DEBUG] start() completed", flush=True)
+                    self._ws_server = _srv
+                    print("[WS_DEBUG] ws_server assigned", flush=True)
+                    logger.info("[WS] WebSocket server on ws://0.0.0.0:8765")
+                except Exception as _e:
+                    print(f"[WS_DEBUG] start() failed: {_e}", flush=True)
+                    logger.warning(f"[WS] start failed: {_e}")
+                print("[WS_DEBUG] entering while loop", flush=True)
+                while self._running:
+                    await asyncio.sleep(0.5)
+                print("[WS_DEBUG] exiting while loop, stopping", flush=True)
+                await _srv.stop()
+
+            t = threading.Thread(target=lambda: asyncio.run(_run_ws()), daemon=True, name="ws-server")
+            t.start()
+            time.sleep(0.5)
+            logger.info("[WS] WebSocket server thread launched")
+        except Exception as _ws_e:
+            logger.warning(f"WebSocket server init failed: {_ws_e}")
+
         self._tick_cache = None
         if ACCEPTANCE_MODE:
             self._tick_cache = TickCache(self.mt5, self._observation_universe, poll_interval=0.5)
             self.mt5._tick_cache = self._tick_cache
             print("[CONSTRUCTOR DEBUG] TickCache created for acceptance mode", flush=True)
         self._bootstrap = None
+        # Check MT5 connectivity — skip MT5-dependent init if not available
+        self._mt5_alive = False
+        try:
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as _exec:
+                _exec.submit(lambda: self.mt5.get_account()).result(timeout=3)
+                self._mt5_alive = True
+        except Exception:
+            self._mt5_alive = False
+        if not self._mt5_alive:
+            logger.warning("MT5 not responding — skipping MT5-dependent init")
         # Bootstrap market seed data from MT5 parquet at engine start
         print("[CONSTRUCTOR DEBUG] Starting MarketSeedLoader.seed_all...", flush=True)
-        try:
-            from bootstrap.market_seed import MarketSeedLoader
-            loader = MarketSeedLoader(self.mt5)
-            self._bootstrap = loader.seed_all(self._observation_universe, bars=1440)
-        except Exception as e:
-            logger.warning(f"[BOOTSTRAP] failed: {e}")
+        if self._mt5_alive:
+            try:
+                from bootstrap.market_seed import MarketSeedLoader
+                loader = MarketSeedLoader(self.mt5)
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as _exec:
+                    _fut = _exec.submit(loader.seed_all, self._observation_universe, 1440)
+                    _bootstrap_result = _fut.result(timeout=30)
+                self._bootstrap = _bootstrap_result if _bootstrap_result else {}
+            except Exception as e:
+                logger.warning(f"[BOOTSTRAP] failed: {e}")
+                self._bootstrap = {}
+        else:
             self._bootstrap = {}
         print(f"[CONSTRUCTOR DEBUG] MarketSeedLoader done, bootstrap has {len(self._bootstrap)} symbols", flush=True)
         print("[CONSTRUCTOR DEBUG] Creating OrderManager...", flush=True)
@@ -504,7 +482,7 @@ class ProximaDemo:
 
         # P0.24: Reconciliation event log for causal tracking
         # P0.26: Restart quarantine — reduced risk after restart for N cycles
-        self._quarantine_cycles_remaining = 20  # ~20 minutes at 60s/cycle
+        self._quarantine_cycles_remaining = 20 if not ACCEPTANCE_MODE else 3  # ~3 cycles for acceptance
         self._has_run_full_cycle = False  # becomes True after first complete 60s cycle
 
         # P0.25: Idempotency guard — tracks which tickets have been fed back to SymbolTrust,
@@ -538,6 +516,10 @@ class ProximaDemo:
         # BattleDecay v7.2 exit engine (all symbols)
         self._battle_decay = self._create_battle_decay_engine()
         self._bd_feed_buffer: dict[int, list] = {}  # ticket -> [(bid, ask, ts)]
+
+        # Rolling tick dispatch latency stats (last 1000 cycles)
+        self._latency_window: list[float] = []
+        self._latency_peak: float = 0.0
 
         # TPI Layer 7 — Tick→Bar outcome tracker
         self._tpi_tracker = TPIOutcomeTracker()
@@ -686,29 +668,33 @@ class ProximaDemo:
         # Preload tick data for thermodynamics engine — ALL symbols
         print(f"[CONSTRUCTOR DEBUG] Subscribing to ticks for {len(self._observation_universe)} symbols...", flush=True)
         # Access raw MetaTrader5 module for symbol_select subscription
-        try:
-            import MetaTrader5 as _raw_mt5
-        except ImportError:
-            _raw_mt5 = None
         _sub_count = 0
-        for sym in self._observation_universe:
+        if self._mt5_alive:
             try:
-                if _raw_mt5 is not None:
-                    _raw_mt5.symbol_select(sym, True)
-                    _ = _raw_mt5.symbol_info_tick(sym)
-                    _sub_count += 1
-            except Exception:
-                pass
+                import MetaTrader5 as _raw_mt5
+            except ImportError:
+                _raw_mt5 = None
+            for sym in self._observation_universe:
+                try:
+                    if _raw_mt5 is not None:
+                        _raw_mt5.symbol_select(sym, True)
+                        _ = _raw_mt5.symbol_info_tick(sym)
+                        _sub_count += 1
+                except Exception:
+                    pass
         print(f"[CONSTRUCTOR DEBUG] Subscribed {_sub_count}/{len(self._observation_universe)} symbols", flush=True)
 
         print(f"[CONSTRUCTOR DEBUG] Loading tick thermo for {len(self._observation_universe)} symbols...", flush=True)
         _thermo_loaded = 0
-        for sym in self._observation_universe:
-            try:
-                self._tick_thermo.load_offline(sym)
-                _thermo_loaded += 1
-            except Exception:
-                pass
+        if self._mt5_alive:
+            for sym in self._observation_universe:
+                try:
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as _exec:
+                        _exec.submit(self._tick_thermo.load_offline, sym).result(timeout=3)
+                    _thermo_loaded += 1
+                except Exception:
+                    pass
         print(f"[CONSTRUCTOR DEBUG] Loaded thermo data for {_thermo_loaded}/{len(self._observation_universe)} symbols", flush=True)
 
         # Pre-seed RF gate rolling buffer from MT5 historical tick data
@@ -882,74 +868,22 @@ class ProximaDemo:
 
     def _compute_observer_state(self, tpi_confidence: float, persistence_streak: int,
                                  curvature_state: str, normalized_entropy: float) -> dict:
-        _ntpi = normalize_tpi(tpi_confidence)
-        _pers = persistence_ratio_from_streak(persistence_streak)
-        _curv = curvature_strength_from_state(curvature_state)
-        _ent = compute_entropy_alignment(normalized_entropy, max_entropy=1.0)
-        confidence = compute_confidence(_ntpi, _pers, _curv, _ent)
-        state = state_from_confidence(confidence)
-        return {"observer_state": state, "observer_confidence": float(confidence),
-                "reality_score": min(1.0, max(0.0, confidence + 0.1))}
+        import demo.helpers as _h; return _h.compute_observer_state(self, tpi_confidence, persistence_streak, curvature_state, normalized_entropy)
 
     def _freq_rates_provider(self, symbol: str) -> list:
-        return self.mt5.get_rates(symbol, count=150, timeframe="H1")
+        import demo.helpers as _h; return _h.freq_rates_provider(self, symbol)
 
     def _bars_elapsed(self, entry_bar_time, symbol) -> int:
-        if not entry_bar_time:
-            return -1
-        elapsed_secs = self._now_ts() - entry_bar_time
-        # entry_bar_time may be hour-floored (error up to ±30 min ~6 M5 bars);
-        # time-based monotonic increment is correct for H5/H20 exit logic
-        return max(0, int(elapsed_secs // 300))
+        import demo.helpers as _h; return _h.bars_elapsed(self, entry_bar_time, symbol)
 
     def _atomic_write_json(self, path: str, data) -> None:
-        """P0.27: Atomic JSON write — temp file + fsync + atomic rename."""
-        import json, os
-        try:
-            tmp_path = f"{path}.tmp"
-            with open(tmp_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=4)
-                f.flush()
-                os.fsync(f.fileno())
-            os.replace(tmp_path, path)
-        except Exception as e:
-            logger.error(f"Atomic write failed for {path}: {e}")
+        import demo.helpers as _h; _h.atomic_write_json(self, path, data)
 
     def _save_active_positions_metadata(self):
-        meta_file = os.path.join(os.path.dirname(SETTINGS.db_path), "active_positions_metadata.json")
-        self._atomic_write_json(meta_file, self._active_positions_metadata)
-        # P0.25: Persist idempotency guard
-        guard_file = os.path.join(os.path.dirname(SETTINGS.db_path), "applied_feedback_tickets.json")
-        self._atomic_write_json(guard_file, list(self._applied_feedback_tickets))
+        import demo.helpers as _h; _h.save_active_positions_metadata(self)
 
     def _update_symbol_trust_from_bd(self, ticket: int, symbol: str) -> None:
-        """P0.10: Feed BattleDecay exit evidence back into SymbolTrust entry priors."""
-        # P0.25: Idempotency guard — each ticket applied exactly once
-        if ticket in self._applied_feedback_tickets:
-            return
-        self._applied_feedback_tickets.add(ticket)
-        if not hasattr(self, '_battle_decay') or not self._battle_decay:
-            return
-        summary = self._battle_decay.get_exit_quality(ticket)
-        if summary is None:
-            return
-        # BD quality: positive when FF dominates (favorable path), negative when EF dominates (adverse)
-        ff = summary.get("ff_total", 0.0)
-        ef = summary.get("ef_total", 0.0)
-        total = ff + ef
-        if total > 1e-9:
-            ratio = (ff - ef) / total  # +1 = perfectly favorable, -1 = perfectly adverse
-            # Scale to [-1, 1] and dampen by continuity
-            cs = summary.get("mean_continuity", 1.0)
-            quality = ratio * cs * 0.5  # max adjustment of ±0.5 to trust
-            current_trust = self._symbol_trust.get(symbol)
-            adjusted = current_trust + quality * 0.3  # 30% blend
-            # Feed as pseudo-PnL: positive quality → positive PnL signal
-            pseudo_pnl = quality * 100.0
-            self._symbol_trust.update(symbol, pseudo_pnl)
-            logger.info(f"[BD_TRUST] {symbol} ticket={ticket} ff={ff:.2f} ef={ef:.2f} "
-                        f"ratio={ratio:.3f} cs={cs:.2f} quality={quality:.3f} "
-                        f"trust={current_trust:.3f}→{self._symbol_trust.get(symbol):.3f}")
+        import demo.helpers as _h; _h.update_symbol_trust_from_bd(self, ticket, symbol)
 
     def _reconcile_broker_positions(self):
         """Reconcile local position state against broker truth (source-of-truth).
@@ -1095,49 +1029,13 @@ class ProximaDemo:
 
     def _emit_reconciliation_event(self, event_type: str, ticket: int, symbol: str,
                                     details: dict = None) -> None:
-        """Emit a structured reconciliation event for causal tracking (P0.24)."""
-        event = {
-            "type": event_type,
-            "ticket": ticket,
-            "symbol": symbol or "?",
-            "cycle_id": self._cycle_id,
-            "timestamp": time.time(),
-            "details": details or {},
-        }
-        self._reconciliation_events.append(event)
-        # Pipe to exec_stats for DFAD/RealityScore visibility
-        if hasattr(self, 'exec_stats') and self.exec_stats:
-            self.exec_stats.record_reconciliation(event_type, symbol or "?", ticket, details)
-        # Limit event log size
-        if len(self._reconciliation_events) > 1000:
-            self._reconciliation_events = self._reconciliation_events[-500:]
+        import demo.helpers as _h; _h.emit_reconciliation_event(self, event_type, ticket, symbol, details)
 
     def _select_balanced_top3(self, candidates, execution_plan, n=3):
-        selected = []
-        for sym in candidates:
-            if len(selected) >= n:
-                break
-            selected.append(sym)
-        return set(selected[:n])
+        import demo.helpers as _h; return _h.select_balanced_top3(self, candidates, execution_plan, n)
 
     def _load_active_positions_metadata(self):
-        import json
-        meta_file = os.path.join(os.path.dirname(SETTINGS.db_path), "active_positions_metadata.json")
-        if os.path.exists(meta_file):
-            try:
-                with open(meta_file, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                self._active_positions_metadata = {int(k): v for k, v in data.items()}
-            except Exception as e:
-                logger.error(f"Error loading active positions metadata: {e}")
-        # P0.25: Restore idempotency guard
-        guard_file = os.path.join(os.path.dirname(SETTINGS.db_path), "applied_feedback_tickets.json")
-        if os.path.exists(guard_file):
-            try:
-                with open(guard_file, "r", encoding="utf-8") as f:
-                    self._applied_feedback_tickets = set(json.load(f))
-            except Exception as e:
-                logger.error(f"Error loading idempotency guard: {e}")
+        import demo.helpers as _h; _h.load_active_positions_metadata(self)
 
     def _train_oss_from_cache(self) -> bool:
         """Load pre-computed OSS training data from ReplayCache with drift."""
@@ -1194,14 +1092,10 @@ class ProximaDemo:
             return False
 
     def _now_ts(self) -> float:
-        if self._clock:
-            return self._clock.time()
-        return time.time()
+        import demo.helpers as _h; return _h.now_ts(self)
 
     def _now_dt(self):
-        if self._clock:
-            return self._clock.now()
-        return datetime.now()
+        import demo.helpers as _h; return _h.now_dt(self)
 
     def reset(self):
         self._sal.reset()
@@ -1272,10 +1166,16 @@ class ProximaDemo:
         if self._replay_mode:
             logger.info("[RF_PRESEED] Replay mode — RF gate will be fed during warmup instead")
             return
+        if not getattr(self, '_mt5_alive', False):
+            logger.info("[RF_PRESEED] MT5 not alive — skipping")
+            return
         total_seeded = 0
         for sym in self._execution_symbols:
             try:
-                ticks = self.mt5.get_historical_ticks(sym, count=self._rf_gate.window)
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as _exec:
+                    _fut = _exec.submit(self.mt5.get_historical_ticks, sym, self._rf_gate.window)
+                    ticks = _fut.result(timeout=5)
                 if ticks and len(ticks) > 0:
                     n = self._rf_gate.pre_seed(sym, ticks)
                     total_seeded += n
@@ -1288,21 +1188,7 @@ class ProximaDemo:
             logger.info(f"[RF_PRESEED] Total: seeded {total_seeded} ticks across {len(self._execution_symbols)} symbols")
 
     def _shadow_regime(self, sym: str) -> str:
-        """Lightweight regime estimate for shadow symbols using spread + entropy."""
-        ed = getattr(self, '_shadow_state', {})
-        state = ed.get(sym, {})
-        spread_p95 = state.get("spread_p95", 0)
-        spread_p50 = state.get("spread_p50", 0)
-        entropy = state.get("entropy", 0.5)
-
-        if spread_p95 > 0 and spread_p50 > 0 and spread_p95 > spread_p50 * 2:
-            return "WIDE"
-        elif entropy > 0.85:
-            return "CHAOTIC"
-        elif entropy < 0.45:
-            return "COMPRESSED"
-        else:
-            return "NORMAL"
+        import demo.helpers as _h; return _h.shadow_regime(self, sym)
 
     def _process_shadow_tick(self, sym: str, tick: dict) -> None:
         """Lightweight shadow symbol processing — no signal generation."""
@@ -1323,488 +1209,29 @@ class ProximaDemo:
             ss["spread_p95"] = float(np.percentile(arr, 95))
 
     def add_activity(self, msg: str):
-        # Ignore verbose startup, mapping, and redundant syncing logs
-        ignore_terms = [
-            "DAILY REPORT", "WEEKLY REPORT", "====", "----", "DEPLOYMENT", 
-            "PERFORMANCE", "SIGNALS", "OPEN POSITIONS", "Markets closed",
-            "Mapping symbol", "Warming up price buffers", "Initialized buffer",
-            "Initializing metadata", "Syncing trade ledger", "Sync: Position"
-        ]
-        if any(term in msg for term in ignore_terms):
-            return
-            
-        # Format known messages beautifully
-        formatted_msg = msg
-        if "Order failed for" in msg:
-            try:
-                parts = msg.split("Order failed for ")[1].split(": ")
-                symbol = parts[0]
-                details = parts[1]
-                formatted_msg = f"❌ FAILED: {symbol} | {details}"
-            except Exception:
-                pass
-        elif "Sync: Closed trade" in msg:
-            try:
-                trade_id = msg.split("Closed trade ")[1].split(" ")[0]
-                ticket = msg.split("(ticket ")[1].split(")")[0]
-                exit_p = msg.split("Exit price: ")[1].split(",")[0]
-                profit = msg.split("Profit: ")[1]
-                formatted_msg = f"✔ CLOSED: Trade #{trade_id} (Ticket {ticket}) | Exit: {exit_p} | PnL: {profit}"
-            except Exception:
-                pass
-        elif "Spread too high for" in msg:
-            try:
-                symbol = msg.split("Spread too high for ")[1].split(",")[0]
-                formatted_msg = f"⌛ BLOCKED: {symbol} | Spread too high"
-            except Exception:
-                pass
-        elif "H20 EXIT: Closing position" in msg:
-            try:
-                ticket = msg.split("Closing position ")[1].split(" ")[0]
-                symbol = msg.split("for ")[1].split(" ")[0]
-                formatted_msg = f"⌛ H20 EXIT: Closing position {ticket} for {symbol}"
-            except Exception:
-                pass
-        elif "Starting Proxima Ops" in msg:
-            formatted_msg = "ℹ Engine initialized and active"
-        elif "Connected to MT5" in msg:
-            try:
-                acc = msg.split("Account: ")[1].split(",")[0]
-                formatted_msg = f"ℹ Connected to MT5 | Account: {acc}"
-            except Exception:
-                pass
-        elif "BUY " in msg and " - ticket=" in msg:
-            try:
-                parts = msg.split("BUY ")[1].split(" ")
-                symbol = parts[0]
-                volume = parts[1]
-                price = msg.split("@ ")[1].split(" - ")[0]
-                ticket = msg.split("ticket=")[1]
-                formatted_msg = f"✈ EXECUTED: Buy {volume} {symbol} @ {price} | Ticket: {ticket}"
-            except Exception:
-                pass
-        elif "Closed ticket " in msg:
-            try:
-                ticket = msg.split("ticket ")[1]
-                formatted_msg = f"✔ CLOSED: Ticket {ticket} closed on MT5"
-            except Exception:
-                pass
-        elif "Failed to close ticket " in msg:
-            try:
-                ticket = msg.split("ticket ")[1].split(":")[0]
-                err = msg.split(": ")[1]
-                formatted_msg = f"❌ CLOSE FAILED: Ticket {ticket} | {err}"
-            except Exception:
-                pass
+        import demo.dashboard as _dash; _dash.add_activity(self, msg)
 
-        t = datetime.now().strftime("%H:%M:%S")
-        formatted = f"[{t}] {formatted_msg}"
-        
-        # Avoid duplicate consecutive logs
-        if self._activity_log and self._activity_log[-1][11:] == formatted_msg:
-            return
-            
-        self._activity_log.append(formatted)
-        if len(self._activity_log) > 6:
-            self._activity_log.pop(0)
+    def _build_full_dashboard_text(self, eval_data: dict, open_positions: list, account: dict, score_data: dict, seconds_to_next_eval: int, rotation_events=0, lock_events=0, migration_events=0, avg_hold_bars=0, top3_ranked=None) -> str:
+        import demo.dashboard as _dash
+        return _dash.build_full_dashboard_text(
+            self, eval_data, open_positions, account, score_data, seconds_to_next_eval,
+            rotation_events=rotation_events, lock_events=lock_events,
+            migration_events=migration_events, avg_hold_bars=avg_hold_bars,
+            top3_ranked=top3_ranked)
 
     def _print_dashboard(self, eval_data: dict, open_positions: list, account: dict, score_data: dict, seconds_to_next_eval: int, rotation_events=0, lock_events=0, migration_events=0, avg_hold_bars=0, top3_ranked=None):
-        if not hasattr(self, "_ansi_initialized"):
-            if sys.platform == "win32":
-                os.system('')
-            self._ansi_initialized = True
-
-        self._spinner_idx = (self._spinner_idx + 1) % len(self._spinners)
-        spinner = self._spinners[self._spinner_idx]
-
-        # Build paper metrics (shared between deployment dashboard and funnel dashboard)
-        perf_summary_inner = self.perf.summary()
-        paper_metrics = {
-            'pp': perf_summary_inner.get('pp') if isinstance(perf_summary_inner.get('pp'), (int, float)) else 0,
-            'avg_hold': perf_summary_inner.get('avg_hold_bars') if isinstance(perf_summary_inner.get('avg_hold_bars'), (int, float)) else 0,
-            'sharpe': perf_summary_inner.get('sharpe') if isinstance(perf_summary_inner.get('sharpe'), (int, float)) else 0,
-            'active_assets': len([s for s, d in eval_data.items() if d.get('status') != 'WATCH']),
-        }
-
-        # Build the full dashboard output
-        out = []
-        out.append(self.dashboard.render(
-            eval_data=eval_data, account_info=account, score_data=score_data,
-            seconds_to_next_eval=seconds_to_next_eval, spinner=spinner,
-            closed_trades=self.perf.n_trades,
-            rotation_events=rotation_events,
-            lock_events=lock_events,
-            migration_events=migration_events,
-            avg_hold_bars=avg_hold_bars,
-            top3_ranked=top3_ranked,
-            paper_metrics=paper_metrics))
-
-        out.append("OPEN POSITIONS:")
-        out.append(f"{'Ticket':<12s} {'Symbol':<10s} {'Side':<6s} {'Volume':<8s} {'Entry Price':<12s} {'Current Price':<14s} {'PnL':<10s} {'Bars':<6s}")
-        for pos in open_positions:
-            ticket = pos["ticket"]
-            meta = self._active_positions_metadata.get(ticket, {})
-            entry_bar = meta.get("entry_bar_time")
-            broker_sym = self.mt5._get_broker_symbol(pos["symbol"])
-            elapsed_bars = self._bars_elapsed(entry_bar, broker_sym)
-            elapsed_str = f"{'20+' if elapsed_bars >= 20 else elapsed_bars}/20" if elapsed_bars >= 0 else "N/A"
-            out.append(f"{ticket:<12d} {pos['symbol']:<10s} {pos['type']:<6s} {pos['volume']:<8.2f} {pos['price_open']:<12.3f} {pos['price_current']:<14.3f} ${pos['profit']:<8.2f} {elapsed_str:<6s}")
-        if not open_positions:
-            out.append(" No open positions")
-        out.append("")
-
-        # Open trade context
-        if open_positions:
-            out.append("OPEN TRADE CONTEXT")
-            out.append("=" * 52)
-            for pos in open_positions:
-                ticket = pos["ticket"]
-                meta = self._active_positions_metadata.get(ticket, {})
-                entry_bar = meta.get("entry_bar_time")
-                broker_sym = self.mt5._get_broker_symbol(pos["symbol"])
-                elapsed_bars = self._bars_elapsed(entry_bar, broker_sym)
-                elapsed_str = f"{'20+' if elapsed_bars >= 20 else elapsed_bars} bars" if elapsed_bars >= 0 else "N/A"
-                es_str = f"{meta.get('entry_es_rank', 0) * 100:.1f}%" if isinstance(meta.get('entry_es_rank'), (int, float)) else "N/A"
-                at_str = f"{meta.get('entry_at_rank', 0) * 100:.1f}%" if isinstance(meta.get('entry_at_rank'), (int, float)) else "N/A"
-                sym_data = eval_data.get(pos["symbol"], eval_data.get(broker_sym, {}))
-                econ_r = sym_data.get("econ_ratio", 0.0)
-                exp_m = sym_data.get("expected_move", 0)
-                out.append(f" ECON: ratio={econ_r:.4f}x move={exp_m:.6f}")
-                sig = meta.get("trigger_count_while_open", 0)
-                out.append(f" Ticket {ticket} | Age {elapsed_str} | ES/AT {es_str}/{at_str} | SigOpen {sig} | PnL ${pos['profit']:.2f} | THESIS_ACTIVE")
-            out.append("=" * 52)
-            out.append("")
-
-        # Recent activity
-        out.append("RECENT ACTIVITY:")
-        for log_line in self._activity_log:
-            out.append(f" {log_line}")
-        if not self._activity_log:
-            out.append(" No recent activity")
-        out.append("")
-
-        # Full funnel dashboard — all research layers in one block
-        full = self.funnel_dash.generate(
-            order_attempts=self.order_tracker.get_recent(1),
-            paper_metrics=paper_metrics)
-        out.append(full)
-
-        if SYSTEM_MODE.ui != UIMode.TRADER_VIEW:
-            # TPI Flow Overlay (Layer 7) — Shadow Dashboard
-            tpi_panel = tpi_dashboard_generate(
-                tracker=self._tpi_tracker,
-                persistence=self._tpi_persistence,
-                curvature=self._tpi_curvature,
-                eligible_symbols=[s for s in self._observation_universe if s in TPI_ELIGIBLE],
-            )
-            out.append(tpi_panel)
-
-            # Deployment Integrity Guards — V2.2
-            n_trades = self.perf.n_trades
-            sig_counts = {}
-            for sym in self._observation_universe:
-                sig_counts[sym] = len([x for x in self.funnel._records if x.get("symbol") == sym]) if hasattr(self.funnel, "_records") else 0
-            guard = self._sample_guard.guard("DEPLOYMENT_CLASSIFICATION")
-            alignment_line = self._alignment_monitor.dashboard_line(sig_counts)
-            out.append(f"V2.2 GUARDS: SampleInspector={guard} | {alignment_line}")
-            # Universe integrity status
-            canonical = set(SETTINGS.execution_symbols)
-            deployed = set(self._execution_universe)
-            core_present = canonical.issubset(deployed)
-            extra = deployed - canonical
-            uni_ok = "CORE_OK" if core_present else f"CORE_MISSING diff={canonical - deployed}"
-            out.append(f"UNIVERSE: {len(deployed)}-asset ({len(extra)} extra) | {sorted(deployed)} | {uni_ok}")
-            # Pyramid event log (compact)
-            if self._pyramid_log:
-                out.append(f"PYRAMID EVENTS ({len(self._pyramid_log)} total):")
-                for pe in self._pyramid_log[-5:]:
-                    out.append(f"  {pe['time'][:19]} {pe['symbol']} #{pe['pyramid_number']} ES={pe['es_percentile']:.3f}")
-            else:
-                out.append("PYRAMID EVENTS: none")
-            # P8: Leakage accounting split
-            total_blocked = self._reinforcement_blocks + self._flip_blocks
-            if total_blocked > 0:
-                pct = self._flip_blocks / total_blocked * 100
-                out.append(f"POSITION EXISTS: {total_blocked} total (reinforcement={self._reinforcement_blocks}, flip_blocked={self._flip_blocks}, flip_pct={pct:.1f}%)")
-            if self._exception_dashboard.has_active():
-                out.append(f"EXCEPTIONS: {self._exception_dashboard.summary().splitlines()[-1]}")
-            # DPL-18: Cross-asset propagation
-            prop_syms = [s for s in self._observation_universe if s in TPI_ELIGIBLE]
-            if prop_syms:
-                out.append(self._tpi_propagation.summary(prop_syms))
-                dpl_matrix = self._tpi_propagation.compute(prop_syms)
-                self._impulse_graph.update(dpl_matrix)
-                out.append(self._impulse_graph.summary())
-            # DPL-19: Tick thermodynamics
-            thermo_syms = [s for s in self._observation_universe]
-            if thermo_syms:
-                out.append(self._tick_thermo.summary(thermo_syms))
-            # DPL-21: Meta-State Fusion
-            meta_syms = [s for s in self._observation_universe if s in self._last_meta_scores]
-            if meta_syms:
-                out.append(self._meta_fusion.summary(meta_syms, self._last_meta_scores))
-            # DPL-20: Session Conditional
-            out.append(self._session_cond.summary())
-            # DPL-22: Entropy Compression
-            ent_syms = [s for s in self._observation_universe]
-            if ent_syms:
-                out.append(self._entropy_compression.summary(ent_syms))
-            # RCL-1A: Outcome Ledger
-            out.append(self._outcome_ledger.summary())
-            # RCL-1B: Information Gain Audit
-            out.append(self._ig_audit.summary(self._outcome_ledger))
-            # RCL-1C: Redundancy Matrix (uses H5 for faster sample accumulation)
-            try:
-                fnames, X, Y = self._outcome_ledger.compute_feature_matrix(horizon="h5")
-                if fnames and X:
-                    self._redundancy_matrix.compute_pairwise(fnames, X)
-            except Exception:
-                pass
-            out.append(self._redundancy_matrix.summary(self._outcome_ledger))
-            # RCL-1D: Meta Reweighting
-            ig_by_h = self._ig_audit.compute_by_horizon(self._outcome_ledger)
-            h20_resolved = [r for r in self._outcome_ledger._resolved if "h20" in r.get("outcomes", {})]
-            self._meta_reweighter.compute_weights(ig_by_h, self._redundancy_matrix, h20_count=len(h20_resolved))
-            out.append(self._meta_reweighter.summary())
-            # RCL-1E: Layer Pruning
-            resolved_n = self._outcome_ledger.resolved_count()
-            self._layer_pruner.compute_scores(ig_by_h, self._redundancy_matrix, self._meta_reweighter, resolved_samples=resolved_n)
-            out.append(self._layer_pruner.summary(self._outcome_ledger))
-            # P2.3: RCL Dual Horizon Dashboard
-            h5_records = [r for r in self._outcome_ledger._resolved if "h5" in r.get("outcomes", {})]
-            h20_records = h20_resolved
-            h5_wins = sum(1 for r in h5_records if r["outcomes"]["h5"].get("win"))
-            h20_wins = sum(1 for r in h20_records if r["outcomes"]["h20"].get("win"))
-            out.append("  RCL DUAL HORIZON")
-            out.append("-" * 52)
-            out.append(f"  H5 Resolved:        {len(h5_records)}")
-            out.append(f"  H20 Resolved:       {len(h20_records)}")
-            if h5_records:
-                out.append(f"  H5 WR:              {h5_wins}/{len(h5_records)} = {h5_wins/max(len(h5_records),1):.1%}")
-            if h20_records:
-                out.append(f"  H20 WR:             {h20_wins}/{len(h20_records)} = {h20_wins/max(len(h20_records),1):.1%}")
-            if h5_records and h20_records:
-                h5_wr = h5_wins / max(len(h5_records), 1)
-                h20_wr = h20_wins / max(len(h20_records), 1)
-                out.append(f"  Divergence:         {h5_wr - h20_wr:+.1%}")
-            out.append("")
-            # P2.5: Session Balance
-            known = {k: v for k, v in self._session_balance.items() if k != "UNKNOWN"}
-            total_signals = sum(known.values())
-            out.append("  SESSION BALANCE")
-            out.append("-" * 52)
-            for sess in ["ASIA", "LONDON", "OVERLAP", "NY", "DEAD"]:
-                cnt = known.get(sess, 0)
-                bar = "█" * min(cnt, 50) + (" " * max(0, 50 - min(cnt, 50)))
-                out.append(f"  {sess:<10s} {cnt:<5d} {bar}")
-            if self._session_balance.get("UNKNOWN", 0):
-                out.append(f"  UNKNOWN:            {self._session_balance['UNKNOWN']}")
-            if total_signals > 0:
-                max_c = max(known.values())
-                min_c = max(min(v for v in known.values() if v > 0), 1)
-                imbalance = max_c / min_c
-                if max_c >= 20:
-                    out.append(f"  Imbalance:          {imbalance:.1f}x")
-                    out.append(f"  Status:             {'BALANCED' if imbalance < 5 else 'SKEWED'}")
-                else:
-                    out.append(f"  Status:             BUILDING (need >=20 signals)")
-            out.append("")
-            # P1.1: Occupancy Leakage Audit
-            out.append(self._occupancy_audit.summary())
-            # P1.2: TPI A/B Validation
-            out.append(self._tpi_ab_audit.summary())
-            # P1.3: Spread normalization — session baselines tracked
-            sess_info = self._spread_normalizer.session_baseline_summary()
-            if sess_info:
-                out.append(sess_info)
-            # P1.4: Funnel Starvation Audit
-            out.append(self._funnel_audit.summary())
-            out.append("")
-            # P3.4: Regime Memory Matrix
-            out.append(self._regime_memory.summary())
-            out.append("")
-            # P4.1: Live Transition Edge Dashboard
-            lines_edge = []
-            lines_edge.append("  LIVE TRANSITION EDGE")
-            lines_edge.append("-" * 60)
-            has_edge = False
-            for sym in self._observation_universe:
-                prev_r = self._regime_snapshot.get(sym) if hasattr(self, '_regime_snapshot') else None
-                curr_r = self._regime_memory._prev_regime.get(sym)
-                if prev_r is not None and curr_r is not None and prev_r != curr_r:
-                    edge_line = self._regime_memory.transition_edge_summary(sym, prev_r, curr_r)
-                    if edge_line:
-                        lines_edge.append(edge_line)
-                        has_edge = True
-            if not has_edge:
-                lines_edge.append("  No active transitions to evaluate")
-            lines_edge.append("")
-            out.extend(lines_edge)
-
-            # P4.2: Signal Decay Velocity
-            out.append(self._signal_decay.summary())
-            out.append("")
-            # P4.3: Occupancy Migration
-            out.append(self._migration.summary())
-
-        # RHL Risk Hardening Layer section
-        ai = self.mt5.get_account() or {}
-        out.append(self._risk.dashboard_section(ai.get("balance", 0.0), open_positions))
-
-        # Write to file as well for reference
-        try:
-            report_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "live_observability_report.md")
-            with open(report_file, "w", encoding="utf-8") as f:
-                f.write("# PROXIMA OPS \u2014 LIVE OBSERVABILITY STATS BREAKDOWN\n\n")
-                f.write(f"*Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n\n")
-                f.write("```text\n")
-                f.write(full)
-                f.write("\n```\n")
-        except Exception as e:
-            logger.error(f"Error writing live_observability_report.md: {e}")
-
-        # Shadow System Status — SOF / STR-E / Phase 2
-        _sr = getattr(self, '_last_stre_result', None)
-        if _sr:
-            out.append("")
-            out.append("=" * 52)
-            out.append("  SHADOW SYSTEM — TRUTH RECONCILIATION")
-            out.append("=" * 52)
-            out.append(f"  GT_corr={_sr.get('gt_corr',0):.4f} SY_corr={_sr.get('sy_corr',0):.4f} STAS={_sr.get('stas',0):.4f} Winner={_sr.get('winner','N/A')}")
-            sof = _sr.get("SOF")
-            if sof is not None:
-                out.append(f"  SOF={sof:.6f} EdgePres={_sr.get('edge_preservation',0):.6f} ExecEff={_sr.get('execution_efficiency',0):.6f}")
-            p2 = "ENABLED" if getattr(self, '_stre_coordinator', None) and self._stre_coordinator.phase2_enabled else "BLOCKED"
-            out.append(f"  Phase 2: {p2} | Samples: {_sr.get('samples',0)}")
-            out.append("")
-
-        # Funnel failure attribution
-        if self._funnel_failures:
-            out.append(f"\n  FUNNEL FAILURE BREAKDOWN ({sum(self._funnel_failures.values())} total)")
-            for reason, count in sorted(self._funnel_failures.items(), key=lambda x: -x[1]):
-                out.append(f"    {reason}: {count}")
-        # Clear screen and write everything in one shot
-        if hasattr(self, "_clear_seq"):
-            sys.stdout.write(self._clear_seq)
-        else:
-            self._clear_seq = '\033c'
-            sys.stdout.write(self._clear_seq)
-        sys.stdout.write("\n".join(out) + "\n")
-        sys.stdout.flush()
+        import demo.dashboard as _dash
+        _dash.print_dashboard(
+            self, eval_data, open_positions, account, score_data, seconds_to_next_eval,
+            rotation_events=rotation_events, lock_events=lock_events,
+            migration_events=migration_events, avg_hold_bars=avg_hold_bars,
+            top3_ranked=top3_ranked)
 
     def _setup_commands(self):
-        self._router.register("status", self._cmd_status)
-        self._router.register("portfolio", self._cmd_portfolio)
-        self._router.register("trades", self._cmd_trades)
-        self._router.register("signal", self._cmd_signal)
-        self._router.register("pause", self._cmd_pause)
-        self._router.register("resume", self._cmd_resume)
-        self._router.register("closeall", self._cmd_closeall)
-        self._router.register("health", self._cmd_health)
-        self._router.register("report", self._cmd_report)
-        self._router.register("alpha", self._cmd_alpha)
-        self._router.register("tpi_mode", self._cmd_tpi_mode)
-
-    def _cmd_alpha(self, args, update) -> str:
-        return self.dashboard.generate_alpha_snapshot()
-
-    def _cmd_tpi_mode(self, args, update) -> str:
-        if args:
-            mode = args[0].upper()
-            try:
-                self._tpi_calibration.set_mode(mode)
-                return f"TPI_MODE set to {mode}"
-            except ValueError as e:
-                return str(e)
-        # Report current mode and gate stats
-        stats = self._tpi_calibration.gate_stats()
-        return (f"TPI_MODE: {stats['mode']}\n"
-                f"Gate blocks: {stats['total_triggers_blocked']}\n"
-                f"By gate: {stats['by_gate']}\n"
-                f"Shadow opps: {stats['shadow_opportunities']}\n"
-                f"Usage: /tpi_mode [HARD_GATE|SOFT_SCORE]")
+        import demo.commands as _cmds; _cmds.setup_commands(self)
 
     def print_alpha_snapshot(self):
         print(self.dashboard.generate_alpha_snapshot())
-
-    def _cmd_status(self, args, update) -> str:
-        ds = self.score.summary()
-        perf = self.perf.summary()
-        mt5_h = self.mt5_monitor.health_summary
-        positions = self.positions.positions
-        return (f"Proxima Ops — Status\n"
-                f"Score: {ds['current_score']:.3f} ({ds['classification']})\n"
-                f"Positions: {len(positions)}\n"
-                f"Today PnL: ${perf['today_pnl']:.2f}\n"
-                f"Sharpe: {perf['sharpe']:.3f}\n"
-                f"PP: {perf['pp']:.3f}\n"
-                f"MT5: {mt5_h['mt5_status']}\n"
-                f"Paused: {self._paused}")
-
-    def _cmd_portfolio(self, args, update) -> str:
-        positions = self.positions.positions
-        if not positions:
-            return "No open positions"
-        lines = ["Portfolio:"]
-        for p in positions:
-            lines.append(f"{p['symbol']} {p['type']} | {p['volume']} | "
-                         f"Entry: {p['price_open']:.3f} | PnL: ${p['profit']:.2f}")
-        return "\n".join(lines)
-
-    def _cmd_trades(self, args, update) -> str:
-        trades = self.trade_ledger.get_recent(10)
-        if not trades:
-            return "No trades recorded"
-        lines = ["Last 10 Trades:"]
-        for t in trades:
-            lines.append(f"{t['symbol']} {t['signal_type']} | "
-                         f"Entry: {t['entry_price']} | "
-                         f"PnL: ${t['profit_money']:.2f} | {t['status']}")
-        return "\n".join(lines)
-
-    def _cmd_signal(self, args, update) -> str:
-        if not args:
-            return "Usage: /signal EURJPY"
-        symbol = args[0].upper()
-        tick = self.tick_source.next_tick(symbol) if self.tick_source else (self._tick_cache.get_tick(symbol) if self._tick_cache else self.mt5.get_tick(symbol))
-        if tick is None:
-            return f"Could not get tick for {symbol}"
-        return (f"{symbol} — Live Tick\n"
-                f"Bid: {tick['bid']:.5f}\n"
-                f"Ask: {tick['ask']:.5f}\n"
-                f"Spread: {tick['spread']}")
-
-    def _cmd_pause(self, args, update) -> str:
-        self._paused = True
-        return "Trading PAUSED. No new entries. Monitoring continues."
-
-    def _cmd_resume(self, args, update) -> str:
-        self._paused = False
-        return "Trading RESUMED."
-
-    def _cmd_closeall(self, args, update) -> str:
-        self.positions.refresh()
-        for pos_ca in self.positions.positions:
-            m_ca = self._active_positions_metadata.get(pos_ca["ticket"])
-            if m_ca:
-                m_ca["expected_exit_reason"] = "MANUAL"
-        self._save_active_positions_metadata()
-        self._sdl.reset()
-        results = self.orders.close_all()
-        closed = sum(1 for r in results if r["closed"])
-        failed = sum(1 for r in results if not r["closed"])
-        return f"Close All: {closed} closed, {failed} failed"
-
-    def _cmd_health(self, args, update) -> str:
-        mt5_h = self.mt5_monitor.health_summary
-        ds = self.score.summary()
-        return (f"Health Check:\n"
-                f"MT5: {mt5_h['mt5_status']}\n"
-                f"Uptime: {mt5_h['uptime_minutes']}m\n"
-                f"Deployment Score: {ds['current_score']:.3f} ({ds['classification']})")
-
-    def _cmd_report(self, args, update) -> str:
-        return self._daily_report.generate()
 
     def sync_ledger_with_mt5(self):
         logger.info("Syncing trade ledger with MT5 active positions...")
@@ -2044,17 +1471,38 @@ class ProximaDemo:
             logger.info("Training OSS from replay cache...")
             self._train_oss_from_cache()
 
+        # Quick MT5 connectivity check — skip warmup if not responding
+        _mt5_alive = False
+        try:
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as _exec:
+                _exec.submit(self.mt5.get_account).result(timeout=3)
+                _mt5_alive = True
+        except Exception:
+            _mt5_alive = False
+
         # Warm up price history buffers (550 H1 bars per asset) and initialize eval_data
         logger.info("Warming up price buffers (fetching 550 H1 bars per asset)...")
         print("  Warming up price buffers...", end=" ", flush=True)
         eval_data = {}
+        self._current_eval_data = eval_data
+        if not _mt5_alive:
+            logger.warning("MT5 not responding — skipping price buffer warmup")
         for sym in self._observation_universe:
             eval_data[sym] = {
                 "price": np.nan, "spread": None, "es_val": np.nan,
                 "es_rank": np.nan, "at_rank": np.nan, "thermo_sizing_mult": np.nan,
                 "status": "WATCH"
             }
-            rates = self.mt5.get_rates(sym, count=550, timeframe="H1")
+            rates = None
+            if _mt5_alive:
+                try:
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as _exec:
+                        _fut = _exec.submit(self.mt5.get_rates, sym, 550, "H1")
+                        rates = _fut.result(timeout=5)
+                except Exception:
+                    pass
             if rates is not None and len(rates) >= 524:
                 broker_sym = self.mt5._get_broker_symbol(sym)
                 self._price_history[broker_sym] = list(rates)
@@ -2134,6 +1582,84 @@ class ProximaDemo:
                 logger.warning(f"Could not fetch enough H1 bars for {sym}. Loaded: {loaded}")
         print("OK")
 
+        # Seed tick buffer from MT5 or parquet archive (works on weekends)
+        if hasattr(self, '_canonical_tpi_buffer'):
+            logger.info("Seeding tick buffer from MT5 cached ticks / parquet archive...")
+            _tick_archive = None
+            for sym in self._observation_universe:
+                loaded = 0
+                # 1) Try MT5 cached ticks — fastest, most recent
+                if _mt5_alive:
+                    import MetaTrader5 as _mt5
+                    for lookback in (168, 72, 48, 24, 12, 6, 2):
+                        try:
+                            _since = int(time.time()) - lookback * 3600
+                            ticks = _mt5.copy_ticks_from(sym, _since, 6000, _mt5.COPY_TICKS_ALL)
+                            if ticks is not None and len(ticks) >= 2:
+                                bid = list(ticks["bid"])
+                                ask = list(ticks["ask"])
+                                ts = list(ticks["time"])
+                                for i in range(len(bid)):
+                                    self._canonical_tpi_buffer.append(sym, bid[i], ask[i], ts[i])
+                                loaded = len(bid)
+                                logger.info("  %s: loaded %d ticks (MT5 cache, lookback=%dh)", sym, loaded, lookback)
+                                break
+                        except Exception:
+                            pass
+                # 2) Fallback to parquet archive (MT5 cache empty on weekends)
+                if loaded == 0:
+                    try:
+                        if _tick_archive is None:
+                            from replay.tick_archive import TickArchive
+                            _tick_archive = TickArchive()
+                        _end = datetime.now()
+                        _start = datetime.fromtimestamp(_end.timestamp() - 30 * 86400)
+                        lf = _tick_archive.load_range(sym, _start, _end)
+                        df = lf.sort("time_sec", descending=True).limit(6000).collect()
+                        if df is not None and len(df) >= 2:
+                            df = df.sort("time_sec")
+                            bid = df["bid"].to_list()
+                            ask = df["ask"].to_list()
+                            ts = df["time_sec"].to_list()
+                            for i in range(len(bid)):
+                                self._canonical_tpi_buffer.append(sym, bid[i], ask[i], ts[i])
+                            loaded = len(bid)
+                            logger.info("  %s: loaded %d ticks (parquet archive, range=%s..%s)",
+                                        sym, loaded, df["time_sec"][0], df["time_sec"][-1])
+                    except Exception as e:
+                        logger.warning("  %s: parquet fallback failed: %s", sym, e)
+                if loaded == 0:
+                    logger.info("  %s: no cached ticks found (weekend — OK)", sym)
+
+        # Pre-populate regime_memory from warmup bar energy/time regimes
+        if hasattr(self, '_regime_memory') and self._regime_memory is not None:
+            for sym in self._observation_universe:
+                broker = self.mt5._get_broker_symbol(sym) if hasattr(self.mt5, '_get_broker_symbol') else sym
+                bars = self._price_history.get(broker, [])
+                if len(bars) < 50:
+                    continue
+                try:
+                    closes = np.array([r["close"] for r in bars], dtype=np.float64)
+                    returns = np.diff(np.log(closes))
+                    vol = np.std(returns) if len(returns) > 1 else 0
+                    energy_r = 0 if vol > np.percentile(np.abs(returns), 66) else (1 if vol < np.percentile(np.abs(returns), 33) else 2)
+                    time_r = 0 if len(bars) < 100 else (0 if np.std(returns[-50:]) > np.std(returns) else 2)
+                    cr = energy_r * 3 + time_r if (energy_r is not None and time_r is not None) else None
+                    if cr is not None:
+                        self._regime_memory.update(sym, cr)
+                except Exception as e:
+                    logger.warning("  regime_memory seed failed for %s: %s", sym, e)
+
+        # Compute initial TPI from seeded buffer so engine_vector has non-zero values
+        if _mt5_alive and hasattr(self, '_canonical_tpi_buffer') and hasattr(self, '_tpi_tracker'):
+            for sym in self._observation_universe:
+                try:
+                    tpi_sig = self._canonical_tpi_buffer.get_tpi(sym)
+                    if tpi_sig and tpi_sig.get("tpi", 0.0) != 0.0:
+                        logger.info("  %s: initial TPI=%.4f dir=%d", sym, tpi_sig["tpi"], tpi_sig["direction"])
+                except Exception:
+                    pass
+
         # Compute initial global ranks after all symbols processed
         self._global_rank_engine.compute()
         logger.debug(f"V2.2 Warmup GlobalRanks:\n{self._global_rank_engine.summary()}")
@@ -2194,6 +1720,55 @@ class ProximaDemo:
         print("  Starting main loop...", flush=True)
         print()
 
+        # Initialize telemetry (attach to existing SHM or create new)
+        try:
+            try:
+                self._telemetry_core = TelemetryCore(create=False)
+            except FileNotFoundError:
+                self._telemetry_core = TelemetryCore(create=True)
+            self._dashboard_extractor = DashboardExtractor(self)
+            self._position_extractor = PositionExtractor(self)
+            self._research_extractor = ResearchExtractor(self)
+            self._engine_harvester = EngineHarvester(self)
+        except Exception as _te:
+            logger.warning(f"Telemetry init failed (non-fatal): {_te}")
+            self._telemetry_core = None
+
+        # ── Intelligence & Decision Layer Initialization ──
+        self._intelligence_bus = IntelligenceBus()
+        self._conflict_resolver = ConflictResolver()
+        self._meta_policy = MetaPolicyEngine()
+        self._decision_synthesizer = DecisionSynthesizer()
+        self._intent_translator = ExecutionIntentTranslator()
+        self._decision_writer = DecisionStreamWriter()
+
+        # Register intelligence engines
+        _regime_detector = RegimeTransitionDetector()
+        _anomaly_detector = IntelligenceAnomalyDetector()
+        _causal_builder = CausalGraphBuilder()
+        _vector_compressor = VectorCompressor()
+        _health_monitor = SystemHealthMonitor()
+
+        self._intelligence_bus.register_regime_detector(_regime_detector)
+        self._intelligence_bus.register_anomaly_detector(_anomaly_detector)
+        self._intelligence_bus.register_causal_graph_builder(_causal_builder)
+        self._intelligence_bus.register_vector_compressor(_vector_compressor)
+        self._intelligence_bus.register_health_monitor(_health_monitor)
+
+        # ── Execution Governor Initialization ──
+        self._execution_governor = ExecutionGovernor()
+        self._risk_engine = RiskConstraintEngine()
+        self._regime_matrix = RegimeExecutionMatrix()
+        self._intent_validator = IntentValidator()
+        self._execution_finalizer = ExecutionFinalizer()
+
+        # Register sub-engines into governor
+        self._execution_governor.register_risk_constraint_engine(self._risk_engine)
+        self._execution_governor.register_regime_matrix(self._regime_matrix)
+        self._execution_governor.register_intent_validator(self._intent_validator)
+
+        self._intelligence_step_counter = 0
+
         print("[WHILE_DEBUG] Pre-loop init complete", flush=True)
         global RUNNING
         _wall_start = _wall_perf_counter()
@@ -2219,6 +1794,18 @@ class ProximaDemo:
                 now = self._now_ts()
                 timestamp = int(now)
                 today_str = self._now_dt().date().isoformat()
+
+                # Session boundary reset — clear tick state when trading day changes
+                _prev_session = getattr(self, '_last_session_date', None)
+                if _prev_session is not None and _prev_session != today_str:
+                    logger.info("[SESSION] New trading day: %s (prev=%s) — resetting tick state", today_str, _prev_session)
+                    if hasattr(self, '_canonical_tpi_buffer'):
+                        self._canonical_tpi_buffer.reset()
+                    if hasattr(self, '_tick_thermo'):
+                        self._tick_thermo.reset()
+                    self._last_session_date = today_str
+                else:
+                    self._last_session_date = today_str
 
                 print("[WHILE_DEBUG] Before mt5_monitor.check()", flush=True)
                 mt5_status = self.mt5_monitor.check()
@@ -2262,45 +1849,127 @@ class ProximaDemo:
                         self._warmup_ticks += 1
                 else:
                     _tick_start = _wall_perf_counter()
+                    _tick_count = 0
+                    _tick_timings = {}
+                    _tick_sym_timings = {}
                     for sym in self._execution_symbols:
-                        tick = self.tick_source.next_tick(sym) if self.tick_source else (self._tick_cache.get_tick(sym) if self._tick_cache else self.mt5.get_tick(sym))
+                        _sym_t = _tick_sym_timings.setdefault(sym, {})
+                        _t0 = _wall_perf_counter()
+                        _fetch_src = "mt5"
+                        if self.tick_source:
+                            tick = self.tick_source.next_tick(sym)
+                            _fetch_src = "replay"
+                        elif self._tick_cache:
+                            tick = self._tick_cache.get_tick(sym)
+                            _fetch_src = "cache"
+                        else:
+                            tick = self.mt5.get_tick(sym)
+                        _tdelta = _wall_perf_counter() - _t0
+                        _tick_timings[_fetch_src + "_fetch"] = _tick_timings.get(_fetch_src + "_fetch", 0) + _tdelta
+                        _sym_t["fetch"] = _sym_t.get("fetch", 0) + _tdelta
                         if tick:
+                            _tick_count += 1
                             price = tick["ask"]
                             eval_data[sym]["price"] = price
                             eval_data[sym]["spread"] = tick["spread"]
                             eval_data[sym]["ecdf_rank"] = self._ecdf.compute_and_update(sym, price)
                             if sym in self._shadow_set:
+                                _t1a = _wall_perf_counter()
                                 self._process_shadow_tick(sym, tick)
+                                _tdelta = _wall_perf_counter() - _t1a
+                                _tick_timings["shadow_proc"] = _tick_timings.get("shadow_proc", 0) + _tdelta
+                                _sym_t["shadow_proc"] = _sym_t.get("shadow_proc", 0) + _tdelta
+                                _t1b = _wall_perf_counter()
                                 if "regime" not in eval_data[sym]:
                                     eval_data[sym]["regime"] = self._shadow_regime(sym)
+                                _tdelta = _wall_perf_counter() - _t1b
+                                _tick_timings["shadow_regime"] = _tick_timings.get("shadow_regime", 0) + _tdelta
+                                _sym_t["shadow_regime"] = _sym_t.get("shadow_regime", 0) + _tdelta
+                            _t2 = _wall_perf_counter()
                             self._tick_thermo.feed_ticks(sym, tick["bid"], tick["ask"], tick["time"])
+                            _tdelta = _wall_perf_counter() - _t2
+                            _tick_timings["thermo"] = _tick_timings.get("thermo", 0) + _tdelta
+                            _sym_t["thermo"] = _sym_t.get("thermo", 0) + _tdelta
+                            _t3 = _wall_perf_counter()
                             self._rf_gate.feed_tick(sym, tick["bid"], tick["ask"], tick["time"], self._warmup_ticks)
+                            _tdelta = _wall_perf_counter() - _t3
+                            _tick_timings["rf_gate"] = _tick_timings.get("rf_gate", 0) + _tdelta
+                            _sym_t["rf_gate"] = _sym_t.get("rf_gate", 0) + _tdelta
+                            _t4 = _wall_perf_counter()
                             self._thesis_graph.tick(sym, price)
+                            _tdelta = _wall_perf_counter() - _t4
+                            _tick_timings["graph"] = _tick_timings.get("graph", 0) + _tdelta
+                            _sym_t["graph"] = _sym_t.get("graph", 0) + _tdelta
+                            _t5 = _wall_perf_counter()
                             self._validation.on_tick(sym, price, tick.get("time", 0))
+                            _tdelta = _wall_perf_counter() - _t5
+                            _tick_timings["validation"] = _tick_timings.get("validation", 0) + _tdelta
+                            _sym_t["validation"] = _sym_t.get("validation", 0) + _tdelta
+                            _t6 = _wall_perf_counter()
                             self._canonical_tpi_buffer.append(sym, tick["bid"], tick["ask"], tick["time"])
+                            _tdelta = _wall_perf_counter() - _t6
+                            _tick_timings["buffer"] = _tick_timings.get("buffer", 0) + _tdelta
+                            _sym_t["buffer"] = _sym_t.get("buffer", 0) + _tdelta
                             # Feed tick to BattleDecay states for this symbol
                             _bd_bid = tick.get("bid", 0)
                             _bd_ask = tick.get("ask", 0)
                             _bd_ts = tick.get("time", 0)
-                            for _bd_t in list(self._battle_decay._states):
-                                _bd_s = self._battle_decay._states[_bd_t]
-                                if _bd_s.symbol == sym:
-                                    _bd_s.feed_tick(_bd_bid, _bd_ask, _bd_ts)
+                            _t7 = _wall_perf_counter()
+                            for _bd_s in self._battle_decay.states_for_symbol(sym):
+                                _bd_s.feed_tick(_bd_bid, _bd_ask, _bd_ts)
+                            _tdelta = _wall_perf_counter() - _t7
+                            _tick_timings["battle_decay"] = _tick_timings.get("battle_decay", 0) + _tdelta
+                            _sym_t["battle_decay"] = _sym_t.get("battle_decay", 0) + _tdelta
                             # Count per-symbol tick for warmup (matching replay mode behavior)
                             self._warmup_ticks += 1
                         # Time cap: don't spend more than 15s per loop on tick dispatch
                         if _wall_perf_counter() - _tick_start > 15:
                             break
-                    # Feed ticks to TPI-eligible symbols (skip in acceptance mode for speed)
+                    # Feed ticks to TPI-eligible symbols (throttled: every 5 cycles for observation symbols)
                     if not ACCEPTANCE_MODE and not getattr(self, '_replay_mode', False):
-                        for tpi_sym in TPI_ELIGIBLE:
-                            if tpi_sym not in (getattr(self, '_active_symbols', set()) or set()):
-                                tpi_tick = self.tick_source.next_tick(tpi_sym) if self.tick_source else (self._tick_cache.get_tick(tpi_sym) if self._tick_cache else self.mt5.get_tick(tpi_sym))
-                                if tpi_tick:
-                                    self._tick_thermo.feed_ticks(tpi_sym, tpi_tick["bid"], tpi_tick["ask"], tpi_tick["time"])
-                                    self._rf_gate.feed_tick(tpi_sym, tpi_tick["bid"], tpi_tick["ask"], tpi_tick["time"], self._warmup_ticks)
-                                    self._canonical_tpi_buffer.append(tpi_sym, tpi_tick["bid"], tpi_tick["ask"], tpi_tick["time"])
-                    print(f"[WHILE_DEBUG] After tick dispatch, _warmup_ticks={self._warmup_ticks}, eval_data keys={len(eval_data)}", flush=True)
+                        if self._warmup_ticks % 5 == 0:
+                            for tpi_sym in TPI_ELIGIBLE:
+                                if tpi_sym not in (getattr(self, '_active_symbols', set()) or set()):
+                                    _t8 = _wall_perf_counter()
+                                    _tpi_src = "mt5"
+                                    if self.tick_source:
+                                        tpi_tick = self.tick_source.next_tick(tpi_sym)
+                                        _tpi_src = "replay"
+                                    elif self._tick_cache:
+                                        tpi_tick = self._tick_cache.get_tick(tpi_sym)
+                                        _tpi_src = "cache"
+                                    else:
+                                        tpi_tick = self.mt5.get_tick(tpi_sym)
+                                    if tpi_tick:
+                                        _tick_count += 1
+                                        self._tick_thermo.feed_ticks(tpi_sym, tpi_tick["bid"], tpi_tick["ask"], tpi_tick["time"])
+                                        self._rf_gate.feed_tick(tpi_sym, tpi_tick["bid"], tpi_tick["ask"], tpi_tick["time"], self._warmup_ticks)
+                                        self._canonical_tpi_buffer.append(tpi_sym, tpi_tick["bid"], tpi_tick["ask"], tpi_tick["time"])
+                                    _tick_timings["tpi_poll"] = _tick_timings.get("tpi_poll", 0) + (_wall_perf_counter() - _t8)
+                    _tick_elapsed = _wall_perf_counter() - _tick_start
+                    # Rolling latency window (last 1000)
+                    self._latency_window.append(_tick_elapsed)
+                    if len(self._latency_window) > 1000:
+                        self._latency_window.pop(0)
+                    if _tick_elapsed > self._latency_peak:
+                        self._latency_peak = _tick_elapsed
+                    _tick_timings_str = " ".join(f"{k}={v*1000:.1f}ms" for k, v in sorted(_tick_timings.items(), key=lambda x: -x[1]))
+                    _worst_sym = max(_tick_sym_timings, key=lambda s: sum(_tick_sym_timings[s].values())) if _tick_sym_timings else None
+                    _worst_sym_str = ""
+                    if _worst_sym and _tick_sym_timings[_worst_sym]:
+                        _ws_total = sum(_tick_sym_timings[_worst_sym].values())
+                        _ws_detail = " ".join(f"{k}={v*1000:.1f}" for k, v in sorted(_tick_sym_timings[_worst_sym].items(), key=lambda x: -x[1]))
+                        _worst_sym_str = f" worst={_worst_sym}({_ws_total*1000:.1f}ms: {_ws_detail})"
+                    if _tick_elapsed > 0.3:
+                        logger.warning("[TICK_LATE] dispatch=%d ticks in %.3fs (%s)%s [CRITICAL]", _tick_count, _tick_elapsed, _tick_timings_str, _worst_sym_str)
+                    elif _tick_elapsed > 0.1:
+                        logger.info("[TICK_TIMING] dispatch=%d ticks in %.3fs (%s)%s [DEGRADED]", _tick_count, _tick_elapsed, _tick_timings_str, _worst_sym_str)
+                    # Log latency summary every 100 cycles
+                    if self._warmup_ticks % 100 == 0 and self._latency_window:
+                        _p50 = sorted(self._latency_window)[len(self._latency_window) // 2]
+                        _p95 = sorted(self._latency_window)[int(len(self._latency_window) * 0.95)]
+                        logger.info("[LATENCY_SUMMARY] ticks=%d p50=%.1fms p95=%.1fms peak=%.1fms window=%d",
+                                    _tick_count, _p50 * 1000, _p95 * 1000, self._latency_peak * 1000, len(self._latency_window))
 
                 # V3/V4 STEP 2+3+4: Ranking Engine + TOP-K + Rotation Stability (execution symbols only)
                 if self.config.ranking:
@@ -5278,9 +4947,7 @@ class ProximaDemo:
                                 else:
                                     alignment = "CONFLICT"
                                 tpi_sig = {**tpi_sig, "alignment": alignment}
-                            tpi_cache_signal(sym, tpi_sig)
                             alignment = tpi_sig.get("alignment") or "NO_SIGNAL"
-                            tpi_record_shadow(sym, tpi_sig, alignment, existing_dir_str)
 
                             # Create Tick→Bar anchored observation
                             try:
@@ -5569,6 +5236,7 @@ class ProximaDemo:
                         self._micro_calibrator.compute_mai()
                     # Update all metrics
                     dashboard_snapshot = self._reality_dashboard.update()
+                    self._last_reality_snapshot = dashboard_snapshot
 
                 # Render terminal dashboard (skip full output in acceptance mode for speed)
                 account_info = self.mt5.get_account() or account
@@ -5658,6 +5326,110 @@ class ProximaDemo:
                         migration_events=self._migration_event_count,
                         avg_hold_bars=average_hold_bars,
                         top3_ranked=top3_for_dash)
+
+                # Telemetry snapshot — always write to SHM for dashboard (all modes)
+                if getattr(self, '_telemetry_core', None) is not None:
+                    try:
+                        self._telemetry_core.begin_cycle(self._cycle_id, time.time())
+                        ev = self._engine_harvester.harvest_engine_vector()
+                        self._telemetry_core.write_engine_vector(tuple(ev))
+                        scalars = self._engine_harvester.harvest_scalars()
+                        self._telemetry_core.write_scalars(**scalars)
+                        self._telemetry_core.end_cycle()
+                    except Exception:
+                        pass
+
+                # Feed snapshot and dashboard to WebSocket server — all modes
+                ws_srv = getattr(self, '_ws_server', None)
+                if ws_srv is not None:
+                    try:
+                        # Throttle blocking MT5 snapshot calls to every 5 cycles
+                        if self._warmup_ticks % 5 == 0 or not hasattr(self, '_last_ws_acct'):
+                            acct = self.mt5.get_account()
+                            pos = self.mt5.get_positions()
+                            self._last_ws_acct = acct
+                            self._last_ws_pos = pos
+                        else:
+                            acct = self._last_ws_acct
+                            pos = self._last_ws_pos
+                        perf_s = self.perf.summary() if hasattr(self.perf, 'summary') else {}
+                        if self._warmup_ticks % 5 == 0:
+                            logger.info("[WS_FEED_DEMO] feeding snapshot acct=%s pos=%d", type(acct).__name__, len(pos) if pos else 0)
+                    except Exception as e:
+                        logger.warning("[WS_FEED_DEMO] snapshot feed error: %s", e)
+                    try:
+                        if self._warmup_ticks % 30 == 0:
+                            _full = self._build_full_dashboard_text(
+                                eval_data=eval_data,
+                                open_positions=open_positions,
+                                account=acct if acct else {},
+                                score_data=ds_info,
+                                seconds_to_next_eval=seconds_to_next_eval,
+                                rotation_events=getattr(self, '_rotation_event_count', 0),
+                                lock_events=getattr(self, '_lock_event_count', 0),
+                                migration_events=getattr(self, '_migration_event_count', 0),
+                                avg_hold_bars=0,
+                                top3_ranked=getattr(self, '_last_top3_qualified', None),
+                            )
+                            logger.info("[WS_FEED_DEMO] feeding full dashboard text len=%d", len(_full))
+                            ws_srv.feed_dashboard_text(_full)
+                    except Exception as e:
+                        logger.warning("[WS_FEED_DEMO] dashboard feed error: %s", e)
+
+                if not ACCEPTANCE_MODE:
+
+                    # ── Intelligence & Decision Cycle ──
+                    try:
+                        _tc = getattr(self, '_telemetry_core', None)
+                        if _tc is not None and getattr(self, '_intelligence_bus', None) is not None:
+                            # Read raw SHM frame bytes from the telemetry core buffer
+                            _raw = bytes(_tc._shm.buf[:432])
+                            if _raw:
+                                self._intelligence_bus.feed(_raw)
+
+                                # Step intelligence (runs all engines)
+                                self._intelligence_step_counter += 1
+                                i_frame = self._intelligence_bus.step()
+
+                                if i_frame is not None:
+                                    # Feed to conflict resolver
+                                    self._conflict_resolver.feed(i_frame)
+                                    context = self._conflict_resolver.resolve()
+
+                                    # Feed to policy engine
+                                    self._meta_policy.feed(i_frame)
+                                    self._meta_policy.feed_decision_context(context)
+                                    policy = self._meta_policy.compute_policy()
+
+                                    # Feed to decision synthesizer
+                                    self._decision_synthesizer.feed_intelligence(i_frame)
+                                    self._decision_synthesizer.feed_policy(policy)
+                                    self._decision_synthesizer.feed_context(context)
+                                    decision = self._decision_synthesizer.synthesize()
+
+                                    # Feed to intent translator
+                                    self._intent_translator.feed_decision(decision)
+                                    intent = self._intent_translator.translate()
+
+                                    # Write decision to SHM
+                                    snapshot = create_decision_snapshot(decision, intent, i_frame)
+                                    self._decision_writer.write(snapshot)
+
+                                    # ── Execution Governance ──
+                                    try:
+                                        governed = self._execution_governor.govern(intent, i_frame)
+                                        final_order = self._execution_finalizer.finalize(governed, i_frame)
+
+                                        # Log final order if not a no-op
+                                        if final_order.direction.value != "NONE":
+                                            _log(f"[GOVERNOR] {final_order.direction.value} "
+                                                 f"size={final_order.size:.3f} "
+                                                 f"risk_adj={final_order.risk_adjusted_size:.3f} "
+                                                 f"reason={final_order.reason[:60]}")
+                                    except Exception:
+                                        pass
+                    except Exception:
+                        pass  # Intelligence layer errors must never crash the trading loop
                 else:
                     _stre = self._last_stre_result or {}
                     _samples = _stre.get("samples", 0)
@@ -5872,6 +5644,20 @@ class ProximaDemo:
                 logger.info("[STR-E] State saved")
         except Exception as _se:
             logger.warning(f"[STR-E] Save error: {_se}")
+        # Cleanup telemetry
+        if hasattr(self, '_telemetry_core') and self._telemetry_core is not None:
+            try:
+                self._telemetry_core.unlink()
+            except Exception:
+                pass
+
+        # ── Intelligence & Decision Cleanup ──
+        try:
+            if hasattr(self, '_decision_writer'):
+                self._decision_writer.close()
+        except Exception:
+            pass
+
         logger.info("Shutdown complete.")
 
 

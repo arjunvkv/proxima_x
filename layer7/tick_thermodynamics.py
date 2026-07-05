@@ -278,3 +278,19 @@ class TickThermodynamicsEngine:
         lines.append("")
         lines.append("  Key: Pres=Pressure(0-1), Tempo=Compression, Burst=density ratio, Asym=uptick-downtick bias")
         return "\n".join(lines)
+
+    def reset(self, symbol=None):
+        if symbol is not None:
+            self._tick_data.pop(symbol, None)
+            self._pressure_history.pop(symbol, None)
+            self._burst_history.pop(symbol, None)
+            self._asymmetry_history.pop(symbol, None)
+            self._accel_history.pop(symbol, None)
+            self._bar_buffer.pop(symbol, None)
+        else:
+            self._tick_data.clear()
+            self._pressure_history.clear()
+            self._burst_history.clear()
+            self._asymmetry_history.clear()
+            self._accel_history.clear()
+            self._bar_buffer.clear()

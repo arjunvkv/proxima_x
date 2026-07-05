@@ -111,7 +111,8 @@ class MT5Connector:
             "equity": info.equity, "margin": info.margin,
             "margin_free": info.margin_free, "margin_level": info.margin_level,
             "leverage": info.leverage, "currency": info.currency,
-            "server": info.server, "name": info.name}
+            "server": info.server, "name": info.name,
+            "profit": getattr(info, 'profit', info.equity - info.balance)}
 
     def get_positions(self) -> list[dict]:
         if not self.ensure_connection():

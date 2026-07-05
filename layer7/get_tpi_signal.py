@@ -13,28 +13,29 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 import numpy as np
+from typing import Optional
 
 from data.tick_buffer import get_offline_tpi_signal, get_offline_tpi
+from proxima_ops.config.settings import SETTINGS
 
-# Symbols eligible for TPI overlay
-TPI_ELIGIBLE = ["EURJPY", "EURUSD", "GBPJPY", "USDJPY", "XAUUSD"]
+# Symbols eligible for TPI overlay = full observation universe (28 symbols)
+TPI_ELIGIBLE = list(set(SETTINGS.symbols + SETTINGS.shadow_symbols))
 # p90 confidence threshold
 P90 = 90.0
-# Session definitions (UTC)
-TPI_SESSION = {
-    "EURJPY": ("London", 9, 17),
-    "EURUSD": ("London", 9, 17),
-    "GBPJPY": ("London", 9, 17),
-    "USDJPY": ("NY", 13, 22),
-    "XAUUSD": ("Overlap", 8, 20),
-}
+
+# Session hours by quote currency (UTC)
+def _session_hours(symbol):
+    s = symbol.upper()
+    if s.endswith("JPY"):
+        return ("Tokyo", 0, 8)
+    if s.endswith("USD") or s.endswith("CAD"):
+        return ("NY", 12, 21)
+    return ("London", 7, 16)
 
 
 def _get_session(symbol):
-    if symbol in TPI_SESSION:
-        name, lo, hi = TPI_SESSION[symbol]
-        return name, lo, hi
-    return None, None, None
+    name, lo, hi = _session_hours(symbol)
+    return name, lo, hi
 
 
 def get_tpi_signal(symbol, existing_signal=None, tick_idx=-1, clock=None):

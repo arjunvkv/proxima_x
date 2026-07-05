@@ -1,45 +1,45 @@
 {
-    "evaluated_count": 16544,
-    "trigger_count": 4313,
+    "evaluated_count": 18425,
+    "trigger_count": 4894,
     "executed_count": 310,
-    "blocked_count": 4003,
-    "spread_blocks": 138,
+    "blocked_count": 4584,
+    "spread_blocks": 479,
     "position_blocks": 2978,
     "risk_blocks": 25,
-    "threshold_misses": 12231,
+    "threshold_misses": 13531,
     "symbol_stats": {
         "EURJPY": {
-            "evaluated": 2556,
-            "triggered": 670,
+            "evaluated": 2861,
+            "triggered": 713,
             "executed": 37,
-            "blocked": 633,
+            "blocked": 676,
             "spread_blocks": 2,
             "position_blocks": 514,
             "risk_blocks": 1,
             "frequency_blocks": 0,
-            "threshold_misses": 1886
+            "threshold_misses": 2148
         },
         "GBPJPY": {
-            "evaluated": 2181,
-            "triggered": 517,
+            "evaluated": 2209,
+            "triggered": 519,
             "executed": 6,
-            "blocked": 511,
+            "blocked": 513,
             "spread_blocks": 8,
             "position_blocks": 498,
             "risk_blocks": 1,
             "frequency_blocks": 0,
-            "threshold_misses": 1664
+            "threshold_misses": 1690
         },
         "EURUSD": {
-            "evaluated": 2264,
-            "triggered": 71,
+            "evaluated": 2569,
+            "triggered": 113,
             "executed": 16,
-            "blocked": 55,
-            "spread_blocks": 15,
+            "blocked": 97,
+            "spread_blocks": 57,
             "position_blocks": 11,
             "risk_blocks": 1,
             "frequency_blocks": 0,
-            "threshold_misses": 2193
+            "threshold_misses": 2456
         },
         "XAUUSD": {
             "evaluated": 1559,
@@ -53,251 +53,251 @@
             "threshold_misses": 582
         },
         "USDJPY": {
-            "evaluated": 2505,
-            "triggered": 669,
+            "evaluated": 2810,
+            "triggered": 709,
             "executed": 35,
-            "blocked": 634,
+            "blocked": 674,
             "spread_blocks": 2,
             "position_blocks": 559,
             "risk_blocks": 0,
             "frequency_blocks": 15,
-            "threshold_misses": 1836
+            "threshold_misses": 2101
         },
         "NZDUSD": {
-            "evaluated": 219,
-            "triggered": 46,
+            "evaluated": 247,
+            "triggered": 48,
             "executed": 2,
-            "blocked": 44,
+            "blocked": 46,
             "spread_blocks": 0,
             "position_blocks": 0,
             "risk_blocks": 1,
-            "threshold_misses": 173
+            "threshold_misses": 199
         },
         "NZDCHF": {
-            "evaluated": 250,
-            "triggered": 101,
+            "evaluated": 278,
+            "triggered": 104,
             "executed": 2,
-            "blocked": 99,
+            "blocked": 102,
             "spread_blocks": 0,
             "position_blocks": 0,
             "risk_blocks": 12,
-            "threshold_misses": 149
+            "threshold_misses": 174
         },
         "EURAUD": {
-            "evaluated": 184,
-            "triggered": 25,
+            "evaluated": 211,
+            "triggered": 28,
             "executed": 5,
-            "blocked": 20,
+            "blocked": 23,
             "spread_blocks": 0,
             "position_blocks": 18,
             "risk_blocks": 0,
-            "threshold_misses": 159
+            "threshold_misses": 183
         },
         "CADJPY": {
-            "evaluated": 191,
-            "triggered": 28,
+            "evaluated": 220,
+            "triggered": 30,
             "executed": 8,
-            "blocked": 20,
-            "spread_blocks": 0,
+            "blocked": 22,
+            "spread_blocks": 2,
             "position_blocks": 17,
             "risk_blocks": 1,
-            "threshold_misses": 163
+            "threshold_misses": 190
         },
         "GBPUSD": {
-            "evaluated": 201,
-            "triggered": 31,
+            "evaluated": 228,
+            "triggered": 34,
             "executed": 8,
-            "blocked": 23,
+            "blocked": 26,
             "spread_blocks": 5,
             "position_blocks": 6,
             "risk_blocks": 1,
-            "threshold_misses": 170
+            "threshold_misses": 194
         },
         "AUDUSD": {
-            "evaluated": 262,
-            "triggered": 92,
+            "evaluated": 290,
+            "triggered": 94,
             "executed": 18,
-            "blocked": 74,
+            "blocked": 76,
             "spread_blocks": 3,
             "position_blocks": 40,
             "risk_blocks": 1,
-            "threshold_misses": 170
+            "threshold_misses": 196
         },
         "USDCAD": {
-            "evaluated": 426,
-            "triggered": 256,
+            "evaluated": 453,
+            "triggered": 258,
             "executed": 20,
-            "blocked": 236,
+            "blocked": 238,
             "spread_blocks": 3,
             "position_blocks": 188,
             "risk_blocks": 1,
-            "threshold_misses": 170
+            "threshold_misses": 195
         },
         "USDCHF": {
-            "evaluated": 258,
-            "triggered": 84,
+            "evaluated": 286,
+            "triggered": 112,
             "executed": 2,
-            "blocked": 82,
+            "blocked": 110,
             "spread_blocks": 5,
             "position_blocks": 35,
             "risk_blocks": 0,
             "threshold_misses": 174
         },
         "GBPCAD": {
-            "evaluated": 199,
-            "triggered": 27,
+            "evaluated": 226,
+            "triggered": 54,
             "executed": 6,
-            "blocked": 21,
+            "blocked": 48,
             "spread_blocks": 12,
             "position_blocks": 0,
             "risk_blocks": 0,
             "threshold_misses": 172
         },
         "GBPCHF": {
-            "evaluated": 189,
-            "triggered": 26,
+            "evaluated": 216,
+            "triggered": 29,
             "executed": 6,
-            "blocked": 20,
+            "blocked": 23,
             "spread_blocks": 0,
             "position_blocks": 0,
             "risk_blocks": 0,
-            "threshold_misses": 163
+            "threshold_misses": 187
         },
         "EURGBP": {
-            "evaluated": 423,
-            "triggered": 214,
+            "evaluated": 450,
+            "triggered": 218,
             "executed": 34,
-            "blocked": 180,
+            "blocked": 184,
             "spread_blocks": 0,
             "position_blocks": 101,
             "risk_blocks": 0,
-            "threshold_misses": 209
+            "threshold_misses": 232
         },
         "GBPAUD": {
-            "evaluated": 210,
-            "triggered": 39,
+            "evaluated": 237,
+            "triggered": 42,
             "executed": 12,
-            "blocked": 27,
+            "blocked": 30,
             "spread_blocks": 4,
             "position_blocks": 19,
             "risk_blocks": 0,
-            "threshold_misses": 171
+            "threshold_misses": 195
         },
         "AUDCHF": {
-            "evaluated": 352,
-            "triggered": 204,
+            "evaluated": 379,
+            "triggered": 206,
             "executed": 39,
-            "blocked": 165,
+            "blocked": 167,
             "spread_blocks": 0,
             "position_blocks": 83,
             "risk_blocks": 1,
-            "threshold_misses": 148
+            "threshold_misses": 173
         },
         "EURCAD": {
-            "evaluated": 206,
-            "triggered": 21,
+            "evaluated": 234,
+            "triggered": 25,
             "executed": 4,
-            "blocked": 17,
+            "blocked": 21,
             "spread_blocks": 0,
             "position_blocks": 0,
             "risk_blocks": 1,
-            "threshold_misses": 185
+            "threshold_misses": 209
         },
         "AUDJPY": {
-            "evaluated": 267,
-            "triggered": 79,
+            "evaluated": 572,
+            "triggered": 371,
             "executed": 23,
-            "blocked": 56,
-            "spread_blocks": 6,
+            "blocked": 348,
+            "spread_blocks": 298,
             "position_blocks": 4,
             "risk_blocks": 0,
-            "threshold_misses": 188
+            "threshold_misses": 201
         },
         "CHFJPY": {
-            "evaluated": 188,
-            "triggered": 16,
+            "evaluated": 215,
+            "triggered": 18,
             "executed": 1,
-            "blocked": 15,
-            "spread_blocks": 8,
+            "blocked": 17,
+            "spread_blocks": 10,
             "position_blocks": 0,
             "risk_blocks": 0,
-            "threshold_misses": 172
+            "threshold_misses": 197
         },
         "NZDCAD": {
-            "evaluated": 206,
-            "triggered": 36,
+            "evaluated": 233,
+            "triggered": 39,
             "executed": 2,
-            "blocked": 34,
+            "blocked": 37,
             "spread_blocks": 29,
             "position_blocks": 0,
             "risk_blocks": 1,
-            "threshold_misses": 170
+            "threshold_misses": 194
         },
         "EURNZD": {
-            "evaluated": 194,
-            "triggered": 9,
+            "evaluated": 222,
+            "triggered": 13,
             "executed": 5,
-            "blocked": 4,
+            "blocked": 8,
             "spread_blocks": 1,
             "position_blocks": 0,
             "risk_blocks": 0,
-            "threshold_misses": 185
+            "threshold_misses": 209
         },
         "EURCHF": {
-            "evaluated": 182,
-            "triggered": 10,
+            "evaluated": 210,
+            "triggered": 38,
             "executed": 3,
-            "blocked": 7,
+            "blocked": 35,
             "spread_blocks": 0,
             "position_blocks": 0,
             "risk_blocks": 1,
             "threshold_misses": 172
         },
         "AUDCAD": {
-            "evaluated": 159,
-            "triggered": 10,
+            "evaluated": 187,
+            "triggered": 13,
             "executed": 4,
-            "blocked": 6,
+            "blocked": 9,
             "spread_blocks": 1,
             "position_blocks": 2,
             "risk_blocks": 0,
-            "threshold_misses": 149
+            "threshold_misses": 174
         },
         "AUDNZD": {
-            "evaluated": 163,
-            "triggered": 18,
+            "evaluated": 190,
+            "triggered": 20,
             "executed": 2,
-            "blocked": 16,
+            "blocked": 18,
             "spread_blocks": 2,
             "position_blocks": 0,
             "risk_blocks": 1,
-            "threshold_misses": 145
-        },
-        "NZDJPY": {
-            "evaluated": 199,
-            "triggered": 29,
-            "executed": 0,
-            "blocked": 29,
-            "spread_blocks": 27,
-            "position_blocks": 0,
-            "risk_blocks": 0,
             "threshold_misses": 170
         },
+        "NZDJPY": {
+            "evaluated": 227,
+            "triggered": 32,
+            "executed": 0,
+            "blocked": 32,
+            "spread_blocks": 30,
+            "position_blocks": 0,
+            "risk_blocks": 0,
+            "threshold_misses": 195
+        },
         "GBPNZD": {
-            "evaluated": 175,
-            "triggered": 4,
+            "evaluated": 203,
+            "triggered": 6,
             "executed": 2,
-            "blocked": 2,
+            "blocked": 4,
             "spread_blocks": 0,
             "position_blocks": 0,
             "risk_blocks": 0,
-            "threshold_misses": 171
+            "threshold_misses": 197
         },
         "CADCHF": {
-            "evaluated": 176,
-            "triggered": 4,
+            "evaluated": 203,
+            "triggered": 31,
             "executed": 1,
-            "blocked": 3,
+            "blocked": 30,
             "spread_blocks": 0,
             "position_blocks": 0,
             "risk_blocks": 0,

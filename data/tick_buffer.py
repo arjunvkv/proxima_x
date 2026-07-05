@@ -14,14 +14,24 @@ from collections import defaultdict
 
 # TPI computation window
 TPI_WINDOW = 200
-# Session hours (UTC)
-SESSION = {
-    "EURJPY": (9, 17),   # London
-    "EURUSD": (9, 17),   # London
-    "GBPJPY": (9, 17),   # London
-    "USDJPY": (13, 22),  # NY
-    "XAUUSD": (8, 20),   # Overlap
-}
+
+def _session_hours(symbol):
+    """Return (start_hour, end_hour) UTC trading session for a symbol.
+    Based on quote currency:
+      XXXJPY → Tokyo (0-8)
+      XXXUSD → NY (12-21)
+      XXXCAD → NY (12-21)
+      Everything else → London (7-16)
+    """
+    s = symbol.upper()
+    if s.endswith("JPY"):
+        return (0, 8)
+    if s.endswith("USD") or s.endswith("CAD"):
+        return (12, 21)
+    return (7, 16)
+
+# Session hours (UTC) — dynamically derived for all symbols
+SESSION = {}  # populated on first access via _get_session
 
 class TickBuffer:
     """Maintains rolling tick ring buffers per symbol."""
@@ -35,8 +45,16 @@ class TickBuffer:
             self._buffers[symbol] = {"bid": [], "ask": [], "time": []}
 
     def append(self, symbol, bid, ask, timestamp):
+        if bid is None or ask is None:
+            return
+        if bid != bid or ask != ask:
+            return
+        if abs(bid) > 1e12 or abs(ask) > 1e12:
+            return
         self._ensure(symbol)
         buf = self._buffers[symbol]
+        if len(buf["time"]) > 0 and timestamp <= buf["time"][-1]:
+            return
         buf["bid"].append(bid)
         buf["ask"].append(ask)
         buf["time"].append(timestamp)
@@ -44,6 +62,12 @@ class TickBuffer:
             buf["bid"].pop(0)
             buf["ask"].pop(0)
             buf["time"].pop(0)
+
+    def reset(self, symbol=None):
+        if symbol is not None:
+            self._buffers.pop(symbol, None)
+        else:
+            self._buffers.clear()
 
     def get_mid_prices(self, symbol):
         buf = self._buffers.get(symbol)
@@ -280,10 +304,8 @@ def get_offline_tpi_signal(symbol, tick_idx=-1, percentile=None):
     # Session check
     ts_sec = float(data["ts"][tick_idx]) / 1_000_000
     hour = (ts_sec // 3600) % 24
-    session_ok = True
-    if symbol in SESSION:
-        lo, hi = SESSION[symbol]
-        session_ok = lo <= hour < hi
+    lo, hi = _session_hours(symbol)
+    session_ok = lo <= hour < hi
 
     return {
         "tpi": tpi,

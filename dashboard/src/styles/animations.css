@@ -1,0 +1,65 @@
+/* Proxima Ops Animation System — GPU accelerated, CSS-only */
+
+/* Slow pulse for health/status indicators */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Glow pulse for active panels */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: inset 0 0 10px rgba(0,255,136,0.1), 0 0 5px rgba(0,255,136,0.1); }
+  50% { box-shadow: inset 0 0 15px rgba(0,255,136,0.2), 0 0 10px rgba(0,255,136,0.2); }
+}
+
+/* Scanline overlay animation */
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+/* Fade in panels */
+@keyframes panel-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Pulsing dot */
+@keyframes pulse-dot {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+/* Utility classes */
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.animate-panel-enter {
+  animation: panel-enter 0.3s ease-out both;
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2s infinite ease-in-out;
+}
+
+/* Panel enter stagger */
+.panel-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.panel-stagger > *:nth-child(2) { animation-delay: 50ms; }
+.panel-stagger > *:nth-child(3) { animation-delay: 100ms; }
+.panel-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.panel-stagger > *:nth-child(5) { animation-delay: 200ms; }
+.panel-stagger > *:nth-child(6) { animation-delay: 250ms; }
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
