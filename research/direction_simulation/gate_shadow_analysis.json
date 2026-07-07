@@ -1,0 +1,185 @@
+{
+  "gate_stats": {
+    "RF_GATE": {
+      "total_blocks": 10811,
+      "would_recover": 2702,
+      "signal_quality_score": 0.3,
+      "unique_symbols": 28,
+      "would_block_rate": 85.327545382794,
+      "already_caught_by_other": 0,
+      "redundancy_pct": 0.0
+    },
+    "OBSERVER_STATE": {
+      "total_blocks": 8351,
+      "would_recover": 1252,
+      "signal_quality_score": 0.15,
+      "unique_symbols": 28,
+      "would_block_rate": 72.10948968137465,
+      "already_caught_by_other": 5845,
+      "redundancy_pct": 70.0
+    },
+    "REALITY_VECTOR": {
+      "total_blocks": 0,
+      "would_recover": 0,
+      "signal_quality_score": 0.0,
+      "unique_symbols": 0,
+      "would_block_rate": 0.0,
+      "already_caught_by_other": 0,
+      "redundancy_pct": 0.0
+    },
+    "CF_GATE": {
+      "total_blocks": 0,
+      "would_recover": 0,
+      "signal_quality_score": 0.0,
+      "unique_symbols": 0,
+      "would_block_rate": 0.0,
+      "already_caught_by_other": 0,
+      "redundancy_pct": 0.0
+    }
+  },
+  "risk_analysis": {
+    "RF_GATE": {
+      "protections_lost": [
+        "No regime quality filter \u2014 bad market regimes pass through",
+        "No micro-structure probability calibration",
+        "Replay drift detection removed",
+        "Model drift alerts disabled"
+      ],
+      "unique_protection": true,
+      "duplicated_by": [],
+      "notes": "RF Gate is the ONLY gate that measures regime-conditioned signal probability. No other gate provides micro-structure quality filtering. Shadow mode would let ~10,800 raw signals through, but ~75% would fail other downstream gates."
+    },
+    "OBSERVER_STATE": {
+      "protections_lost": [
+        "No signal confidence threshold \u2014 all confidence levels treated equally",
+        "No TPI confidence gating",
+        "No persistence-streak awareness in execution",
+        "No entropy/curvature sanity check"
+      ],
+      "unique_protection": false,
+      "duplicated_by": [
+        "SDL (persistence)",
+        "TPI gate (micro flow)"
+      ],
+      "notes": "Observer State overlaps with SDL for persistence checking and with TPI gate for micro-flow quality. However, it is the ONLY gate that combines TPI + persistence + curvature + entropy into a single composite confidence score."
+    },
+    "REALITY_VECTOR": {
+      "protections_lost": [
+        "No execution tier awareness (PASSIVE/AGGRESSIVE/MODERATE)",
+        "No E_exec / E_pred / E_contam contamination detection"
+      ],
+      "unique_protection": true,
+      "duplicated_by": [],
+      "notes": "Reality Vector is unique \u2014 no other gate measures execution contamination (E_contam). It never triggered in this log because it requires E_contam > 0.3 to go PASSIVE. Critical for protecting against market regime collapse."
+    },
+    "CF_GATE": {
+      "protections_lost": [
+        "No counterfactual error hysteresis",
+        "No CF error-driven circuit breaker"
+      ],
+      "unique_protection": true,
+      "duplicated_by": [],
+      "notes": "CF Gate is unique \u2014 no other gate measures counterfactual prediction error. It never triggered in this log, meaning the system's counterfactual predictions were within tolerance (avg_cf_err < 0.35). Essential as a circuit breaker for when the CF engine degrades."
+    }
+  },
+  "pipeline_current": {
+    "total_pipeline_audits": 539,
+    "total_submitted": 4336,
+    "total_accepted": 2258,
+    "acceptance_rate_pct": 52.07564575645757
+  },
+  "observer_detail": {
+    "harness_total": 11581,
+    "execute_count": 3230,
+    "non_execute_count": 8351,
+    "non_execute_states": {
+      "HESITATE": 8128,
+      "REVIEW": 223
+    }
+  },
+  "rf_detail": {
+    "blocked_signal": 7473,
+    "blocked_rank": 3338,
+    "passed": 1859,
+    "warmup": 0,
+    "symbol_top5": [
+      [
+        "EURJPY",
+        683
+      ],
+      [
+        "AUDJPY",
+        580
+      ],
+      [
+        "EURUSD",
+        549
+      ],
+      [
+        "USDJPY",
+        535
+      ],
+      [
+        "USDCHF",
+        486
+      ]
+    ]
+  },
+  "router_reject_detail": {
+    "total": 21,
+    "causes": {
+      "OBSERVER_STATE": 10,
+      "SDL": 1
+    }
+  },
+  "exploration_detail": {
+    "total_audits": 299,
+    "would_block_breakdown": {
+      "NOT_IN_TOP3": {
+        "count": 251,
+        "pct": 83.9
+      },
+      "NET_ALPHA": {
+        "count": 213,
+        "pct": 71.2
+      },
+      "RF_GATE": {
+        "count": 170,
+        "pct": 56.9
+      },
+      "TPI_GATE": {
+        "count": 86,
+        "pct": 28.8
+      }
+    }
+  },
+  "total_scanned_lines": 430407,
+  "date_range": [
+    "1970-01-01",
+    "2026-03-12",
+    "2026-03-13",
+    "2026-03-14",
+    "2026-03-16",
+    "2026-03-17",
+    "2026-03-18",
+    "2026-03-19",
+    "2026-03-20",
+    "2026-03-21",
+    "2026-03-23",
+    "2026-03-24",
+    "2026-04-01",
+    "2026-04-02",
+    "2026-04-03",
+    "2026-04-07",
+    "2026-05-07",
+    "2026-05-08",
+    "2026-06-03",
+    "2026-06-08",
+    "2026-06-22",
+    "2026-07-03",
+    "2026-07-04",
+    "2026-07-05",
+    "2026-07-06",
+    "2026-07-07"
+  ]
+}

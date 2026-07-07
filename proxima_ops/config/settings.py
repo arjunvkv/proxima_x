@@ -114,6 +114,12 @@ class Settings:
     # Demo validation duration
     demo_days_target: int = 30
 
+    # Fixed volume override — if > 0, all trades use this exact volume instead of risk-based calculation
+    fixed_volume: float = 0.7
+
+    # Profit target — when combined unrealized PnL of all active positions reaches this, close all
+    profit_target_close: float = 50.0
+
     # Controlled exposure / exploration mode — randomly samples low-conviction trades for data collection
     exploration_mode: bool = True
     exploration_max_per_cycle: int = 1

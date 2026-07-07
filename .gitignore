@@ -20,6 +20,9 @@ env/
 # OpenCode
 .opencode/
 
+# Node modules (dashboard)
+dashboard/node_modules/
+
 # Runtime logs
 *.log
 logs/

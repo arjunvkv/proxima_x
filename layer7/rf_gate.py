@@ -52,7 +52,7 @@ class LiveRfGate:
 
     RF inference runs every `predict_every` ticks when 2000-tick windows are full.
     """
-    def __init__(self, model_path=None, window=2000, predict_every=500, prob_thresh=0.60):
+    def __init__(self, model_path=None, window=2000, predict_every=500, prob_thresh=0.30):
         self.window = window
         self.predict_every = predict_every
         self.prob_thresh = prob_thresh

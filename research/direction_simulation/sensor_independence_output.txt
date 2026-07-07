@@ -1,0 +1,184 @@
+﻿Reading C:\Trading\Agentic_Trading\proxima_x\proxima_demo.log (76.0 MB)...
+  Lines read: 424,494
+  OSS SURFACE:          13,077
+  PROD_SIGNAL_BREAKDOWN: 10,406
+  SHADOW_RAW:           11,413
+  TPI_SOURCE:           11,586
+
+  Matched cycles: 7,556
+
+  Computing repaired sensors...
+
+========================================================================
+SENSOR INDEPENDENCE ANALYSIS
+  Total matched cycles: 7,556
+  Match window: 5.0s
+  Shadow z-score window: 30
+  Energy window: 20
+========================================================================
+
+========================================================================
+CORRELATION MATRIX (Pearson r)
+========================================================================
+                       OSS      Shadow ShadowScore         TPI  exec_drift     ShadowZ      Energy
+           OSS      1.0000     -0.0021      0.0138     -0.0045     -0.3329      0.0046      0.0167
+        Shadow     -0.0021      1.0000      0.7933      0.0668     -0.0091      0.0008     -0.0103
+   ShadowScore      0.0138      0.7933      1.0000      0.0455     -0.0256      0.0075     -0.0063
+           TPI     -0.0045      0.0668      0.0455      1.0000     -0.0040      0.0067     -0.0044
+    exec_drift     -0.3329     -0.0091     -0.0256     -0.0040      1.0000     -0.0150     -0.0034
+       ShadowZ      0.0046      0.0008      0.0075      0.0067     -0.0150      1.0000      0.0213
+        Energy      0.0167     -0.0103     -0.0063     -0.0044     -0.0034      0.0213      1.0000
+
+========================================================================
+CORRELATION MATRIX (Spearman rank)
+========================================================================
+                       OSS      Shadow ShadowScore         TPI  exec_drift     ShadowZ      Energy
+           OSS      1.0000      0.7376      0.4196      0.3311      0.9964     -0.0006      0.0067
+        Shadow      0.7376      1.0000      0.7770      0.2586      0.7361      0.0052     -0.0034
+   ShadowScore      0.4196      0.7770      1.0000      0.2067      0.4172      0.0040     -0.0041
+           TPI      0.3311      0.2586      0.2067      1.0000      0.3304      0.0036     -0.0067
+    exec_drift      0.9964      0.7361      0.4172      0.3304      1.0000     -0.0019      0.0061
+       ShadowZ     -0.0006      0.0052      0.0040      0.0036     -0.0019      1.0000      0.0168
+        Energy      0.0067     -0.0034     -0.0041     -0.0067      0.0061      0.0168      1.0000
+
+========================================================================
+DIRECTIONAL AGREEMENT (same sign, both non-zero)
+========================================================================
+  OSS          vs Shadow      : agree= 25.0% disagree= 75.0% (n=4)
+  OSS          vs TPI         : agree= 50.0% disagree= 50.0% (n=2)
+  Shadow       vs TPI         : agree= 48.3% disagree= 51.7% (n=4915)
+  OSS          vs exec_drift  : agree= 25.0% disagree= 75.0% (n=4)
+  exec_drift   vs TPI         : agree= 33.3% disagree= 66.7% (n=6)
+
+========================================================================
+CROSS-DOMAIN CORRELATIONS
+========================================================================
+  p_cont vs shadow_conf:  Pearson=-0.1081  Spearman=0.1289
+  oss_conf vs shadow_conf: Pearson=0.3925  Spearman=0.5029
+  oss_ev vs shadow_score:  Pearson=0.1048  Spearman=0.3202
+
+========================================================================
+REPAIRED SENSOR ANALYSIS (ShadowZ and Energy)
+========================================================================
+  OSS          vs ShadowZ     :
+    Pearson=+0.0046  Spearman=-0.0006  agree= 50.0%  disagree= 50.0%  (n=4)
+  Shadow       vs ShadowZ     :
+    Pearson=+0.0008  Spearman=+0.0052  agree= 47.2%  disagree= 52.8%  (n=6452)
+  ShadowScore  vs ShadowZ     :
+    Pearson=+0.0075  Spearman=+0.0040  agree= 47.1%  disagree= 52.9%  (n=6452)
+  TPI          vs ShadowZ     :
+    Pearson=+0.0067  Spearman=+0.0036  agree= 52.1%  disagree= 47.9%  (n=5336)
+  exec_drift   vs ShadowZ     :
+    Pearson=-0.0150  Spearman=-0.0019  agree= 33.3%  disagree= 66.7%  (n=9)
+  OSS          vs Energy      :
+    Pearson=+0.0167  Spearman=+0.0067  agree= 50.0%  disagree= 50.0%  (n=4)
+  Shadow       vs Energy      :
+    Pearson=-0.0103  Spearman=-0.0034  agree= 57.5%  disagree= 42.5%  (n=6424)
+  ShadowScore  vs Energy      :
+    Pearson=-0.0063  Spearman=-0.0041  agree= 56.8%  disagree= 43.2%  (n=6424)
+  TPI          vs Energy      :
+    Pearson=-0.0044  Spearman=-0.0067  agree= 46.1%  disagree= 53.9%  (n=5303)
+  exec_drift   vs Energy      :
+    Pearson=-0.0034  Spearman=+0.0061  agree= 66.7%  disagree= 33.3%  (n=9)
+  ShadowZ      vs Energy      :
+    Pearson=+0.0213  Spearman=+0.0168  agree= 48.1%  disagree= 51.9%  (n=7270)
+
+========================================================================
+VERDICT: ARE SENSORS STILL INDEPENDENT AFTER REPAIRS?
+========================================================================
+  Current sensors mean |Pearson|: 0.0699
+  Repaired sensors mean |Pearson| with others: 0.0077
+  ShadowZ vs Energy |Pearson|: 0.0213
+
+  >>> SENSORS REMAIN INDEPENDENT (mean |r| < 0.20)
+      Repairs do not introduce convergence.
+
+  ShadowZ vs ShadowScore (raw continuous): |r|=0.0075
+  ShadowZ vs Shadow (discrete):           |r|=0.0008
+    -> z-score successfully decorrelated Shadow from itself
+
+========================================================================
+PER-REGIME CORRELATION ANALYSIS
+========================================================================
+
+  Pearson r by regime (key pairs):
+                  Regime OSS/    Shad OSS/     TPI Shad/     TPI Shad/    Shad Shad/    Ener OSS/    exec
+  ----------------------------------------------------------------------------------------------------------
+              TRANSITION       0.0281       0.0080       0.1164       0.0509       0.0960       0.3291
+                 CHAOTIC       0.0000       0.0000       0.0675       0.0075       0.0136       0.0000
+
+  Directional agreement by regime:
+                  Regime      n   OSS/Shad    OSS/TPI   Shad/TPI
+  ------------------------------------------------------------
+              TRANSITION    742      25.0%      50.0%      56.7%
+                 CHAOTIC   6814       0.0%       0.0%      47.9%
+
+========================================================================
+TRENDING vs CHAOTIC: DO SENSORS CONVERGE OR DIVERGE?
+========================================================================
+  Trending regimes: {'TRANSITION', 'TRENDING'}
+  Chaotic regimes:  {'ACTIVE_INSTABILITY', 'CHAOTIC', 'COMPRESSED_CHAOS'}
+
+  --- TRENDING / TRANSITION ---
+                  Pair   Pearson  Spearman   Agree%
+  ------------------------------------------------
+         OSS vs Shadow       -0.0281   +0.4621    25.0%
+         OSS vs TPI          -0.0080   +0.5089    50.0%
+      Shadow vs TPI          +0.1164   +0.3346    56.7%
+  ShadowScore vs ShadowZ      +0.0509   +0.0691    47.7%
+     ShadowZ vs Energy       +0.0960   +0.0040    47.4%
+
+  --- CHAOTIC / COMPRESSED_CHAOS / ACTIVE_INSTABILITY ---
+                  Pair   Pearson  Spearman   Agree%
+  ------------------------------------------------
+         OSS vs Shadow       +0.0000   +0.7521     0.0%
+         OSS vs TPI          +0.0000   +0.3450     0.0%
+      Shadow vs TPI          +0.0675   +0.2726    47.9%
+  ShadowScore vs ShadowZ      -0.0075   -0.0079    47.1%
+     ShadowZ vs Energy       +0.0136   +0.0158    48.2%
+
+  OSS-Shadow |r| in trending: 0.0281  chaotic: 0.0000
+  >> No significant regime-dependent convergence difference
+  TPI-Shadow |r| in trending: 0.1164  chaotic: 0.0675
+
+========================================================================
+SENSOR STATISTICS OVERVIEW
+========================================================================
+             OSS: n=  7556  mean=+0.0005  nonzero=     4 (  0.1%)
+          Shadow: n=  7556  mean=-0.4254  nonzero=  6618 ( 87.6%)
+     ShadowScore: n=  7556  mean=-0.3336  nonzero=  6618 ( 87.6%)
+             TPI: n=  7556  mean=+0.1620  nonzero=  5474 ( 72.4%)
+      exec_drift: n=  7556  mean=-0.0009  nonzero=     9 (  0.1%)
+         ShadowZ: n=  7556  mean=+0.1780  nonzero=  7363 ( 97.4%)
+          Energy: n=  7556  mean=+0.0239  nonzero=  7331 ( 97.0%)
+           TPI FLAT rate: 1215/6689 (18.2%)
+           exec_drift==0 rate: 7547/7556 (99.9%)
+
+========================================================================
+CONCLUSION
+========================================================================
+  CURRENT SENSORS:
+    OSS vs Shadow:     Pearson r=-0.0021, agree=25.0%
+    OSS vs TPI:        Pearson r=-0.0045, agree=50.0%
+    Shadow vs TPI:     Pearson r=+0.0668, agree=48.3%
+
+  REPAIRED SENSORS:
+    ShadowZ vs OSS:      r=+0.0046  (desired: near 0)
+    ShadowZ vs Shadow:   r=+0.0008  (desired: near 0 means independent)
+    ShadowZ vs ShadowSc: r=+0.0075  (desired: near 0 means decorrelated)
+    Energy vs OSS:       r=+0.0167  (desired: near 0)
+    Energy vs Shadow:    r=-0.0103  (desired: near 0)
+    Energy vs TPI:       r=-0.0044  (desired: near 0)
+
+  Mean absolute pairwise |r| across ALL 7 sensors: 0.0664
+  Max absolute pairwise |r|: 0.7933
+
+  >>> PARTIAL CONVERGENCE DETECTED
+      Some sensor pairs may be measuring the same latent factor.
+      Consider Dimensionality Reduction (PCA/ICA) on sensor space.
+
+  REGIME CONVERGENCE TABLE:
+                  Regime      n  mean|r|   max|r|
+  ----------------------------------------------
+              TRANSITION    742   0.0866   0.3291
+                 CHAOTIC   6814   0.0113   0.0675

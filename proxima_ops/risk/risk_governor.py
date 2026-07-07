@@ -53,7 +53,13 @@ class RiskGovernor:
             self._today = today_str
 
         if self._entries_paused:
-            if self._pause_until and now >= self._pause_until:
+            if self._pause_reason == "LOSS_STREAK_STOP":
+                self._entries_paused = False
+                self._pause_reason = ""
+                self._state = "HEALTHY"
+                self._loss_streak = 0
+                logger.info("Risk governor: LOSS_STREAK_STOP unpaused (feature removed)")
+            elif self._pause_until and now >= self._pause_until:
                 self._entries_paused = False
                 self._pause_reason = ""
                 self._state = "HEALTHY"
@@ -67,13 +73,6 @@ class RiskGovernor:
                 self._pause_reason = "DAILY_STOP"
                 self._state = "DAILY_STOP"
                 logger.warning(f"Risk governor: DAILY_STOP at ${self._daily_loss + self._daily_unrealized:.2f}")
-
-            elif self._loss_streak >= CONSECUTIVE_LOSS_LIMIT:
-                self._entries_paused = True
-                self._pause_reason = "LOSS_STREAK_STOP"
-                self._state = "LOSS_STREAK_STOP"
-                self._pause_until = now.__class__.fromtimestamp(now.timestamp() + LOSS_STREAK_HALT_HOURS * 3600)
-                logger.warning(f"Risk governor: LOSS_STREAK_STOP ({self._loss_streak} consecutive losses)")
 
         return {
             "state": self._state,

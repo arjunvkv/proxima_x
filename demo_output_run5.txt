@@ -1,0 +1,652 @@
+  BOOT INTEGRITY AUDIT
+----------------------------------------------------
+  EURJPY     OK    (m5=OK, ticks=OK, vpl=SKIP)
+  EURUSD     OK    (m5=OK, ticks=OK, vpl=SKIP)
+  GBPJPY     WARN  (m5=OK, ticks=WARN, vpl=SKIP)
+  USDJPY     OK    (m5=OK, ticks=OK, vpl=SKIP)
+  XAUUSD     WARN  (m5=OK, ticks=WARN, vpl=SKIP)
+  Universe Status: DEGRADED
+  Trade Mode:      ALLOWED (with warnings)
+
+    GBPJPY ticks: Tick parquet not found at C:\Trading\Agentic_Trading\data\ticks/GBPJPY_ticks.parquet (optional for synthetic)
+    XAUUSD ticks: Tick parquet not found at C:\Trading\Agentic_Trading\data\ticks/XAUUSD_ticks.parquet (optional for synthetic)
+[CONSTRUCTOR DEBUG] Boot audit done, creating MT5 connector...
+[CONSTRUCTOR DEBUG] MT5Connector created
+[CONSTRUCTOR DEBUG] Starting MarketSeedLoader.seed_all...
+[CONSTRUCTOR DEBUG] MarketSeedLoader done, bootstrap has 28 symbols
+[CONSTRUCTOR DEBUG] Creating OrderManager...
+[CONSTRUCTOR DEBUG] Creating PositionManager...
+[CONSTRUCTOR DEBUG] Creating ledgers...
+[C1]
+[C2]
+[C3]
+[C4]
+[CONSTRUCTOR DEBUG] Subscribing to ticks for 28 symbols...
+[CONSTRUCTOR DEBUG] Subscribed 28/28 symbols
+[CONSTRUCTOR DEBUG] Loading tick thermo for 28 symbols...
+[CONSTRUCTOR DEBUG] Loaded thermo data for 28/28 symbols
+[CONSTRUCTOR DEBUG] Pre-seeding RF gate for 28 symbols...
+[CONSTRUCTOR DEBUG] RF gate pre-seed complete
+Starting Proxima Ops Demo Deployment...
+  Threshold: 0.55
+  Risk: 0.25%
+  Assets: ['EURJPY', 'USDJPY', 'EURUSD', 'GBPUSD', 'AUDUSD', 'USDCAD', 'USDCHF', 'NZDUSD', 'GBPJPY', 'AUDJPY', 'CADJPY', 'CHFJPY', 'NZDJPY', 'EURGBP', 'EURCHF', 'EURAUD', 'EURCAD', 'EURNZD', 'GBPCHF', 'GBPAUD', 'GBPCAD', 'GBPNZD', 'AUDNZD', 'AUDCAD', 'AUDCHF', 'NZDCAD', 'NZDCHF', 'CADCHF']
+  Shadow: 26 symbols
+  Connecting to MT5... OK
+  Warming up price buffers... OK
+  Loading existing positions...
+  Starting main loop...
+
+[WHILE_DEBUG] Pre-loop init complete
+[WHILE_DEBUG] Entering while RUNNING loop
+[WHILE_DEBUG] Top of loop
+[WHILE_DEBUG] Before mt5_monitor.check()
+[WHILE_DEBUG] After mt5_monitor.check()
+[WHILE_DEBUG] _replay_mode=False _replay_feed=None
+[WHILE_DEBUG] Before tick dispatch
+[WHILE_DEBUG] After tick dispatch, _warmup_ticks=28, eval_data keys=28
+
+                                 MOF EVALUATION                               
+  ----------------------------------------------------------------------------
+  State:       INFORMATION_DEGRADED
+  Score:       0.4416
+  Permission:  BLOCKED
+  Components:  coherence=0.6308  confidence=0.0000  stability=0.0000
+
+  >>> MOF OVERRIDE: RELAXED_SIM — allowing simulated trades (INFORMATION_DEGRADED)
+
+
+RESTRICTED EXECUTION BRIDGE — GATED FIREWALL
+==============================================================================
+Symbol       Bridge State   Geometry           Regime             Governor       Exit? 
+------------------------------------------------------------------------------
+AUDCAD       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+AUDCHF       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+AUDJPY       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+AUDNZD       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+AUDUSD       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+CADCHF       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+CADJPY       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+CHFJPY       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+EURAUD       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+EURCAD       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+EURCHF       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+EURGBP       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+EURJPY       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+EURNZD       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+EURUSD       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+GBPAUD       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+GBPCAD       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+GBPCHF       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+GBPJPY       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+GBPNZD       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+GBPUSD       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+NZDCAD       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+NZDCHF       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+NZDJPY       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+NZDUSD       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+USDCAD       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+USDCHF       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+USDJPY       ELIGIBLE       UNKNOWN            STABLE_FLOW        HOLD           NO    
+
+ANY ELIGIBLE: True
+Eligible: 28 / 28
+Pending exits: NONE
+Shadow instability: False
+
+
+==============================================================================
+[EXEC FLOW] NZDJPY: entering execute block risk_pct=0.0000 final_mult=0.00 phase6_mult=0.0100
+[EXEC FLOW] EURCAD: entering execute block risk_pct=0.0000 final_mult=0.00 phase6_mult=0.0100
+[EXEC FLOW] CADJPY: entering execute block risk_pct=0.0000 final_mult=0.00 phase6_mult=0.0100
+[EXEC FLOW] CADJPY: pre_order_check vol=0.35 price=114.1240 bal=24741 pos=0
+[EXEC FLOW] CADJPY: rhl_check.allowed=True reason=
+[SUBMIT] CADJPY: recording submitted ex_dir=FLAT
+[EXEC FLOW] EURGBP: entering execute block risk_pct=0.0000 final_mult=0.00 phase6_mult=0.0100
+c============================================================================
+   [ - ]  PROXIMA V6 OPS - TOP-3 ROTATION  |  PHASE: COLLECTING_EVIDENCE
+   Deployment: v6_20260706_2259 | Session: c906f89c
+============================================================================
+Status: ACTIVE | Account: 5051788806 | Balance: $24,741.04 | Score: 0.500 (LIVE_WARNING)
+Runtime: 0h 1m | Next Signal Evaluation in: 0s
+----------------------------------------------------------------------------
+
+  SESSION (this deployment only)
+  Evaluated: 24 | Triggered: 0 (0.00%) | Executed: 0 (0.00%) | Blocked: 0 (0.00%)
+
+  LIFETIME (all deployments)
+  Evaluated: 19866 | Triggered: 5178 (26.06%) | Executed: 376 (1.89%) | Blocked: 4802 (24.17%)
+
+  Block Analysis -> Spread: 138 | Pos Exists: 3093 | Risk Limit: 557 | Other: 1014
+----------------------------------------------------------------------------
+RESEARCH -> PAPER TRANSFER:
+Target PP: 0.536 | Target Hold: 15.6 bars | Target Sharpe: ~6.0
+Current PP: 0.000 | Current Hold: 0.0 bars | Current Sharpe: 0.00
+----------------------------------------------------------------------------
+ARCHITECTURE: Top-3 Rotation | Lock: 3 bars | Exit: H20 Cap | Risk: Emergency Stop
+ROTATION: 0 events | LOCKS: 0 events | MIGRATIONS: 0 observed
+----------------------------------------------------------------------------
+ASSET EVALUATION:
+Symbol     Price      Spread   SpdPres   ES Value     ES Rank    AT Rank    Sizing   Regime         Status     History (E/T/Ex)
+AUDCHF     0.560      5        0.22      0.000020     33.3%      84.5%      0.00x    NORMAL         WATCH      [476 / 219 / 40]
+GBPCAD     1.902      6        0.30      0.000010     6.0%       27.6%      0.00x    NORMAL         WATCH      [322 / 65 / 7]
+GBPCHF     1.078      4        0.19      0.000010     18.8%      99.6%      0.00x    NORMAL         WATCH      [306 / 66 / 10]
+NZDJPY     92.429     6        0.30      0.000017     1.2%       2.2%       0.00x    NORMAL         WATCH      [321 / 66 / 2]
+EURCHF     0.921      3        0.15      0.000005     12.9%      49.2%      0.00x    NORMAL         WATCH      [301 / 44 / 4]
+EURJPY     185.492    3        0.19      0.000013     17.1%      26.2%      0.00x    LOCKED         WATCH      [2686 / 700 / 39]
+EURCAD     1.625      4        0.17      0.000011     29.2%      71.6%      0.00x    NORMAL         WATCH      [314 / 54 / 6]
+GBPJPY     217.008    9        0.45      0.000013     2.8%       38.1%      0.00x    COMPRESSED_C   WATCH      [2295 / 550 / 7]
+AUDCAD     0.988      6        0.30      0.000016     8.3%       23.8%      0.00x    NORMAL         WATCH      [273 / 40 / 6]
+USDCAD     1.421      1        0.05      0.000007     0.8%       26.2%      0.00x    NORMAL         WATCH      [545 / 274 / 21]
+AUDJPY     112.751    4        0.20      0.000023     5.6%       47.2%      0.00x    NORMAL         WATCH      [395 / 95 / 26]
+EURAUD     1.645      4        0.20      0.000009     1.4%       26.6%      0.00x    NORMAL         WATCH      [302 / 63 / 7]
+GBPAUD     1.925      7        0.35      0.000009     1.0%       8.9%       0.00x    NORMAL         WATCH      [339 / 73 / 16]
+CHFJPY     201.353    7        0.35      0.000012     2.4%       13.1%      0.00x    NORMAL         WATCH      [314 / 42 / 4]
+CADJPY     114.125    8        0.24      0.000020     78.0%      52.0%      0.00x    NORMAL         WATCH      [267 / 60 / 9]
+EURNZD     2.007      8        0.33      0.000018     34.5%      46.6%      0.00x    NORMAL         WATCH      [305 / 42 / 6]
+NZDUSD     0.570      1        0.05      0.000029     9.7%       42.9%      0.00x    NORMAL         WATCH      [331 / 82 / 3]
+USDJPY     162.197    2        0.08      0.000021     78.2%      76.6%      0.00x    ACTIVE_INSTA   WATCH      [2639 / 712 / 40]
+USDCHF     0.806      1        0.05      0.000020     7.5%       34.7%      0.00x    NORMAL         WATCH      [378 / 93 / 5]
+GBPNZD     2.348      8        0.36      0.000018     28.2%      54.8%      0.00x    NORMAL         WATCH      [300 / 10 / 4]
+NZDCAD     0.810      6        0.29      0.000018     18.3%      24.6%      0.00x    NORMAL         WATCH      [333 / 83 / 7]
+EURGBP     0.855      3        0.15      0.000004     6.7%       24.2%      0.00x    NORMAL         WATCH      [535 / 251 / 38]
+NZDCHF     0.459      2        0.10      0.000010     0.8%       5.8%       0.00x    NORMAL         WATCH      [373 / 127 / 5]
+GBPUSD     1.338      0        0.00      0.000012     0.8%       27.4%      0.00x    NORMAL         WATCH      [322 / 62 / 10]
+AUDNZD     1.220      6        0.29      0.000010     14.9%      31.0%      0.00x    NORMAL         WATCH      [282 / 52 / 4]
+AUDUSD     0.695      1        0.05      0.000019     1.4%       12.3%      0.00x    NORMAL         WATCH      [379 / 123 / 19]
+CADCHF     0.567      8        0.31      0.000017     46.8%      29.4%      0.00x    NORMAL         WATCH      [286 / 37 / 2]
+EURUSD     1.144      3        0.30      0.000009     1.2%       19.6%      0.00x    COMPRESSED_C   WATCH      [2388 / 116 / 22]
+----------------------------------------------------------------------------
+TOP CURRENT OPPORTUNITIES:
+ 1. USDJPY     ES Rank: 78.2% | AT Rank: 76.6% | Status: WATCH
+ 2. CADCHF     ES Rank: 46.8% | AT Rank: 29.4% | Status: WATCH
+ 3. EURNZD     ES Rank: 34.5% | AT Rank: 46.6% | Status: WATCH
+----------------------------------------------------------------------------
+TOP-3 RANKED: CADJPY
+OPEN POSITIONS:
+Ticket       Symbol     Side   Volume   Entry Price  Current Price  PnL        Bars  
+ No open positions
+
+RECENT ACTIVITY:
+ [23:00:29] [DIRECTIONAL PARITY] BUY: 0/0=0.0% SELL: 1/0=100.0%
+ [23:00:29] Deployment snapshot recorded: score=0.500
+ [23:01:03] [MICRO_CALIB] MAI=0.5 (spread=0.500 lat=0.500 order=0.500 tick=0.500)
+ [23:01:03] [ALERT] SPR = 0.000 (below threshold 0.200)
+ [23:01:03] [ALERT] GFR = 1.000 (above threshold 0.500)
+ [23:01:03] [ALERT] OVERALL = 0.375 (below threshold 0.400)
+
+====================================================
+  SIGNAL FUNNEL
+====================================================
+
+  Generated:          392
+  Threshold Passed:   55
+  Triggered:          55
+  Submitted:          13
+  Accepted:           0
+  Opened:             0
+  Closed:             0
+  Blocked:            42
+
+----------------------------------------------------
+  Conversion Rates
+----------------------------------------------------
+  Pass Rate:      14.0%
+  Submit Rate:    23.6%
+  Accept Rate:     0.0%
+  Open Rate:       0.0%
+
+====================================================
+  ALPHA LEAKAGE
+====================================================
+
+  Generated -> Threshold Passed -> Executed -> Closed
+  Leakage: 100.0%  (392 signals lost between generation and execution)
+  Execution Survival: 0.0%  (0/392)
+
+====================================================
+  REJECTION BREAKDOWN
+====================================================
+  Unknown              42
+
+====================================================
+  POSITION AUDIT
+====================================================
+  MT5 Open:    0
+  Ledger Open: 0
+  Diff:        0
+  Status:      HEALTHY
+
+====================================================
+  DEPLOYMENT COMPONENTS
+====================================================
+  Performance:  0.00  (COLLECTING_DATA)
+  Execution:    0.00        (COLLECTING_DATA)
+  DD Control:   0.00        (COLLECTING_DATA)
+  Trade Count:  0.00       (Trades=0)
+  ------------------------
+  Score:        0.500    (LIVE_WARNING)
+
+====================================================
+  LAST ORDER
+====================================================
+  [23:00:28]
+  Signal:   SIG_20260706_230028_CADJPY
+  Action:   FLAT  CADJPY
+  Vol:      0.35  @ 114.12400
+  Status:   PENDING
+
+====================================================
+  DEPLOYMENT REALITY
+====================================================
+  ASR:                      COLLECTING_DATA
+  Execution Quality:        NO_DATA
+  Mean Slippage:            0 pts
+  Trend:                    STABLE
+  Classification:           COLLECTING_EVIDENCE
+
+
+====================================================
+  INVALID SPREAD AUDIT
+====================================================
+  Blocked Signals:          25
+  Profitable Blocked:       6
+  Leakage Rate:             24.0%
+  ADR:                      0.591
+  Classification:           ALPHA_DESTROYER
+
+
+====================================================
+  DPL LIVE VALIDATION (REAL OUTCOMES)
+====================================================
+  Snapshots:                2302
+  Resolved:                 1278 (55.5%)
+  Symbols:                  AUDCHF, GBPCAD, GBPCHF, NZDJPY, EURCHF, EURJPY, EURCAD, GBPJPY, AUDCAD, USDCAD, AUDJPY, EURAUD, GBPAUD, CHFJPY, CADJPY, EURNZD, NZDUSD, USDJPY, USDCHF, GBPNZD, NZDCAD, EURGBP, NZDCHF, GBPUSD, AUDNZD, AUDUSD, CADCHF, EURUSD
+  Regime Dist:              R0=58, R1=68, R2=2176
+  Short Outcomes:           YES
+  Regime P(up):
+    R0: 0.8837 (n=43, z=7.85)
+    R1: 0.3214 (n=56, z=-2.86)
+    R2: 0.8463 (n=1028, z=30.79)
+  Best Feature:             es_rank_h50
+    Accuracy:               0.5714
+    Info Gain:              0.016112
+    P(up|high):             0.4286
+    N:                      98
+
+
+====================================================
+  REALITY CONVERGENCE
+====================================================
+  ATE:                      COLLECTING_DATA
+  Frequency Match:          COLLECTING_DATA
+  Friction Index:           0.123
+  Health Index:             COLLECTING_DATA
+  Classification:           COLLECTING_EVIDENCE
+
+
+====================================================
+  AUTONOMOUS RESEARCH DIRECTOR
+====================================================
+  Evidence:         0.00
+  Research Conf:    UNCHANGED
+  Deployment Conf:  UNCHANGED
+  Alpha Transfer:   COLLECTING_DATA
+  Risk:             energy_storage_alpha
+  Strength:         energy_storage_alpha
+  Recommendation:   OBSERVE_LONGER
+  Classification:   RESEARCH_PENDING
+
+====================================================
+  RESEARCH vs PAPER
+====================================================
+  PP:    Research COLLECTING_DATA | Paper 0.000
+  Hold:  Research COLLECTING_DATA  | Paper 0.0 bars
+  Sharpe:Research COLLECTING_DATA  | Paper 0.00
+  Mix:   Research COLLECTING_DATA | Paper 0 assets
+
+====================================================
+====================================================
+  LAYER 7 — TPI FLOW OVERLAY (SHADOW MODE)
+====================================================
+
+  SYMBOL        TPI      DIR     CONF    PCT   SESSION  ELIG  ALIGN
+  EURJPY        +0.00000      ?  0.00000   N/A CANO    NO ---
+  GBPJPY        +0.00000      ?  0.00000   N/A CANO    NO ---
+  USDJPY        +0.00000      ?  0.00000   N/A CANO    NO ---
+  EURUSD        +0.00000      ?  0.00000   N/A CANO    NO ---
+
+  PERSISTENCE & CURVATURE
+----------------------------------------------------
+  EURJPY      streak= 0  curv=   NEUTRAL
+  GBPJPY      streak= 0  curv=   NEUTRAL
+  USDJPY      streak= 0  curv=   NEUTRAL
+  EURUSD      streak= 0  curv=   NEUTRAL
+
+  INCREMENTAL EDGE ATTRIBUTION
+----------------------------------------------------
+  Base Win Rate:            0/0   (  0.0%)
+  TPI-Aligned W/R:          0/0   (  0.0%)
+  TPI-Conflict W/R:         0/0   (  0.0%)
+  Veto Avoided Losses:      0
+
+  PROMOTION GATE STATUS
+----------------------------------------------------
+  Gate A (Aligned > Base +5%):  PENDING (0.0% vs 0.0%)
+  Gate B (Conflict < Base -5%): PENDING (0.0% vs 0.0%)
+  Gate C (n >= 50):              PENDING (0 eligible obs)
+  Gates Passed: 0/3
+
+  SHADOW OBSERVATIONS
+----------------------------------------------------
+  Alignments:        0 (  0.0%)
+  Conflicts:         0 (  0.0%)
+  Weak Align:        0 (  0.0%)
+  No Signal:         4
+  Eligible Veto:     0
+  Total Obs:         4
+
+  LAST SHADOW OBSERVATION
+  [23:00:29] EURUSD | TPI=+0.00000 | None | P0 | NO_SIGNAL vs NONE
+
+  LIVE DECAY (H1 / H3 directional hit)
+----------------------------------------------------
+  H1 Hit Rate:     pending  (0 resolved)
+  H3 Hit Rate:     pending  (0 resolved)
+  Signal Age:     pending
+  Half-Life:      pending
+
+V2.2 GUARDS: SampleInspector=DEPLOYMENT_CLASSIFICATION | Research Alignment: 0.00 | Target: 28 assets | Live: 28 assets | Missing: ['XAUUSD'] *** ALERT ***
+UNIVERSE: 28-asset (26 extra) | ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'CHFJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURNZD', 'EURUSD', 'GBPAUD', 'GBPCAD', 'GBPCHF', 'GBPJPY', 'GBPNZD', 'GBPUSD', 'NZDCAD', 'NZDCHF', 'NZDJPY', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY'] | CORE_OK
+PYRAMID EVENTS: none
+  DPL-18: CROSS-ASSET PROPAGATION
+----------------------------------------------------
+  Source   Target   Lag   Corr     DirAgr   PScore   Stab    
+  EURJPY   EURUSD   ?     ?        ?        ?        ?       
+  EURJPY   GBPJPY   ?     ?        ?        ?        ?       
+  EURJPY   USDJPY   ?     ?        ?        ?        ?       
+  EURUSD   EURJPY   ?     ?        ?        ?        ?       
+  EURUSD   GBPJPY   ?     ?        ?        ?        ?       
+  EURUSD   USDJPY   ?     ?        ?        ?        ?       
+  GBPJPY   EURJPY   ?     ?        ?        ?        ?       
+  GBPJPY   EURUSD   ?     ?        ?        ?        ?       
+  GBPJPY   USDJPY   ?     ?        ?        ?        ?       
+  USDJPY   EURJPY   ?     ?        ?        ?        ?       
+  USDJPY   EURUSD   ?     ?        ?        ?        ?       
+  USDJPY   GBPJPY   ?     ?        ?        ?        ?       
+
+  LEADERS (most influential):
+  FOLLOWERS (most influenced):
+  P4.5: CROSS-ASSET IMPULSE GRAPH
+----------------------------------------------------
+  Leader:     EURJPY (influence=0.0000)
+  Follower:   EURJPY (dependency=0.0000)
+  Hub:        EURJPY (centrality=0.0000)
+
+  Directed edge weights (top):
+
+    EURJPY    influence=0.0000  dependency=0.0000  centrality=0.0000
+    EURUSD    influence=0.0000  dependency=0.0000  centrality=0.0000
+    GBPJPY    influence=0.0000  dependency=0.0000  centrality=0.0000
+    USDJPY    influence=0.0000  dependency=0.0000  centrality=0.0000
+  DPL-19: TICK THERMODYNAMICS
+----------------------------------------------------
+  Symbol   Pres    Dir   Tempo   Burst   Asym    Up%    Dn%    Accel  
+  AUDCHF   INSUFFICIENT_DATA   
+  GBPCAD   INSUFFICIENT_DATA   
+  GBPCHF   INSUFFICIENT_DATA   
+  NZDJPY   INSUFFICIENT_DATA   
+  EURCHF   INSUFFICIENT_DATA   
+  EURJPY   0.155   FLAT  0.000   0.00x   -0.018  42.7%  44.3%  18072.1
+  EURCAD   INSUFFICIENT_DATA   
+  GBPJPY   INSUFFICIENT_DATA   
+  AUDCAD   INSUFFICIENT_DATA   
+  USDCAD   INSUFFICIENT_DATA   
+  AUDJPY   INSUFFICIENT_DATA   
+  EURAUD   INSUFFICIENT_DATA   
+  GBPAUD   INSUFFICIENT_DATA   
+  CHFJPY   INSUFFICIENT_DATA   
+  CADJPY   INSUFFICIENT_DATA   
+  EURNZD   INSUFFICIENT_DATA   
+  NZDUSD   INSUFFICIENT_DATA   
+  USDJPY   0.012   FLAT  0.000   0.00x   +0.038  51.3%  47.5%  -11.4  
+  USDCHF   INSUFFICIENT_DATA   
+  GBPNZD   INSUFFICIENT_DATA   
+  NZDCAD   INSUFFICIENT_DATA   
+  EURGBP   INSUFFICIENT_DATA   
+  NZDCHF   INSUFFICIENT_DATA   
+  GBPUSD   0.154   FLAT  0.000   0.00x   -0.014  48.7%  50.1%  4532153036.5
+  AUDNZD   INSUFFICIENT_DATA   
+  AUDUSD   INSUFFICIENT_DATA   
+  CADCHF   INSUFFICIENT_DATA   
+  EURUSD   0.162   FLAT  0.000   0.00x   -0.047  36.5%  40.1%  6023.9 
+
+  Key: Pres=Pressure(0-1), Tempo=Compression, Burst=density ratio, Asym=uptick-downtick bias
+  DPL-21: META-STATE FUSION
+----------------------------------------------------
+  Collecting samples (0/10 minimum)...
+
+  Symbol   Meta    Dir   TPI    Pers   Curv   Decay  Prop   Pres  
+  EURJPY   0.083   FLAT  0.000  0.000  0.400  0.000  0.000  0.155 
+  GBPJPY   0.060   FLAT  0.000  0.000  0.400  0.000  0.000  0.000 
+  USDJPY   0.062   FLAT  0.000  0.000  0.400  0.000  0.000  0.012 
+  EURUSD   0.084   FLAT  0.000  0.000  0.400  0.000  0.000  0.162 
+
+  Feature Attribution (global avg):
+  DPL-20: SESSION CONDITIONAL
+----------------------------------------------------
+  TPI  : ASIA=? LOND=? OVER=? NY=0% DEAD=?   best=NONE(0%)
+  META : ASIA=? LOND=? OVER=? NY=0% DEAD=?   best=NONE(0%)
+
+  Per-session accuracy (meta > 0 samples):
+  Session    n     Acc      BestLayer   
+  ASIA       0     ?        ?           
+  LONDON     0     ?        ?           
+  OVERLAP    0     ?        ?           
+  NY         4     0.0%    META        
+  DEAD       0     ?        ?           
+
+  Best sessions per layer:
+  DPL-22: ENTROPY COMPRESSION
+----------------------------------------------------
+  Warmup: 28/28 symbols ready
+  Symbol   H20     H50     H100     Slope    NormH   Cmp   SCmp   State
+  AUDCHF   2.766   3.144   3.255    -0.218   0.833   YES   no     NORMAL
+  GBPCAD   3.184   3.231   3.251    +0.175   0.959   no    no     NORMAL
+  GBPCHF   3.009   3.288   3.265    -0.000   0.906   YES   no     NORMAL
+  NZDJPY   2.709   3.190   3.248    -0.375   0.815   YES   no     NORMAL
+  EURCHF   3.209   3.103   3.203    +0.325   0.966   no    YES    NORMAL
+  EURJPY   2.828   3.143   3.238    -0.280   0.851   YES   no     NORMAL
+  EURCAD   2.984   3.137   3.236    +0.275   0.898   no    YES    NORMAL
+  GBPJPY   2.984   3.259   3.235    -0.200   0.898   YES   no     NORMAL
+  AUDCAD   2.984   2.995   3.054    -0.062   0.898   YES   YES    NORMAL
+  USDCAD   2.984   3.193   3.250    +0.018   0.898   no    no     NORMAL
+  AUDJPY   3.222   3.223   3.267    +0.313   0.970   no    no     NORMAL
+  EURAUD   2.984   3.144   3.209    +0.000   0.898   no    no     NORMAL
+  GBPAUD   2.984   3.141   3.245    +0.320   0.898   no    no     NORMAL
+  CHFJPY   2.946   3.198   3.241    -0.020   0.887   YES   no     NORMAL
+  CADJPY   2.771   3.108   3.130    -0.338   0.834   YES   no     NORMAL
+  EURNZD   2.941   3.051   3.148    +0.208   0.885   no    YES    NORMAL
+  NZDUSD   3.033   3.221   3.210    +0.049   0.913   no    no     NORMAL
+  USDJPY   2.946   3.200   3.234    +0.200   0.887   no    no     NORMAL
+  USDCHF   2.633   3.223   3.210    -0.195   0.793   YES   no     NORMAL
+  GBPNZD   2.809   3.077   3.161    +0.180   0.846   no    YES    NORMAL
+  NZDCAD   2.802   3.225   3.198    -0.283   0.843   YES   no     NORMAL
+  EURGBP   2.984   3.053   3.164    -0.000   0.898   YES   YES    NORMAL
+  NZDCHF   2.909   3.113   3.094    +0.067   0.876   no    no     NORMAL
+  GBPUSD   2.804   3.220   3.178    -0.180   0.844   YES   no     NORMAL
+  AUDNZD   2.822   3.056   3.184    -0.225   0.850   YES   YES    NORMAL
+  AUDUSD   2.823   3.181   3.237    +0.077   0.850   no    no     NORMAL
+  CADCHF   2.828   3.173   3.181    -0.180   0.851   YES   no     NORMAL
+  EURUSD   2.546   3.030   3.188    -0.562   0.767   YES   no     NORMAL
+
+  Collecting outcomes (0/20 minimum)...
+
+  Compression events: 82 total
+  RCL-1A: OUTCOME ATTRIBUTION LEDGER
+----------------------------------------------------
+  Total records:     28
+  Resolved:          0
+  Unresolved:        28
+
+  Layers tracked:
+    tpi_value                 4/28
+    persistence_rank          4/28
+    curvature_state           4/28
+    decay_ema                 4/28
+    propagation_score         4/28
+    pressure_score            4/28
+    meta_score                4/28
+    entropy_score             4/28
+  RCL-1B: LIVE INFORMATION GAIN AUDIT
+----------------------------------------------------
+  Resolved samples: 0
+  Need >= 10 resolved samples for IG computation (have 0)
+  RCL-1C: FEATURE REDUNDANCY MATRIX
+----------------------------------------------------
+  Features tracked: 0
+  Need >= 10 resolved samples (have 0)
+
+  P4.4: BAYESIAN META REWEIGHTING
+------------------------------------------------------------
+  Component       Prior    Live     Delta    RP    
+  tpi             0.227    0.227    +0.000   0.000 
+  persistence     0.182    0.182    +0.000   0.000 
+  curvature       0.136    0.136    +0.000   0.000 
+  decay           0.136    0.136    +0.000   0.000 
+  propagation     0.091    0.091    +0.000   0.000 
+  pressure        0.136    0.136    +0.000   0.000 
+  transition_tis  0.045    0.045    +0.000   0.000 
+  decay_dps       0.045    0.045    +0.000   0.000 
+
+  Total drift: 0.000
+  Promoted: 
+  Demoted:  
+  RCL-1E: LAYER PRUNING
+----------------------------------------------------
+  Resolved samples: 0
+  Need >= 10 resolved samples for pruning classification
+
+  Layer                     Score      Class     
+  tpi_value                 ---        UNCLASSIFIED
+  tpi_sign                  ---        UNCLASSIFIED
+  persistence_rank          ---        UNCLASSIFIED
+  curvature_state           ---        UNCLASSIFIED
+  decay_ema                 ---        UNCLASSIFIED
+  propagation_score         ---        UNCLASSIFIED
+  pressure_score            ---        UNCLASSIFIED
+  entropy_score             ---        UNCLASSIFIED
+  meta_score                ---        UNCLASSIFIED
+  RCL DUAL HORIZON
+----------------------------------------------------
+  H5 Resolved:        0
+  H20 Resolved:       0
+
+  SESSION BALANCE
+----------------------------------------------------
+  ASIA       0                                                       
+  LONDON     0                                                       
+  OVERLAP    0                                                       
+  NY         0                                                       
+  DEAD       0                                                       
+
+  OCCUPANCY LEAKAGE AUDIT
+----------------------------------------------------
+  Blocked signals:    0
+  Resolved:           0
+  Unresolved:         0
+
+  TPI A/B VALIDATION
+----------------------------------------------------
+  SOFT_SCORE:
+    Trades:        0
+    WR:            0.0%
+    Avg Return:    0.000000
+    Sharpe:        0.0000
+    Avg Hold:      0.0 bars
+  HARD_GATE:
+    Trades:        0
+    WR:            0.0%
+    Avg Return:    0.000000
+    Sharpe:        0.0000
+    Avg Hold:      0.0 bars
+
+  Waiting for N>=20 per arm (SOFT=0, HARD=0)
+
+  SPREAD SESSION BASELINES:
+    CADJPY: NY=7.0
+    EURCAD: NY=0.0
+    EURGBP: NY=0.0
+    NZDJPY: NY=7.0
+  FUNNEL STARVATION AUDIT
+----------------------------------------------------
+  Generated:        28
+  Threshold                4 (14.3%)
+  TPI Passed              28 (100.0%)
+  Spread Passed           28 (100.0%)
+  Occupancy Passed        28 (100.0%)
+  Risk Passed             28 (100.0%)
+  Submitted                1 ( 3.6%)
+  Accepted                 0 ( 0.0%)
+  Opened                   0 ( 0.0%)
+  Closed                   0 ( 0.0%)
+
+  Alpha Leakage Index: 1.0000  (1 - Opened/Generated)
+  Biggest Leak:        SUBMITTED (-27/28 = 96%)
+
+
+  REGIME MEMORY MATRIX
+------------------------------------------------------------
+  No transitions recorded yet
+
+  LIVE TRANSITION EDGE
+------------------------------------------------------------
+  No active transitions to evaluate
+
+  SIGNAL DECAY VELOCITY
+----------------------------------------------------------------------
+  No cohort data yet
+
+  OCCUPANCY MIGRATION
+------------------------------------------------------------
+  No migration events
+====================================================
+  RISK HARDENING LAYER
+====================================================
+  Risk Budget:          $61.85   
+  True Stop Risk:       $0.00    
+  Portfolio Heat:       0.0000  (NORMAL)
+  Daily PnL:            $0.00    
+  Loss Streak:          0
+  Drawdown:             0.0%
+  Risk State:           HEALTHY
+  Entries Paused:       NO
+----------------------------------------------------
+  Limits Active:
+    Max Positions:       5 total, 5 FX, 1 gold, 1 index
+    Max Daily Loss:      1% equity
+    Consecutive Loss:    3
+    Equity Floor:        10% drawdown
+
+  Catastrophic Stops (pips):
+    EURJPY       50
+    EURUSD       50
+    GBPJPY       70
+    USDJPY       50
+    XAUUSD       500
+
+====================================================
+
+====================================================
+  SHADOW SYSTEM — TRUTH RECONCILIATION
+====================================================
+  GT_corr=0.0000 SY_corr=0.0000 STAS=0.0000 Winner=SY_LEGACY
+  SOF=0.000000 EdgePres=0.000000 ExecEff=0.000000
+  Phase 2: BLOCKED | Samples: 1
+
+[WHILE_DEBUG] Top of loop
+[WHILE_DEBUG] Before mt5_monitor.check()
+[WHILE_DEBUG] After mt5_monitor.check()
+[WHILE_DEBUG] _replay_mode=False _replay_feed=None
+[WHILE_DEBUG] Before tick dispatch
+[WHILE_DEBUG] After tick dispatch, _warmup_ticks=56, eval_data keys=28

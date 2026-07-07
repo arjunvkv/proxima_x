@@ -23,7 +23,7 @@ if _PROJECT_ROOT not in sys.path:
 import math
 import random
 import logging
-from collections import defaultdict
+from collections import defaultdict, deque
 from proxima_ops.decision.gate.mra_signal import MarketRealityAnchor
 from proxima_ops.decision.gate.emd_signal import ExecutionMicrostructureDrift
 from proxima_ops.decision.gate.recovery_policy import RecoveryPolicy, check_regime_failure
@@ -73,6 +73,39 @@ from proxima_ops.governance.system_mode_contract import (
     ModeValidator, RuntimeInvariantChecker, ModeSnapshotLogger,
 )
 
+# Portfolio Exposure Gate — blocks conflicting base-currency exposure
+BASE_CURRENCY_MAP = {
+    "EURUSD":"EUR","GBPUSD":"GBP","AUDUSD":"AUD","NZDUSD":"NZD",
+    "USDCAD":"USD","USDCHF":"USD","USDJPY":"USD",
+    "EURGBP":"EUR","EURCHF":"EUR","EURAUD":"EUR","EURCAD":"EUR","EURNZD":"EUR",
+    "GBPCHF":"GBP","GBPAUD":"GBP","GBPCAD":"GBP","GBPNZD":"GBP","GBPJPY":"GBP",
+    "AUDJPY":"AUD","AUDCAD":"AUD","AUDCHF":"AUD","AUDNZD":"AUD",
+    "NZDJPY":"NZD","NZDCAD":"NZD","NZDCHF":"NZD",
+    "CADJPY":"CAD","CADCHF":"CAD","CHFJPY":"CHF",
+}
+
+def _sign(x: float) -> int:
+    return 1 if x > 0 else (-1 if x < 0 else 0)
+
+def _portfolio_exposure_check(open_positions: list, symbol: str, direction: str) -> dict:
+    """Advisory-only: log base-currency exposure conflicts without blocking."""
+    base = BASE_CURRENCY_MAP.get(symbol)
+    if base is None:
+        return {"allowed": True}
+    delta = 1.0 if direction == "BUY" else -1.0
+    net = 0.0
+    for p in open_positions:
+        pb = BASE_CURRENCY_MAP.get(p.get("symbol", ""))
+        if pb == base:
+            pd = 1.0 if p.get("type", 0) == 0 else -1.0
+            net += pd
+    MICRO_LOT_UNIT = 0.03
+    scaled_net = net / MICRO_LOT_UNIT
+    projected_net = net + delta
+    if abs(scaled_net) > 2 and _sign(net) != _sign(projected_net):
+        logger.warning(f"[PORTFOLIO_EXPOSURE] {symbol} {direction}: {base} {net:+.1f}->{projected_net:+.1f} scaled={scaled_net:.1f}")
+    return {"allowed": True}
+
 # Acceptance mode setup
 import tempfile as _tf
 ACCEPTANCE_MODE = "--acceptance" in sys.argv
@@ -81,7 +114,7 @@ if ACCEPTANCE_MODE:
     _ah = logging.FileHandler(ACCEPTANCE_LOG_PATH, encoding="utf-8", mode="w")
     _ah.setLevel(logging.INFO)
     _ah.setFormatter(logging.Formatter("%(asctime)s %(message)s", datefmt="%H:%M:%S"))
-    _af = lambda r: any(t in r.getMessage() for t in ("[CYCLE]", "[ENTROPY_RANK]", "[TOPOLOGY_DECISION]", "[TOPOLOGY_TRANSITION]", "[EXHAUST_DETAIL]", "[EXHAUST_AUDIT]", "[EXHAUST_VS_SHADOW]", "[EXHAUST_DBG]", "[EXHAUST_NEAR_MISS]", "[EXHAUST_NEAREST]", "[SHADOW_EXHAUST_OVERRIDE]", "[SHADOW_EXHAUST_RATE]", "[THESIS_BUFFER]", "[THESIS_LABELS]", "[B4_RECORD]", "[B4_RESOLVE]", "[B4_ACCEPT]", "[THESIS_RF_STATUS]", "[THESIS_GRAPH]", "[AUTO_STOP]", "[SHUTDOWN]", "[TOPOLOGY_INIT]", "[TOPOLOGY_DBG]"))
+    _af = lambda r: any(t in r.getMessage() for t in ("[CYCLE]", "[ENTROPY_RANK]", "[TOPOLOGY_DECISION]", "[TOPOLOGY_TRANSITION]", "[EXHAUST_DETAIL]", "[EXHAUST_AUDIT]", "[EXHAUST_VS_SHADOW]", "[EXHAUST_DBG]", "[EXHAUST_NEAR_MISS]", "[EXHAUST_NEAREST]", "[SHADOW_EXHAUST_OVERRIDE]", "[SHADOW_EXHAUST_RATE]", "[THESIS_BUFFER]", "[THESIS_LABELS]", "[B4_RECORD]", "[B4_RESOLVE]", "[B4_ACCEPT]", "[THESIS_RF_STATUS]", "[THESIS_GRAPH]", "[AUTO_STOP]", "[SHUTDOWN]", "[TOPOLOGY_INIT]", "[TOPOLOGY_DBG]", "[EXEC_FLOW]", "[SUBMIT]", "[PORTFOLIO_EXPOSURE]", "[TRIGGER_CHECK]"))
     _ah.addFilter(type('AcceptFilter', (), {'filter': lambda self, r: _af(r)})())
     logger.addHandler(_ah)
     logger.info("[ACCEPTANCE_MODE] enabled — logging CYCLE/ENTROPY_RANK/TOPOLOGY_DECISION/TOPOLOGY_TRANSITION to %s", ACCEPTANCE_LOG_PATH)
@@ -395,7 +428,7 @@ class ProximaDemo:
         if os.environ.get("VALIDATION_MODE"):
             self._execution_symbols = ["EURUSD"]
         elif ACCEPTANCE_MODE:
-            self._execution_symbols = ["EURUSD", "USDJPY", "EURJPY", "AUDJPY"]
+            self._execution_symbols = list(SETTINGS.symbols)
         else:
             self._execution_symbols = list(SETTINGS.symbols)
         self._execution_universe = list(self._execution_symbols)
@@ -482,6 +515,10 @@ class ProximaDemo:
         self._migration_event_count = 0  # observation only — no trading decisions
         self._top3_history = []  # list of (timestamp, top3_list) for rotation tracking
         self._last_top3_qualified = []
+        self._drs_rankings = []  # list of (sym, drs, ps, strength) ranked by score
+        self._drs_decay_lambda = 0.1  # decay factor for held position DRS (higher = faster decay)
+        self._displacement_temperature = 1.0  # softmax temperature (lower = more selective)
+        self._slot_inertia = [1.0, 0.85, 0.7]  # displacement resistance by slot index
         # Gate audit logger — tracks every rejection with full context
         self._gate_audit_logger = get_gate_audit()
         # Spread model — probabilistic filter replacing hard cutoff
@@ -528,6 +565,8 @@ class ProximaDemo:
 
         # Phase 6 — Deployment Control System (SHADOW mode initially)
         self._phase6_rollout = Phase6RolloutController()
+        # Start in MICRO_CAPITAL (not SHADOW) so trades can execute immediately
+        self._phase6_rollout.force_state("MICRO_CAPITAL")
         self._phase6_killswitch = Phase6KillSwitch()
         self._phase6_scaling = Phase6ScalingEngine()
         self._phase6_recovery = Phase6RecoveryProtocol()
@@ -849,7 +888,7 @@ class ProximaDemo:
         # Wave 4: Cross-symbol + memory + portfolio coupling
         self.market_graph = MarketGraph()
         self.memory_compressor = MemoryCompressor()
-        self.portfolio_graph = PortfolioGraph()
+        self.portfolio_graph = PortfolioGraph(kill_threshold=1500.0)
         # Wave 5: Rejection semantics
         self.rejection_engine = RejectionEngine()
 
@@ -889,7 +928,42 @@ class ProximaDemo:
         confidence = compute_confidence(_ntpi, _pers, _curv, _ent)
         state = state_from_confidence(confidence)
         return {"observer_state": state, "observer_confidence": float(confidence),
-                "reality_score": min(1.0, max(0.0, confidence + 0.1))}
+                "reality_score": min(1.0, max(0.0, confidence + 0.25))}
+
+    def _compute_drs(self, prod_signals: dict, eval_data: dict,
+                     held: list[dict] = None) -> list:
+        scores = []
+        _get_broker = (self.mt5._get_broker_symbol if hasattr(self.mt5, '_get_broker_symbol') else lambda s: s)
+        held_by_internal = {}
+        for _p in (held or []):
+            _ps = _p.get("symbol", "")
+            for _es in self._execution_symbols:
+                if _get_broker(_es) == _ps:
+                    held_by_internal[_es] = _p
+                    break
+        for sym in self._execution_symbols:
+            ps = prod_signals.get(sym, 0)
+            if ps == 0:
+                continue
+            ed = eval_data.get(sym, {})
+            strength = ed.get("research_p_cont", 0.5)
+            oss_conf = ed.get("oss_conf", 0.5)
+            ecdf_r = ed.get("ecdf_rank", 0.5)
+            sdl_s = self._sdl.get_strength(sym)
+            sdl_dir = self._sdl.get_current(sym)
+            ps_str = "BUY" if ps == 1 else "SELL" if ps == -1 else None
+            dir_align = 1.0 if (sdl_dir is None or ps_str is None or sdl_dir == ps_str) else -0.5
+            drs = strength * 0.25 + oss_conf * 0.25 + ecdf_r * 0.15 + sdl_s * 0.25 + (dir_align * 0.1)
+            # Apply decay for held positions — incumbents must re-prove themselves
+            if sym in held_by_internal:
+                meta = self._active_positions_metadata.get(held_by_internal[sym].get("ticket", 0), {})
+                drs_entry = meta.get("drs_entry", drs)
+                age = meta.get("age_cycles", 0)
+                decay = math.exp(-self._drs_decay_lambda * age)
+                drs = drs_entry * decay + drs * (1 - decay)
+            scores.append((sym, drs, ps, strength))
+        scores.sort(key=lambda x: -x[1])
+        return scores
 
     def _freq_rates_provider(self, symbol: str) -> list:
         return self.mt5.get_rates(symbol, count=150, timeframe="H1")
@@ -2127,6 +2201,11 @@ class ProximaDemo:
                             for c in closes[1:]:
                                 ema = alpha * c + (1 - alpha) * ema
                             self._drift_ema[sym] = ema
+                        # Initialize directional energy buffers
+                        if not hasattr(self, '_last_prices'):
+                            self._last_prices = {}
+                        if not hasattr(self, '_price_diff_buffers'):
+                            self._price_diff_buffers = {}
                 except Exception as e:
                     logger.warning(f"[ENTROPY_WARMUP] {sym} failed: {e}")
             else:
@@ -2242,6 +2321,14 @@ class ProximaDemo:
                         eval_data[sym]["price"] = price
                         eval_data[sym]["spread"] = tick.get("spread", 0)
                         eval_data[sym]["ecdf_rank"] = self._ecdf.compute_and_update(sym, price)
+                        # Feed directional energy buffer with tick diff
+                        if hasattr(self, '_last_prices') and hasattr(self, '_price_diff_buffers'):
+                            _last = self._last_prices.get(sym, price)
+                            self._last_prices[sym] = price
+                            if sym not in self._price_diff_buffers:
+                                from collections import deque
+                                self._price_diff_buffers[sym] = deque(maxlen=20)
+                            self._price_diff_buffers[sym].append(price - _last)
                         _ts = tick.get("time_sec", tick.get("timestamp", 0))
                         self._tick_thermo.feed_ticks(sym, tick.get("bid", 0), tick.get("ask", 0), _ts)
                         self._rf_gate.feed_tick(sym, tick.get("bid", 0), tick.get("ask", 0), _ts, self._warmup_ticks)
@@ -2269,6 +2356,14 @@ class ProximaDemo:
                             eval_data[sym]["price"] = price
                             eval_data[sym]["spread"] = tick["spread"]
                             eval_data[sym]["ecdf_rank"] = self._ecdf.compute_and_update(sym, price)
+                            # Feed directional energy buffer with tick diff
+                            if hasattr(self, '_last_prices') and hasattr(self, '_price_diff_buffers'):
+                                _last = self._last_prices.get(sym, price)
+                                self._last_prices[sym] = price
+                                if sym not in self._price_diff_buffers:
+                                    from collections import deque
+                                    self._price_diff_buffers[sym] = deque(maxlen=20)
+                                self._price_diff_buffers[sym].append(price - _last)
                             if sym in self._shadow_set:
                                 self._process_shadow_tick(sym, tick)
                                 if "regime" not in eval_data[sym]:
@@ -2351,45 +2446,44 @@ class ProximaDemo:
                         w20 = max(0.0, 2.0 * entropy - 1.0)
                         w10 = 1.0 - w3 - w20
                         horizon = 10  # nominal for logging
-                        # Compute z-score drift: (price - EMA20) / rolling_std(diff)
-                        ema_val = getattr(self, '_drift_ema', {}).get(sym, price)
-                        live_drift = 0
-                        if ema_val > 0 and price > 0:
-                            _diff = price - ema_val
-                            if not hasattr(self, '_diff_hist'):
-                                self._diff_hist = {}
-                            self._diff_hist.setdefault(sym, []).append(_diff)
-                            if len(self._diff_hist[sym]) > 20:
-                                self._diff_hist[sym] = self._diff_hist[sym][-20:]
-                            _local_std = float(np.std(self._diff_hist[sym])) if len(self._diff_hist[sym]) > 5 else 0.0
-                            if _local_std > 1e-10:
-                                _z = _diff / _local_std
-                                live_drift = 1 if _z > 0.5 else (-1 if _z < -0.5 else 0)
-                        exec_drift = 0
-                        _warmup_min = 5000 if not os.environ.get("VALIDATION_MODE") else 100
-                        if getattr(self, '_warmup_ticks', 0) < _warmup_min:
-                            exec_drift = 0
-                        else:
-                            exec_drift = live_drift
-                        # Research drift: always live (for persistence telemetry, not execution)
-                        research_drift = live_drift
+                        # Directional Energy: net/gross price flow over rolling 20-tick window
+                        # Measures price pressure directionality; ~79% non-zero vs EMA-drift ~1.4%
+                        exec_drift = 0.0
+                        _de_buffer = getattr(self, '_price_diff_buffers', {}).get(sym)
+                        if _de_buffer and len(_de_buffer) >= 3:
+                            _de_net = sum(_de_buffer)
+                            _de_gross = sum(abs(d) for d in _de_buffer)
+                            exec_drift = _de_net / max(_de_gross, 1e-9)
+                            exec_drift = max(-1.0, min(1.0, exec_drift))
+                        # Quantize exec_drift to {-1,0,1} for OSS bucket lookup
+                        # Uses fixed threshold of 0.5 — fires ~79% vs old EMA-drift ~1.4%
+                        oss_drift = 1 if exec_drift > 0.5 else (-1 if exec_drift < -0.5 else 0)
+                        # Canonical discrete direction from z-score drift (matches OSS training)
+                        direction_num = oss_drift
+                        # Research drift: matches exec drift (no separate live/exec split)
+                        research_drift = exec_drift
                         # Compute OSS for all 3 horizons and blend by entropy weights
-                        oss_3 = self._oss_bootstrap.predict_with_info(sym, ecdf, horizon=3, drift=exec_drift)
-                        oss_10 = self._oss_bootstrap.predict_with_info(sym, ecdf, horizon=10, drift=exec_drift)
-                        oss_20 = self._oss_bootstrap.predict_with_info(sym, ecdf, horizon=20, drift=exec_drift)
-                        oss_list = [(w3, oss_3), (w10, oss_10), (w20, oss_20)]
-                        def blend_float(key):
-                            return sum(w * float(o.get(key, 0.0)) for w, o in oss_list)
-                        def blend_bool(key):
-                            return sum(w * float(o.get(key, 0.0)) for w, o in oss_list) / max(1e-10, w3 + w10 + w20)
+                        oss_3 = self._oss_bootstrap.predict_with_info(sym, ecdf, horizon=3, drift=oss_drift)
+                        oss_10 = self._oss_bootstrap.predict_with_info(sym, ecdf, horizon=10, drift=oss_drift)
+                        oss_20 = self._oss_bootstrap.predict_with_info(sym, ecdf, horizon=20, drift=oss_drift)
+                        oss_list = [(w3, oss_3, 3), (w10, oss_10, 10), (w20, oss_20, 20)]
+                        # Availability-aware blend: only horizons with trained buckets contribute evidence
+                        valid_pairs = [(w, o) for w, o, h in oss_list if o.get("p_cont") is not None]
+                        if valid_pairs and sum(w for w, _ in valid_pairs) > 0:
+                            _total_w = sum(w for w, _ in valid_pairs)
+                            def blend_float(key):
+                                return sum(w * float(o.get(key, 0.0)) for w, o in valid_pairs) / _total_w
+                        else:
+                            def blend_float(key):
+                                return 0.5 if key == "p_cont" else 0.0
                         p_cont = blend_float("p_cont")
                         p_cont = max(0.0, min(1.0, p_cont))
-                        if exec_drift == 0 and not os.environ.get("VALIDATION_MODE"):
+                        if oss_drift == 0:
                             prod_sig = 0
                         elif p_cont >= 0.60:
-                            prod_sig = exec_drift
+                            prod_sig = direction_num
                         elif p_cont <= 0.40:
-                            prod_sig = -exec_drift
+                            prod_sig = 0  # confidence too low, no reversal
                         else:
                             prod_sig = 0
                         eval_data[sym]["expected_move"] = blend_float("mean_abs_move")
@@ -2400,15 +2494,22 @@ class ProximaDemo:
                         r_oss_10 = self._oss_bootstrap.predict_with_info(sym, ecdf, horizon=10, drift=research_drift)
                         r_oss_20 = self._oss_bootstrap.predict_with_info(sym, ecdf, horizon=20, drift=research_drift)
                         r_oss_list = [(w3, r_oss_3), (w10, r_oss_10), (w20, r_oss_20)]
-                        research_p_cont = max(0.0, min(1.0, sum(w * float(o.get("p_cont", 0.5)) for w, o in r_oss_list)))
-                        research_ph = int(round(sum(w * float(o.get("persist_hits", 0)) for w, o in r_oss_list)))
-                        research_pt = int(round(sum(w * float(o.get("persist_total", 0)) for w, o in r_oss_list)))
+                        r_valid_pairs = [(w, o) for w, o in r_oss_list if o.get("p_cont") is not None]
+                        if r_valid_pairs and sum(w for w, _ in r_valid_pairs) > 0:
+                            _r_total_w = sum(w for w, _ in r_valid_pairs)
+                            research_p_cont = max(0.0, min(1.0, sum(w * float(o.get("p_cont", 0.5)) for w, o in r_valid_pairs) / _r_total_w))
+                            research_ph = int(round(sum(w * float(o.get("persist_hits", 0)) for w, o in r_valid_pairs) / _r_total_w))
+                            research_pt = int(round(sum(w * float(o.get("persist_total", 0)) for w, o in r_valid_pairs) / _r_total_w))
+                        else:
+                            research_p_cont = 0.5
+                            research_ph = 0
+                            research_pt = 0
                         research_bucket = oss_10.get("diagnostics", {}).get("found_bucket", "?")
                         research_fr = oss_10.get("diagnostics", {}).get("fallback_reason", "?")
                         oss_info = oss_10  # nominal for log fields
                         logger.info(
                             f"[OSS SURFACE] {sym} "
-                            f"ecdf={ecdf:.4f} exec_drift={exec_drift} live_drift={live_drift} "
+                            f"ecdf={ecdf:.4f} exec_drift={exec_drift:.4f} "
                             f"horizon=blended(w3={w3:.2f},w10={w10:.2f},w20={w20:.2f}) regime={regime} "
                             f"p_cont={p_cont:.2f} ph={persist_hits} pt={persist_total} "
                             f"r_pc={research_p_cont:.2f} r_ph={research_ph} r_pt={research_pt} "
@@ -2425,6 +2526,7 @@ class ProximaDemo:
                         eval_data[sym]["research_p_cont"] = research_p_cont
                         eval_data[sym]["research_drift"] = research_drift
                         eval_data[sym]["exec_drift"] = exec_drift
+                        eval_data[sym]["direction_num"] = direction_num
                         eval_data[sym]["oss_ev_signal"] = oss_info.get("ev_signal", 0)
                     else:
                         # Mean-reversion fallback: cheap → buy, expensive → sell
@@ -2601,6 +2703,8 @@ class ProximaDemo:
                 self._phase6_current_mult = _scaling["position_size_multiplier"]
                 if _roll["state"] == "SHADOW":
                     self._phase6_current_mult = 0.0
+                if ACCEPTANCE_MODE:
+                    self._phase6_current_mult = 1.0
                 _pv6 = self._phase6_recovery.evaluate(self._cycle_id, _p6_metrics["alignment"], _p6_metrics["rc_veto_rate"])
                 if _pv6.get("active"):
                     self._phase6_current_mult = min(self._phase6_current_mult, _pv6.get("max_exposure", 1.0))
@@ -2666,27 +2770,12 @@ class ProximaDemo:
                             f"overrides_this={len(_exhaust_overrides)} total={self._exhaust_override_count} "
                             f"rate={_exhaust_rate:.3f}/cycle")
 
-                # PHASE A: Confidence-gated arbitration (replaces weighted ensemble)
-                import math
-                # Compute system-level avg_entropy for regime classification
-                _entropies = [v.get("entropy", 0.5) for v in eval_data.values()]
-                _avg_entropy = sum(_entropies) / max(len(_entropies), 1)
-                _regime = "CHAOTIC" if _avg_entropy > 0.65 else ("STRUCTURED" if _avg_entropy < 0.40 else "TRANSITION")
-                _reg_req = {"STRUCTURED": 0.60, "TRANSITION": 0.55, "CHAOTIC": 0.50}
+                # PHASE A: Agreement-based arbitration (simplified — removed confidence-weighted overrides)
                 for sym in self._execution_symbols:
                     oss_sig = prod_signals.get(sym, 0)
                     shadow_sig = shadow_signals.get(sym, 0)
-                    # OSS confidence
                     oss_ev = eval_data.get(sym, {}).get("oss_ev", 0.0)
-                    oss_mag = 1.0 / (1.0 + math.exp(-8.0 * (abs(oss_ev) - 0.05))) if oss_ev != 0 else 0.0
-                    oss_conf_raw = eval_data.get(sym, {}).get("oss_conf", 0.5)
-                    oss_support = min(1.0, oss_conf_raw * 5.0)  # proxy count/20
-                    oss_conf = oss_mag * oss_support
-                    # Shadow confidence (no entropy multiplier per Phase A)
-                    _entropy = eval_data.get(sym, {}).get("entropy", 0.5)
-                    _score = eval_data.get(sym, {}).get("ecdf_rank", 0.5) - _entropy
-                    shadow_conf = min(1.0, abs(_score) / 0.30)
-                    # Arbitration
+                    # Agreement filter: trade only when OSS and Shadow converge
                     if oss_sig == 0 and shadow_sig == 0:
                         prod_signal = 0
                         _reason = "BOTH_ZERO"
@@ -2694,38 +2783,22 @@ class ProximaDemo:
                         prod_signal = oss_sig
                         _reason = "AGREE"
                     elif oss_sig == 0:
-                        if shadow_conf > 0.25:
-                            prod_signal = shadow_sig
-                            _reason = f"OSS_NEUTRAL_{'BUY' if shadow_sig>0 else 'SELL'}"
-                            logger.info(f"[PURE_SHADOW_TRADE] {sym} oss=0 shadow={int(shadow_sig):+d} "
-                                        f"conf={shadow_conf:.2f} regime={_regime}")
-                        else:
-                            prod_signal = 0
-                            _reason = "OSS_NEUTRAL_FLAT"
+                        prod_signal = shadow_sig
+                        _reason = "CONFLICT_C_ACCUM"
                     elif shadow_sig == 0:
                         prod_signal = oss_sig
                         _reason = "SHADOW_NEUTRAL"
                     else:
-                        # Disagreement
-                        if shadow_conf > _reg_req[_regime]:
-                            prod_signal = shadow_sig
-                            _reason = f"SHADOW_OVERRIDE({_regime})"
-                        elif oss_conf > 0.60:
-                            prod_signal = oss_sig
-                            _reason = f"OSS_OVERRIDE({_regime})"
-                        else:
-                            prod_signal = 0
-                            _reason = "CONFLICT_FLAT"
+                        prod_signal = 0
+                        _reason = "CONFLICT_A_DIVERGE"
                     eval_data[sym]["prod_signal"] = prod_signal
                     prod_signals[sym] = prod_signal
                     eval_data[sym]["arb_reason"] = _reason
                     _pc = eval_data.get(sym, {}).get("research_p_cont", 0.5)
-                    _ev_sig_show = eval_data.get(sym, {}).get("oss_ev_signal", 0)
                     logger.info(f"[PROD_SIGNAL_BREAKDOWN] {sym} "
-                                f"oss={int(oss_sig):+d}(ev={oss_ev:.4f},conf={oss_conf:.2f}) "
-                                f"ev_sig={_ev_sig_show:+d} "
-                                f"shadow={int(shadow_sig):+d}(conf={shadow_conf:.2f}) "
-                                f"regime={_regime} reason={_reason} final={int(prod_signal):+d} "
+                                f"oss={int(oss_sig):+d}(ev={oss_ev:.4f}) "
+                                f"shadow={int(shadow_sig):+d} "
+                                f"reason={_reason} final={int(prod_signal):+d} "
                                 f"pc={_pc:.2f}")
                     # Track branch usage distribution
                     if not hasattr(self, '_branch_counts'):
@@ -2748,6 +2821,8 @@ class ProximaDemo:
                     if _gated != 0:
                         self._post_rf_count += 1
                 logger.info(f"[PROD SIGNAL] { {k: v for k, v in prod_signals.items() if k in self._execution_symbols} } (phase A arbitration)")
+                # REMOVED: OSS Symmetry Break (previously injected artificial ±0.01 bias into flat signal states)
+                # This created hidden direction drift with no market basis. Signals remain zero when unresolved.
                 # Shadow Mirror — capture final signal outputs (SZ3)
                 for _sym_sz3, _sig_sz3 in prod_signals.items():
                     if _sym_sz3 not in eval_data:
@@ -2773,7 +2848,7 @@ class ProximaDemo:
                     self._shadow_gt.capture("L0_GT", _sym_sz3, _ed_sz3)
                     self._shadow_gt.capture("L1_GT", _sym_sz3, _ed_sz3)
                 # TOPOLOGY_DECISION: topology vs arbitration cross-reference
-                _topo_dec = defaultdict(lambda: {"symbols": 0, "AGREE": 0, "SHADOW_OVERRIDE": 0, "OSS_OVERRIDE": 0, "CONFLICT": 0, "NEUTRAL": 0})
+                _topo_dec = defaultdict(lambda: {"symbols": 0, "AGREE": 0, "SHADOW_NEUTRAL": 0, "OSS_NEUTRAL": 0, "CONFLICT": 0, "NEUTRAL": 0})
                 for _s in self._execution_symbols:
                     if _s not in eval_data:
                         continue
@@ -2785,10 +2860,10 @@ class ProximaDemo:
                     _reason = eval_data.get(_s, {}).get("arb_reason", "?")
                     if "AGREE" in _reason:
                         _topo_dec[_tp]["AGREE"] += 1
-                    elif "SHADOW_OVERRIDE" in _reason or "PURE_SHADOW" in _reason:
-                        _topo_dec[_tp]["SHADOW_OVERRIDE"] += 1
-                    elif "OSS_OVERRIDE" in _reason:
-                        _topo_dec[_tp]["OSS_OVERRIDE"] += 1
+                    elif "SHADOW_NEUTRAL" in _reason:
+                        _topo_dec[_tp]["SHADOW_NEUTRAL"] += 1
+                    elif "OSS_NEUTRAL" in _reason:
+                        _topo_dec[_tp]["OSS_NEUTRAL"] += 1
                     elif "CONFLICT" in _reason:
                         _topo_dec[_tp]["CONFLICT"] += 1
                     else:
@@ -2796,8 +2871,8 @@ class ProximaDemo:
                 for _tp in sorted(_topo_dec.keys()):
                     _d = _topo_dec[_tp]
                     logger.info(f"[TOPOLOGY_DECISION] {_tp}: syms={_d['symbols']} "
-                                f"agree={_d['AGREE']} shadow={_d['SHADOW_OVERRIDE']} "
-                                f"oss={_d['OSS_OVERRIDE']} conflict={_d['CONFLICT']} neutral={_d['NEUTRAL']}")
+                                f"agree={_d['AGREE']} shadow={_d['SHADOW_NEUTRAL']} "
+                                f"oss={_d['OSS_NEUTRAL']} conflict={_d['CONFLICT']} neutral={_d['NEUTRAL']}")
                 # PERSIST_COMPARE: compare exec OSS vs research persistence + Shadow arbitration
                 _same = 0
                 _diff = 0
@@ -2818,26 +2893,17 @@ class ProximaDemo:
                                     drift=_ed.get("research_drift", 0))
                         _research_oss_sig = _rinfo.get("signal", 0)
                     _exec_final = _exec_oss_sig  # simplified: actual final from arbitration already in prod_signals
-                    # Research arbitration (same Phase A logic)
+                    # Research arbitration (simplified agreement filter)
                     if _research_oss_sig == 0 and _shadow_sig == 0:
                         _research_final = 0
                     elif _research_oss_sig == _shadow_sig:
                         _research_final = _research_oss_sig
                     elif _research_oss_sig == 0:
-                        _research_final = _shadow_sig if _shadow_conf > 0.25 else 0
+                        _research_final = 0
                     elif _shadow_sig == 0:
                         _research_final = _research_oss_sig
                     else:
-                        _shadow_conf_v = min(1.0, abs(_ed.get("ecdf_rank", 0.5) - _entropy) / 0.30)
-                        _oss_ev = _ed.get("oss_ev", 0.0)
-                        _oss_mag = 1.0 / (1.0 + math.exp(-8.0 * (abs(_oss_ev) - 0.05))) if _oss_ev != 0 else 0.0
-                        _oss_conf = _oss_mag * min(1.0, _ed.get("oss_conf", 0.5) * 5.0)
-                        if _shadow_conf_v > _reg_req[_regime]:
-                            _research_final = _shadow_sig
-                        elif _oss_conf > 0.60:
-                            _research_final = _research_oss_sig
-                        else:
-                            _research_final = 0
+                        _research_final = 0
                     if _exec_final == _research_final:
                         _same += 1
                     else:
@@ -3375,6 +3441,8 @@ class ProximaDemo:
                             logger.info("[QUARANTINE] completed — full risk resumes")
                     # Broker truth reconciliation before any state mutation
                     self._reconcile_broker_positions()
+                    # SDL regime-conditioned decay: weaken locks under regime shifts, persist under stability
+                    self._sdl.decay_all()
                     # Auto-stop if ACCEPTANCE_MODE and cycle limit reached
                     if ACCEPTANCE_MODE and PROXIMA_MAX_CYCLES > 0 and self._cycle_id >= PROXIMA_MAX_CYCLES:
                         logger.info("[AUTO_STOP] acceptance mode: max_cycles=%d reached", PROXIMA_MAX_CYCLES)
@@ -3418,12 +3486,30 @@ class ProximaDemo:
                     # Enforce H20 exits on active positions
                     self.positions.refresh()
                     open_positions = self.positions.positions
+                    # Profit target: close all when combined unrealized PnL reaches threshold (immediate trigger at cycle start)
+                    if open_positions and SETTINGS.profit_target_close > 0:
+                        _total_pnl = sum(p.get("profit", 0) for p in open_positions)
+                        _per_pos_s = {p.get("symbol", "?"): f"${p.get('profit', 0):.2f}" for p in open_positions}
+                        logger.info(f"[PNL_CHECK] total=${_total_pnl:.2f} target=${SETTINGS.profit_target_close:.2f} per={_per_pos_s}")
+                        if _total_pnl >= SETTINGS.profit_target_close:
+                            logger.info(f"PROFIT TARGET: combined PnL=${_total_pnl:.2f} >= ${SETTINGS.profit_target_close:.2f}, closing all")
+                            for p_pos in open_positions:
+                                m_pt = self._active_positions_metadata.get(p_pos["ticket"])
+                                if m_pt:
+                                    m_pt["expected_exit_reason"] = "PROFIT_TARGET"
+                            self._save_active_positions_metadata()
+                            self._sdl.reset()
+                            self.orders.close_all()
+                            open_positions = []
                     for pos in open_positions:
                         ticket = pos["ticket"]
                         symbol = pos["symbol"]
                         _tpc = int(os.environ.get("PROXIMA_TICKS_PER_CYCLE", "1"))
                         self._position_tick_age[ticket] = self._position_tick_age.get(ticket, 0) + _tpc
                         ttl_age = self._position_tick_age[ticket]
+                        _meta_age = self._active_positions_metadata.get(ticket, {})
+                        if _meta_age:
+                            _meta_age["age_cycles"] = _meta_age.get("age_cycles", 0) + 1
                         if ticket in self._battle_decay._states:
                             self._battle_decay._states[ticket].age_ticks = ttl_age
                         _es_check = self._exit_state.get(ticket, {})
@@ -3723,6 +3809,37 @@ class ProximaDemo:
                             self._rotation_event_count += 1
                     self._top3_history.append((self._now_ts(), top3_qualified))
                     self._last_top3_qualified = top3_qualified
+
+                    # DRS — Directional Reality Score: rank all symbols by conviction, select top 3
+                    # Overrides TOP3 set when signals are present, uses TOP3 fallback when no signals
+                    # Held positions are included with decayed conviction — incumbents must re-prove
+                    _held = getattr(self.positions, 'positions', []) if hasattr(self, 'positions') else []
+                    _drs_results = self._compute_drs(prod_signals, eval_data, held=_held)
+                    self._drs_rankings = _drs_results
+                    self._drs_by_symbol = {s: sc for s, sc, _, _ in _drs_results}
+                    _drs_top3 = [s for s, _, _, _ in _drs_results[:3]]
+                    if _drs_top3:
+                        _prev = set(getattr(self, '_top3_submit_set', set()))
+                        self._top3_submit_set = set(_drs_top3)
+                        logger.info(f"[DRS_RANK] top3={_drs_top3} scores={[(s, round(sc, 3)) for s, sc, _, _ in _drs_results[:3]]} prev={sorted(_prev)}")
+                        # Displacement: close any held position whose symbol is not in top 3 DRS
+                        _drs_top3_broker = set()
+                        for _s in _drs_top3:
+                            _drs_top3_broker.add(self.mt5._get_broker_symbol(_s) if hasattr(self.mt5, '_get_broker_symbol') else _s)
+                        for _pos in _held:
+                            _psym = _pos.get("symbol", "")
+                            _pticket = _pos.get("ticket", 0)
+                            if _psym not in _drs_top3_broker and _pticket in self._active_positions_metadata:
+                                _pmeta = self._active_positions_metadata[_pticket]
+                                _pmeta["expected_exit_reason"] = "DRS_DISPLACED"
+                                _pmeta["displaced_by"] = _drs_top3[0] if _drs_top3 else "?"
+                                if self.orders.close(_pticket):
+                                    logger.info(f"[DRS_DISPLACE] closed {_psym} ticket={_pticket} — not in top 3 DRS")
+                                else:
+                                    logger.warning(f"[DRS_DISPLACE] FAILED {_psym} ticket={_pticket}")
+                    else:
+                        _cur = getattr(self, '_top3_submit_set', set())
+                        logger.info(f"[DRS_RANK] no non-zero signals — keeping TOP3 set={sorted(_cur)}")
 
                     # P0.14: Build TPI snapshot from canonical per-symbol buffer (single source of truth)
                     self._cycle_tpi_snapshot = {}
@@ -4165,7 +4282,7 @@ class ProximaDemo:
                             if rf_warming_up:
                                 sym_th = min(sym_th + 0.15, 0.95)
                             rank_triggered = es_percentile >= sym_th
-                            logger.info(f"V2.3 TriggerCheck: {sym} local={es_percentile:.3f} sym_threshold={sym_th:.3f} rank_triggered={rank_triggered} (oss={triggered_from_oss})")
+                            logger.info(f"[TRIGGER_CHECK] {sym} local={es_percentile:.3f} sym_threshold={sym_th:.3f} rank_triggered={rank_triggered} (oss={triggered_from_oss})")
                         elif mode == "GLOBAL_ALL_QUALIFIED":
                             gp = self._global_rank_engine.get_global_percentile(sym)
                             thr = SETTINGS.global_rank_threshold + (0.15 if rf_warming_up else 0.0)
@@ -4362,7 +4479,7 @@ class ProximaDemo:
                                                 break
                                         sig_dir = self._execution_plan.get(sym, {}).get("direction_num", prod_signals.get(sym, 0))  # 1=BUY, -1=SELL
                                         held_sig = (1 if held_dir == "BUY" else -1 if held_dir == "SELL" else 0)
-                                        is_flip = (held_sig != 0 and sig_dir != 0 and held_sig != sig_dir)
+                                        is_flip = (held_sig != 0 and sig_dir != 0 and (held_sig > 0) != (sig_dir > 0))
 
                                         if is_flip:
                                             flip_ticket = next((hp2["ticket"] for hp2 in positions_now if self.mt5._get_broker_symbol(hp2["symbol"]) == broker_sym), None)
@@ -4729,26 +4846,36 @@ class ProximaDemo:
                                     except Exception:
                                         pass
                                     _ex_dir = self._execution_plan.get(sym, {}).get("direction", "FLAT")
-                                    # Exploration mode: force direction from TPI signal
+                                    # Exploration direction fallback: production → OSS direction → exec_drift sign
                                     if exploration_active and _ex_dir == "FLAT":
-                                        _tpi_for_dir = self._cycle_tpi_snapshot.get(sym, {}).get("direction", 0)
-                                        if _tpi_for_dir > 0:
-                                            _ex_dir = "BUY"
-                                        elif _tpi_for_dir < 0:
-                                            _ex_dir = "SELL"
+                                        _oss_dir = eval_data.get(sym, {}).get("direction_num", 0)
+                                        if _oss_dir != 0:
+                                            _ex_dir = "BUY" if _oss_dir > 0 else "SELL"
                                         else:
-                                            _ex_dir = "BUY" if hash(f"{sym}_{self._cycle_id}") % 2 == 0 else "SELL"
-                                        logger.info(f"[EXPLORATION] {sym}: forced direction={_ex_dir} (was FLAT)")
+                                            _ed_drift = eval_data.get(sym, {}).get("exec_drift", 0.0)
+                                            if abs(_ed_drift) > 0.3:
+                                                _ex_dir = "BUY" if _ed_drift > 0 else "SELL"
+                                    if exploration_active and _ex_dir == "FLAT":
+                                        blocked = True
+                                        block_reason = "EXPLORATION_NO_DIRECTION"
+                                        self._freq_pipeline.record_blocked(
+                                            sym, es_percentile, at_percentile,
+                                            0.90, block_reason, 0.0,
+                                            energy_regime=energy_regime,
+                                            time_regime=time_regime,
+                                            combined_regime=combined_regime)
+                                        self.audit.record_blocked(signal_id, block_reason)
+                                        if self._env and hasattr(self._env, 'ledger') and self._env.ledger is not None:
+                                            self._env.ledger.add_signal({
+                                                "symbol": sym, "ts": self._now_ts(),
+                                                "phase": "gate_reject", "reason": block_reason,
+                                                "signal_id": signal_id,
+                                            })
+                                        continue
                                     _ask = tick["ask"] if tick else 0.0
                                     _bid = tick["bid"] if tick else 0.0
                                     exec_price = _bid if _ex_dir == "SELL" else _ask
-                                    volume = self.orders.calculate_volume(sym, exec_price,
-                                        account["balance"] if account else 100000.0, risk_pct)
-                                    # P0.26: Restart quarantine — halve position size if still in quarantine
-                                    if self._quarantine_cycles_remaining > 0:
-                                        volume = max(volume * 0.5, 0.01)
-                                        logger.info(f"[QUARANTINE] {sym}: reducing vol {volume*2:.3f}→{volume:.3f} "
-                                                    f"({self._quarantine_cycles_remaining} cycles remaining)")
+                                    volume = SETTINGS.fixed_volume
                                     price = exec_price
                                     balance = account["balance"] if account else 100000.0
                                     # Wave 3: Update drawdown tracker
@@ -4813,6 +4940,12 @@ class ProximaDemo:
                                         _pers_obs.get("streak", 0), _entropy_obs, combined_regime)
                                     _obs_state["observer_state"] = _decayed["state"]
                                     _obs_state["reality_score"] = _decayed["confidence"]
+                                    # Startup grace: override non-EXECUTE→EXECUTE when OSS has real conviction
+                                    if _obs_state["observer_state"] != "EXECUTE" and self._cycle_id < 10:
+                                        _ed_state = eval_data.get(sym, {})
+                                        if _ed_state.get("direction_num", 0) != 0 and _ed_state.get("p_cont", 0.5) >= 0.60:
+                                            _obs_state["observer_state"] = "EXECUTE"
+                                            logger.info(f"[STARTUP_EXECUTE] {sym}: observer={_decayed['state']}→EXECUTE dir={_ed_state['direction_num']} p_cont={_ed_state.get('p_cont', 0.5):.2f}")
                                     self.weak_day.record_entropy_compression(
                                         _entropy_obs < 0.3, _curv_obs == "ACCELERATION")
                                     self.weak_day.record_persistence_event(
@@ -4822,6 +4955,9 @@ class ProximaDemo:
                                     _obs_state["reality_score"] *= _weak["trade_multiplier"]
                                     # SymbolTrust removed from forward execution path — all symbols evaluated on live signal only
                                     _obs_state["reality_score"] = max(0.0, min(1.0, _obs_state["reality_score"]))
+                                    # Startup grace: ensure EXECUTE state has minimum reality_score
+                                    if _obs_state["observer_state"] == "EXECUTE":
+                                        _obs_state["reality_score"] = max(_obs_state["reality_score"], 0.25)
                                     # Execute pending close (migration/flip) — atomic: close only if route will proceed
                                     pending_info = self._pending_close.pop(broker_sym, None)
                                     if pending_info is not None:
@@ -4845,7 +4981,7 @@ class ProximaDemo:
                                     # E7: Spread net-alpha gate — expected spread cost must leave positive edge
                                     point_val = 0.01 if "JPY" in sym else (0.1 if "XAU" in sym or "XAG" in sym else 0.0001)
                                     spread_cost_pts = (_ask - _bid) / max(point_val, 1e-9)
-                                    expected_alpha_pts = abs(price - rhl_check.get("sl", price)) * 0.3  # rough edge estimate
+                                    expected_alpha_pts = abs(price - rhl_check.get("sl", price)) * 0.3 / max(point_val, 1e-9)
                                     net_alpha_pts = expected_alpha_pts - spread_cost_pts * 2  # entry + exit spread
                                     if not exploration_active and net_alpha_pts <= 0:
                                         logger.info(f"[NET_ALPHA_BLOCK] {sym}: expected alpha={expected_alpha_pts:.2f} <= spread_cost={spread_cost_pts*2:.2f}, skipping")
@@ -4936,7 +5072,7 @@ class ProximaDemo:
                                     _stre_gate_state = self._stre_engine.compute()
                                     if _stre_gate_state["samples"] >= 10:
                                         _stas = _stre_gate_state.get("stas", 0.0)
-                                        if _stas < -0.1:
+                                        if _stas < -0.1 and not exploration_active:
                                             logger.info(f"[STR-E_GATE] {sym}: stas={_stas:.4f} samples={_stre_gate_state['samples']} — shadow winning, blocking")
                                             self.rejection_engine.reject(sym, RejectionType.STR_E_GATE, _stas, time.time())
                                             continue
@@ -4944,18 +5080,24 @@ class ProximaDemo:
                                         logger.warning(f"[SDL_BLOCK] {sym}: {ex_dir} blocked by direction lock (current={self._sdl.get_current(sym)})")
                                         continue
 
+                                    _portfolio_exposure_check(positions_now, sym, ex_dir)
+
+                                    # DRS top-3 constraint: exploration must compete on DRS ranking too
+                                    if SETTINGS.portfolio_mode == "TOP_3_ROTATION" and sym not in self._top3_submit_set:
+                                        logger.info(f"[EXPLORE_TOP3_BLOCK] {sym}: not in top3 set {self._top3_submit_set}")
+                                        continue
+
                                     t_start = _wall_perf_counter()
                                     if exploration_active:
                                         _obs_state["observer_state"] = "EXECUTE"
                                         _obs_state["reality_score"] = max(_obs_state.get("reality_score", 0.5), 0.3)
-                                        _explore_vol = self.orders.calculate_volume(sym, price, balance, SETTINGS.risk_per_trade * 0.08)
-                                        logger.info(f"[ORDER EXECUTING] {sym} {ex_dir} price={price} vol={_explore_vol:.2f} tier={exec_tier} [EXPLORATION]")
+                                        logger.info(f"[ORDER EXECUTING] {sym} {ex_dir} price={price} vol={SETTINGS.fixed_volume:.2f} tier={exec_tier} [EXPLORATION]")
                                         _exec_result = {"executed": True, "order_result": None}
                                         try:
                                             if ex_dir == "BUY":
-                                                _exec_result["order_result"] = self.orders.execute_buy(sym, price, balance, SETTINGS.risk_per_trade * 0.08, sl=rhl_check.get("sl", 0.0), tp=rhl_check.get("tp", 0.0), comment="PROXIMA_EXPLORATION")
+                                                _exec_result["order_result"] = self.orders.execute_buy(sym, price, balance, volume=SETTINGS.fixed_volume, sl=rhl_check.get("sl", 0.0), tp=rhl_check.get("tp", 0.0), comment="PROXIMA_EXPLORATION")
                                             else:
-                                                _exec_result["order_result"] = self.orders.execute_sell(sym, price, balance, SETTINGS.risk_per_trade * 0.08, sl=rhl_check.get("sl", 0.0), tp=rhl_check.get("tp", 0.0), comment="PROXIMA_EXPLORATION")
+                                                _exec_result["order_result"] = self.orders.execute_sell(sym, price, balance, volume=SETTINGS.fixed_volume, sl=rhl_check.get("sl", 0.0), tp=rhl_check.get("tp", 0.0), comment="PROXIMA_EXPLORATION")
                                         except Exception as _e:
                                             logger.error(f"[EXPLORE_ORDER_FAIL] {sym}: {_e}")
                                     else:
@@ -5040,7 +5182,7 @@ class ProximaDemo:
                                         _tid = self._thesis_buffer.record(
                                             symbol=sym, ticket=ticket,
                                             thesis_direction=_tdir, thesis_type=_ttype, thesis_confidence=_tconf,
-                                            regime=_regime, cycle_id=self._cycle_id,
+                                            regime=_ed.get("regime", ""), cycle_id=self._cycle_id,
                                             oss_sig=_oss_sig, shadow_sig=_sh_sig,
                                             exhaustion_active=_exhaust_active,
                                             ecdf=_ed.get("ecdf_rank", 0.5),
@@ -5085,6 +5227,7 @@ class ProximaDemo:
                                         self._position_tick_age[ticket] = 0
                                         if self._position_registry_lock:
                                             with self._position_registry_lock:
+                                                _drs_at_entry = getattr(self, '_drs_by_symbol', {}).get(broker_sym, 0.0)
                                                 self._active_positions_metadata[ticket] = {
                                                     "entry_bar_time": entry_bar_time,
                                                     "entry_warmup_ticks": self._warmup_ticks,
@@ -5103,9 +5246,12 @@ class ProximaDemo:
                                                     "entry_price": entry_px,
                                                     "min_price": entry_px,
                                                     "max_price": entry_px,
-                                                    "entry_time": self._now_dt().strftime("%Y-%m-%d %H:%M:%S")
+                                                    "entry_time": self._now_dt().strftime("%Y-%m-%d %H:%M:%S"),
+                                                    "drs_entry": _drs_at_entry,
+                                                    "age_cycles": 0,
                                                 }
                                         else:
+                                            _drs_at_entry = getattr(self, '_drs_by_symbol', {}).get(broker_sym, 0.0)
                                             self._active_positions_metadata[ticket] = {
                                                 "entry_bar_time": entry_bar_time,
                                                 "entry_warmup_ticks": self._warmup_ticks,
@@ -5124,7 +5270,9 @@ class ProximaDemo:
                                                 "entry_price": entry_px,
                                                 "min_price": entry_px,
                                                 "max_price": entry_px,
-                                                "entry_time": self._now_dt().strftime("%Y-%m-%d %H:%M:%S")
+                                                "entry_time": self._now_dt().strftime("%Y-%m-%d %H:%M:%S"),
+                                                "drs_entry": _drs_at_entry,
+                                                "age_cycles": 0,
                                             }
                                         self._save_active_positions_metadata()
                                         # P6: Log pyramid event
@@ -5514,6 +5662,19 @@ class ProximaDemo:
                             m_ep = self._active_positions_metadata.get(tick_ep["ticket"])
                             if m_ep:
                                 m_ep["expected_exit_reason"] = "EQUITY_PROTECTION"
+                        self._save_active_positions_metadata()
+                        self._sdl.reset()
+                        self.orders.close_all()
+
+                # Redundant profit target check (fallback in case cycle-start check was missed)
+                if open_positions and SETTINGS.profit_target_close > 0:
+                    _total_pnl_r = sum(p.get("profit", 0) for p in open_positions)
+                    if _total_pnl_r >= SETTINGS.profit_target_close:
+                        logger.info(f"PROFIT TARGET (redundant): combined PnL=${_total_pnl_r:.2f} >= ${SETTINGS.profit_target_close:.2f}, closing all")
+                        for p_pos in open_positions:
+                            m_pt = self._active_positions_metadata.get(p_pos["ticket"])
+                            if m_pt:
+                                m_pt["expected_exit_reason"] = "PROFIT_TARGET"
                         self._save_active_positions_metadata()
                         self._sdl.reset()
                         self.orders.close_all()

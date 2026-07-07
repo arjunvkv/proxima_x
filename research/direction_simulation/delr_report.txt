@@ -1,0 +1,159 @@
+========================================================================
+DIRECTIONAL ENERGY LIVE REPLAY — ANALYSIS REPORT
+========================================================================
+Log file: C:\Trading\Agentic_Trading\proxima_demo.log
+Total OSS SURFACE entries: 3559
+Total entries with DE != 0: 659 (18.5%)
+exec_drift always 0: True
+signal always 0: True
+Unique symbols: 28
+Live drift values: [-1, 0, 1]
+
+------------------------------------------------------------------------
+3a. DIRECTIONAL ENERGY BY CURRENCY PAIR
+------------------------------------------------------------------------
+Symbol     Entries  DE>0     DE Cov%  Mean|DE| MeanE    DE+/DE-   
+--------------------------------------------------------------
+NZDUSD     64       24       37.5     0.3750   0.0487   15/9      
+CADJPY     62       23       37.1     0.3710   0.0334   14/9      
+CHFJPY     62       23       37.1     0.3710   0.0283   13/10     
+NZDJPY     62       23       37.1     0.3710   0.0278   17/6      
+EURCHF     62       23       37.1     0.3710   0.0322   17/6      
+EURNZD     62       23       37.1     0.3710   0.0381   11/12     
+GBPAUD     62       23       37.1     0.3710   0.0502   13/10     
+NZDCHF     62       23       37.1     0.3710   0.0415   16/7      
+GBPUSD     65       24       36.9     0.3692   0.0494   13/11     
+AUDUSD     64       23       35.9     0.3594   0.0530   14/9      
+USDCAD     64       23       35.9     0.3594   0.0306   13/10     
+CADCHF     62       22       35.5     0.3548   0.0339   13/9      
+USDCHF     64       22       34.4     0.3438   0.0297   15/7      
+GBPJPY     62       21       33.9     0.3387   0.0272   15/6      
+EURGBP     62       21       33.9     0.3387   0.0537   8/13      
+EURAUD     62       21       33.9     0.3387   0.0496   8/13      
+GBPCAD     62       21       33.9     0.3387   0.0439   11/10     
+GBPNZD     62       21       33.9     0.3387   0.0357   13/8      
+NZDCAD     62       20       32.3     0.3226   0.0504   10/10     
+EURCAD     62       18       29.0     0.2903   0.0497   8/10      
+AUDNZD     62       18       29.0     0.2903   0.0361   10/8      
+GBPCHF     62       17       27.4     0.2742   0.0326   11/6      
+AUDCAD     62       17       27.4     0.2742   0.0343   9/8       
+AUDCHF     62       15       24.2     0.2419   0.0279   11/4      
+EURUSD     520      44       8.5      0.0846   0.0251   23/21     
+AUDJPY     509      39       7.7      0.0766   0.0229   24/15     
+EURJPY     514      36       7.0      0.0700   0.0133   21/15     
+USDJPY     517      31       6.0      0.0600   0.0131   19/12     
+
+Highest DE coverage: NZDUSD (37.5%), CADJPY (37.1%), CHFJPY (37.1%)
+Lowest DE coverage:  USDJPY (6.0%), EURJPY (7.0%), AUDJPY (7.7%)
+exec_drift is ALWAYS 0 on all pairs — no coverage gap measurement possible for exec_drift
+
+------------------------------------------------------------------------
+3b. DIRECTIONAL ENERGY BY SESSION
+------------------------------------------------------------------------
+Session         Entries    DE Cov%    Mean|DE|   MeanE      DE+/DE-         Exec>0    
+----------------------------------------------------------------------
+ASIAN           1758       3.4        0.0341     0.017065   32/28           0         
+LONDON          1455       21.5       0.2151     0.042470   177/136         0         
+NEW_YORK        342        82.5       0.8246     0.012904   173/109         0         
+OFF_HOURS       4          100.0      1.0000     0.177725   3/1             0         
+
+  ASIAN: mean DE = +0.002275 (bullish=Y)
+  LONDON: mean DE = +0.028179 (bullish=Y)
+  NEW_YORK: mean DE = +0.187135 (bullish=Y)
+  OFF_HOURS: mean DE = +0.500000 (bullish=Y)
+
+------------------------------------------------------------------------
+3c. DIRECTIONAL ENERGY BY VOLATILITY REGIME
+------------------------------------------------------------------------
+Regime                    Entries    DE Cov%    Mean|DE|   DE>0%      Exec>0    
+-----------------------------------------------------------------
+NORMAL                    1946       27.1       0.2708     15.8       0         
+LOCKED                    514        7.0        0.0700     4.1        0         
+ACTIVE_INSTABILITY        517        6.0        0.0600     3.7        0         
+COMPRESSED_CHAOS          582        11.2       0.1117     6.5        0         
+
+  Coverage gap (exec_drift - DE): exec_drift fires 0% in ALL regimes
+  Largest gap: N/A — exec_drift never fires
+
+------------------------------------------------------------------------
+3d. DIRECTIONAL ENERGY BY p_cont BUCKETS
+------------------------------------------------------------------------
+Bucket               Entries    DE Cov%    Mean|DE|   Exec>0    
+------------------------------------------------------------
+Low (0-0.4)          3559       18.5       0.1852     0         
+
+------------------------------------------------------------------------
+4. CRITICAL FAILURE ANALYSIS — DE = 0
+------------------------------------------------------------------------
+Total DE=0 entries: 2900 / 3559 (81.5%)
+  Flat ecdf (no change): 2900 / 2900 (100.0%)
+  p_cont distribution in DE=0 entries:
+    Low (0-0.4): 2900 (100.0%)
+    Medium (0.4-0.6): 0 (0.0%)
+    High (0.6-1.0): 0 (0.0%)
+  Regime distribution in DE=0 entries:
+    NORMAL                   : 1419/2900 (48.9% of DE=0, 72.9% of all NORMAL entries)
+    LOCKED                   : 478/2900 (16.5% of DE=0, 93.0% of all LOCKED entries)
+    ACTIVE_INSTABILITY       : 486/2900 (16.8% of DE=0, 94.0% of all ACTIVE_INSTABILITY entries)
+    COMPRESSED_CHAOS         : 517/2900 (17.8% of DE=0, 88.8% of all COMPRESSED_CHAOS entries)
+
+  Regime prevalence: DE=0 vs DE!=0:
+    NORMAL                   : DE=0  48.9% | DE!=0  80.0% | Δ=-31.0% >>> UNDER-REPRESENTED
+    LOCKED                   : DE=0  16.5% | DE!=0   5.5% | Δ=+11.0% <<< OVER-REPRESENTED
+    ACTIVE_INSTABILITY       : DE=0  16.8% | DE!=0   4.7% | Δ=+12.1% <<< OVER-REPRESENTED
+    COMPRESSED_CHAOS         : DE=0  17.8% | DE!=0   9.9% | Δ=+8.0% <<< OVER-REPRESENTED
+
+  Pattern recognition for DE=0:
+    Extreme ecdf (≤0.05 or ≥0.95): 2210/2900 (76.2%)
+    Very low p_cont (<0.05): 2297/2900 (79.2%)
+    Regime=LOCKED: 478/2900 (16.5%)
+
+------------------------------------------------------------------------
+5. SIGN STABILITY ANALYSIS (5+ consecutive entries per symbol)
+------------------------------------------------------------------------
+
+  NOTE: exec_drift is always 0 — it never changes sign.
+  Sign flip rate comparison is trivially zero for exec_drift.
+  Only Directional Energy sign stability is meaningful.
+
+  Total DE sign flips across all sequences: 386
+  Total windows of opportunity: 3559
+  Global DE flip rate: 10.85%
+
+  Symbol     SeqLen   DE Flips   FlipRate% 
+  --------------------------------------
+  NZDCAD     62       15         24.19     
+  CADJPY     62       14         22.58     
+  GBPCAD     62       14         22.58     
+  GBPUSD     65       14         21.54     
+  EURCAD     62       13         20.97     
+  ...
+  USDCAD     64       8          12.50     
+  EURUSD     520      34         6.54      
+  AUDJPY     509      30         5.89      
+  EURJPY     514      30         5.84      
+  USDJPY     517      20         3.87      
+
+  Most stable (lowest flip rate): USDJPY (3.87%)
+  Most flippy (highest flip rate): NZDCAD (24.19%)
+
+========================================================================
+KEY FINDINGS
+========================================================================
+1. exec_drift is ALWAYS 0 across all 3559 OSS SURFACE entries.
+   - Directional Energy provides the ONLY non-zero directional signal.
+   - exec_drift coverage gap = 100% (it never fires).
+2. Directional Energy fires on 659/3559 entries (18.5%).
+3. DE=0 cases (2900 entries, 81.5%):
+   - Most common regime: NORMAL (48.9%)
+4. Session with strongest directional bias: 
+  ASIAN (mean DE=+0.0023)
+  LONDON (mean DE=+0.0282)
+  NEW_YORK (mean DE=+0.1871)
+  OFF_HOURS (mean DE=+0.5000)
+
+5. DE sign flip rate: 10.85% across all symbols
+
+========================================================================
+END OF REPORT
+========================================================================

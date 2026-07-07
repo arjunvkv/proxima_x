@@ -1,0 +1,47 @@
+  BOOT INTEGRITY AUDIT
+----------------------------------------------------
+  EURJPY     OK    (m5=OK, ticks=OK, vpl=SKIP)
+  EURUSD     OK    (m5=OK, ticks=OK, vpl=SKIP)
+  GBPJPY     WARN  (m5=OK, ticks=WARN, vpl=SKIP)
+  USDJPY     OK    (m5=OK, ticks=OK, vpl=SKIP)
+  XAUUSD     WARN  (m5=OK, ticks=WARN, vpl=SKIP)
+  Universe Status: DEGRADED
+  Trade Mode:      ALLOWED (with warnings)
+
+    GBPJPY ticks: Tick parquet not found at C:\Trading\Agentic_Trading\data\ticks/GBPJPY_ticks.parquet (optional for synthetic)
+    XAUUSD ticks: Tick parquet not found at C:\Trading\Agentic_Trading\data\ticks/XAUUSD_ticks.parquet (optional for synthetic)
+[CONSTRUCTOR DEBUG] Boot audit done, creating MT5 connector...
+[CONSTRUCTOR DEBUG] MT5Connector created
+[CONSTRUCTOR DEBUG] Starting MarketSeedLoader.seed_all...
+[CONSTRUCTOR DEBUG] MarketSeedLoader done, bootstrap has 28 symbols
+[CONSTRUCTOR DEBUG] Creating OrderManager...
+[CONSTRUCTOR DEBUG] Creating PositionManager...
+[CONSTRUCTOR DEBUG] Creating ledgers...
+[C1]
+[C2]
+[C3]
+[C4]
+[CONSTRUCTOR DEBUG] Subscribing to ticks for 28 symbols...
+[CONSTRUCTOR DEBUG] Subscribed 28/28 symbols
+[CONSTRUCTOR DEBUG] Loading tick thermo for 28 symbols...
+[CONSTRUCTOR DEBUG] Loaded thermo data for 28/28 symbols
+[CONSTRUCTOR DEBUG] Pre-seeding RF gate for 28 symbols...
+[CONSTRUCTOR DEBUG] RF gate pre-seed complete
+Starting Proxima Ops Demo Deployment...
+  Threshold: 0.55
+  Risk: 0.25%
+  Assets: ['EURJPY', 'USDJPY', 'EURUSD', 'GBPUSD', 'AUDUSD', 'USDCAD', 'USDCHF', 'NZDUSD', 'GBPJPY', 'AUDJPY', 'CADJPY', 'CHFJPY', 'NZDJPY', 'EURGBP', 'EURCHF', 'EURAUD', 'EURCAD', 'EURNZD', 'GBPCHF', 'GBPAUD', 'GBPCAD', 'GBPNZD', 'AUDNZD', 'AUDCAD', 'AUDCHF', 'NZDCAD', 'NZDCHF', 'CADCHF']
+  Shadow: 26 symbols
+  Connecting to MT5... OK
+  Warming up price buffers... OK
+  Loading existing positions...
+  Starting main loop...
+
+[WHILE_DEBUG] Pre-loop init complete
+[WHILE_DEBUG] Entering while RUNNING loop
+[WHILE_DEBUG] Top of loop
+[WHILE_DEBUG] Before mt5_monitor.check()
+[WHILE_DEBUG] After mt5_monitor.check()
+[WHILE_DEBUG] _replay_mode=False _replay_feed=None
+[WHILE_DEBUG] Before tick dispatch
+[WHILE_DEBUG] After tick dispatch, _warmup_ticks=28, eval_data keys=28

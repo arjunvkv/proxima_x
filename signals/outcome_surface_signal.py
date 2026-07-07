@@ -34,7 +34,7 @@ class OutcomeSurfaceSignal:
             info = self._buckets.get(bucket_key)
         if info is None:
             return 0
-        # Persistence-based signal: does the current drift persist?
+        # Persistence-based signal: confidence-weighted attenuation (no sign inversion)
         persist_hits = info.get("persist_hits", 0)
         persist_total = info.get("persist_total", 0)
         p_cont = persist_hits / persist_total if persist_total > 0 else 0.5
@@ -43,7 +43,7 @@ class OutcomeSurfaceSignal:
         if p_cont >= 0.60:
             return drift_state  # drift persists → follow drift
         elif p_cont <= 0.40:
-            return -drift_state  # drift fails → reversal
+            return 0  # drift fails → no signal (confidence too low, no reversal)
         return 0
 
     def predict_with_info(self, ecdf: float, drift_state: int = 0) -> dict:
@@ -91,7 +91,7 @@ class OutcomeSurfaceSignal:
         elif p_cont >= 0.60:
             sig = drift_state
         elif p_cont <= 0.40:
-            sig = -drift_state
+            sig = 0  # confidence too low, no signal (no reversal)
         else:
             sig = 0
         return {

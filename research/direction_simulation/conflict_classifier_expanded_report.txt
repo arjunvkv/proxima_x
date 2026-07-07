@@ -1,0 +1,179 @@
+==============================================================================
+  CONFLICT CLASSIFIER EXPANDED ANALYSIS — FULL REPORT
+  Log: proxima_demo.log
+  Analysis date: 2026-07-07 11:46
+  Total CONFLICT_FLAT events: 270
+==============================================================================
+
+──────────────────────────────────────────────────────────────────────────────
+  1. TYPE DISTRIBUTION (all dates)
+──────────────────────────────────────────────────────────────────────────────
+  Type                              Count       %
+  ────────────────────────────── ──────── ───────
+  A_NOISE — transient noise, no action      239   88.5%
+  B_TRANSITION — regime shift, 50% entry allowed       25    9.3%
+  C_ACCUMULATION — smart-money accumulation, 70% entry allowed        6    2.2%
+  D_INDETERMINACY — persistent deadlock, no action        0    0.0%
+  ────────────────────────────── ──────── ───────
+  TOTAL                               270 100.0%
+
+  Actionable (B+C): 31 / 270 (11.5%)
+
+──────────────────────────────────────────────────────────────────────────────
+  2. DURATION DISTRIBUTION PER TYPE
+──────────────────────────────────────────────────────────────────────────────
+  Type                    Count     Mean   Median    Max   StdDev     ≥5    ≥10
+  ──────────────────── ──────── ──────── ──────── ────── ──────── ────── ──────
+  A_NOISE                   239     1.14        1      2     0.35      0      0
+  B_TRANSITION               25     3.40        3      4     0.50      0      0
+  C_ACCUMULATION              6     5.67        6      7     0.82      6      0
+  D_INDETERMINACY             0        —        —      —        —      —      —
+
+──────────────────────────────────────────────────────────────────────────────
+  3. SYMBOLS MOST PRONE TO EACH TYPE (top 7)
+──────────────────────────────────────────────────────────────────────────────
+  A_NOISE              ( 239 total)  →  GBPCAD(28), USDJPY(27), GBPUSD(26), EURCAD(23), AUDCAD(22), EURNZD(18), GBPAUD(17)
+  B_TRANSITION         (  25 total)  →  GBPUSD(4), GBPAUD(3), EURCAD(3), GBPCAD(3), AUDCAD(3), USDCHF(2), EURNZD(2)
+  C_ACCUMULATION       (   6 total)  →  GBPAUD(3), USDCHF(2), EURCAD(1)
+
+──────────────────────────────────────────────────────────────────────────────
+  4. REGIME CORRELATION PER TYPE
+──────────────────────────────────────────────────────────────────────────────
+  Type                     ACTIVE_INSTABILITY       COMPRESSED_CHAOS                 LOCKED                 NORMAL
+  ──────────────────── ────────────────────────────────────────────────────────────────────────────────────────
+  A_NOISE                27(  11%)   16(   7%)    7(   3%)  189(  79%)
+  B_TRANSITION                  —    1(   4%)          —   24(  96%)
+  C_ACCUMULATION                —          —          —    6( 100%)
+  D_INDETERMINACY               —          —          —          —
+
+──────────────────────────────────────────────────────────────────────────────
+  5. TYPE B & C — OPPORTUNITY ANALYSIS
+──────────────────────────────────────────────────────────────────────────────
+
+  Type B unique trade opportunities: 25  (sizing: 50%)
+  Type C unique trade opportunities: 6  (sizing: 70%)
+  Total BC opportunities: 31
+
+  Additional volume (standard units):
+    Type B:  25 × 0.5 = 12.5
+    Type C:  6 × 0.7 = 4.2
+    Total:   16.7 standard units
+
+  Estimated additional trades: 31 (vs. 0 from current system for CONFLICT_FLAT)
+
+──────────────────────────────────────────────────────────────────────────────
+  6. TYPE C ACCUMULATION — HIGH VALUE EVENTS (10+ cycles)
+──────────────────────────────────────────────────────────────────────────────
+
+  No Type C events with duration ≥ 10 cycles found.
+  However, 6 events with duration ≥ 5 cycles exist:
+    GBPAUD   dur= 5  ev= +0.6335  p_cont=0.81  NORMAL
+    GBPAUD   dur= 6  ev= +0.6335  p_cont=0.81  NORMAL
+    GBPAUD   dur= 7  ev= +0.6335  p_cont=0.81  NORMAL
+    EURCAD   dur= 5  ev= -0.7878  p_cont=0.89  NORMAL
+    USDCHF   dur= 5  ev= -0.7878  p_cont=0.89  NORMAL
+    USDCHF   dur= 6  ev= -0.7878  p_cont=0.89  NORMAL
+
+──────────────────────────────────────────────────────────────────────────────
+  7. CONFUSION TABLE — ALLOWED EVENTS (Type B/C) ACTUAL OUTCOMES
+──────────────────────────────────────────────────────────────────────────────
+
+  Total Type B/C events: 31
+  Events with subsequent ORDER EXECUTION: 6
+  Events WITHOUT subsequent execution: 25
+
+  Event details (executed only):
+  Symbol   Date                 Class                    Ev Dur Orders        PnL
+  ──────── ──────────────────── ────────────────── ──────── ─── ────── ──────────
+  GBPAUD   2026-07-07 02:11     B_TRANSITION        +0.6335   3      1      +0.00
+  GBPAUD   2026-07-07 02:12     B_TRANSITION        +0.6335   4      1      +0.00
+  GBPAUD   2026-07-07 02:13     C_ACCUMULATION      +0.6335   5      1      +0.00
+  GBPAUD   2026-07-07 02:14     C_ACCUMULATION      +0.6335   6      1      +0.00
+  GBPUSD   2026-07-07 02:12     B_TRANSITION        -0.7878   3      2      +0.00
+  GBPUSD   2026-07-07 02:13     B_TRANSITION        -0.7878   4      2      +0.00
+
+  PnL from BC-allowed, executed events:
+    No non-zero PnL trades recorded (simulation mode — all PnL = $0.00)
+
+── Forward Price Validation (next OSS entries) ──
+  Of 31 Type B/C events:
+    OSS direction validated by subsequent p_cont movement:  7 (23%)
+    Shadow direction validated by subsequent p_cont movement: 9 (29%)
+    No clear direction: 15
+
+  Forward validation — EXECUTED events only:
+  Symbol   Class               Exec?   Δp_cont  OSS_ok?  Shad_ok?
+  ──────── ────────────────── ────── ───────── ──────── ─────────
+  GBPAUD   B_TRANSITION            Y    +0.110        ✓         ✗
+  GBPAUD   B_TRANSITION            Y    +0.080        ✓         ✗
+  GBPAUD   C_ACCUMULATION          Y    +0.110        ✓         ✗
+  GBPAUD   C_ACCUMULATION          Y    -0.310        ✗         ✓
+  GBPUSD   B_TRANSITION            Y    +0.100        ✗         ✓
+  GBPUSD   B_TRANSITION            Y    +0.490        ✗         ✓
+
+── Trade Lifecycle — Executed Events ──
+
+  GBPAUD at 02:11:11 | Class=B_TRANSITION | OSS=LONG(ev=+0.6335) | Shadow=LONG
+    ORDER:  BUY @ 1.92514 vol=0.70 PnL=N/A
+
+  GBPAUD at 02:12:10 | Class=B_TRANSITION | OSS=LONG(ev=+0.6335) | Shadow=LONG
+    ORDER:  BUY @ 1.92514 vol=0.70 PnL=N/A
+
+  GBPAUD at 02:13:09 | Class=C_ACCUMULATION | OSS=LONG(ev=+0.6335) | Shadow=LONG
+    ORDER:  BUY @ 1.92514 vol=0.70 PnL=N/A
+
+  GBPAUD at 02:14:33 | Class=C_ACCUMULATION | OSS=LONG(ev=+0.6335) | Shadow=LONG
+    ORDER:  BUY @ 1.92514 vol=0.70 PnL=N/A
+
+  GBPUSD at 02:12:10 | Class=B_TRANSITION | OSS=SHORT(ev=-0.7878) | Shadow=LONG
+    ORDER:  BUY @ 1.33899 vol=0.35 PnL=N/A
+    ORDER:  BUY @ 1.33907 vol=0.35 PnL=N/A
+
+  GBPUSD at 02:13:09 | Class=B_TRANSITION | OSS=SHORT(ev=-0.7878) | Shadow=LONG
+    ORDER:  BUY @ 1.33899 vol=0.35 PnL=N/A
+    ORDER:  BUY @ 1.33907 vol=0.35 PnL=N/A
+
+──────────────────────────────────────────────────────────────────────────────
+  8. DIRECTION DISAGREEMENT ANALYSIS (OSS vs Shadow)
+──────────────────────────────────────────────────────────────────────────────
+
+  OSS conviction distribution:
+    Strong (≥0.80):        9 (  3.3%)
+    Moderate (0.60-0.79):  214 ( 79.3%)
+    Weak (0.30-0.59):     47 ( 17.4%)
+    Negligible (<0.30):    0 (  0.0%)
+
+  OSS direction: LONG=100 SHORT=170
+  Shadow direction: LONG=170 SHORT=100
+
+──────────────────────────────────────────────────────────────────────────────
+  9. REGIME BREAKDOWN — PER-REGIME TYPE DISTRIBUTION
+──────────────────────────────────────────────────────────────────────────────
+
+  ACTIVE_INSTABILITY        (total:   27)
+    A_NOISE                27 (100.0%)
+
+  COMPRESSED_CHAOS          (total:   17)
+    A_NOISE                16 ( 94.1%)
+    B_TRANSITION            1 (  5.9%)
+
+  LOCKED                    (total:    7)
+    A_NOISE                 7 (100.0%)
+
+  NORMAL                    (total:  219)
+    A_NOISE               189 ( 86.3%)
+    B_TRANSITION           24 ( 11.0%)
+    C_ACCUMULATION          6 (  2.7%)
+
+
+==============================================================================
+  10. KEY FINDINGS & RECOMMENDATIONS
+==============================================================================
+
+  1. 88.5% of conflicts are Type A (noise) — correct to ignore
+  2. 9.3% are Type B (transition) — potential 50%-sized entries
+  3. 2.2% are Type C (accumulation) — highest-value opportunities
+  4. 0.0% are Type D (indeterminacy) — correct to hold
+  5. Actionable events (B+C): 31 (11.5%)
+  6. Estimated additional volume: 16.7 std units (31 trades)
+  8. PnL data not available (simulation mode — all trades $0.00)

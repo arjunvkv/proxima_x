@@ -26,20 +26,24 @@ class OrderManager:
 
     def calculate_volume(self, symbol: str, price: float,
                          account_balance: float, risk_pct: float = None) -> float:
-        risk = risk_pct if risk_pct is not None else SETTINGS.risk_per_trade
-        if price is None or price <= 0 or account_balance is None or account_balance <= 0:
-            return 0.01
-        risk_amount = float(account_balance) * float(risk)
-
-        if "JPY" in symbol:
-            point_value_per_lot = max(float(price), 1.0)
-            point_value_per_lot = 1000.0 / point_value_per_lot
+        # If fixed_volume is configured, use it directly instead of risk-based calculation
+        if SETTINGS.fixed_volume > 0:
+            lots = SETTINGS.fixed_volume
         else:
-            point_value_per_lot = 10.0
+            risk = risk_pct if risk_pct is not None else SETTINGS.risk_per_trade
+            if price is None or price <= 0 or account_balance is None or account_balance <= 0:
+                return 0.01
+            risk_amount = float(account_balance) * float(risk)
 
-        assumed_sl_points = get_risk_stop_distance(symbol)["stop_pips"]
-        lots = risk_amount / max(assumed_sl_points * point_value_per_lot, 1.0)
-        lots = max(0.01, round(lots, 2))
+            if "JPY" in symbol:
+                point_value_per_lot = max(float(price), 1.0)
+                point_value_per_lot = 1000.0 / point_value_per_lot
+            else:
+                point_value_per_lot = 10.0
+
+            assumed_sl_points = get_risk_stop_distance(symbol)["stop_pips"]
+            lots = risk_amount / max(assumed_sl_points * point_value_per_lot, 1.0)
+            lots = max(0.01, round(lots, 2))
 
         # MT5 volume normalization: enforce volume_step, volume_min, volume_max
         try:

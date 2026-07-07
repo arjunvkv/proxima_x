@@ -28,9 +28,9 @@ class ExecutionMapper:
 
     def _direction(self, sym_data: Dict[str, Any]) -> str:
         sig = sym_data.get("prod_signal", sym_data.get("signal", 0))
-        if sig == 1:
+        if sig > 0:
             return "BUY"
-        elif sig == -1:
+        elif sig < 0:
             return "SELL"
         return "FLAT"
 

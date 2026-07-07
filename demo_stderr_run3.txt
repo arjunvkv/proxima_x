@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "C:\Trading\Agentic_Trading\proxima_x\run_proxima_demo.py", line 6151, in <module>
+    main()
+  File "C:\Trading\Agentic_Trading\proxima_x\run_proxima_demo.py", line 6138, in main
+    demo.run_demo()
+  File "C:\Trading\Agentic_Trading\proxima_x\run_proxima_demo.py", line 2443, in run_demo
+    exec_drift = max(-1.0, min(1.0, _momentum))
+    ^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'oss_drift' where it is not associated with a value

@@ -6,7 +6,7 @@ from typing import Optional
 logger = logging.getLogger("proxima_ops.risk.exposure")
 
 MAX_POSITIONS_TOTAL = 5
-MAX_FX_POSITIONS = 3
+MAX_FX_POSITIONS = 5
 MAX_GOLD_POSITIONS = 1
 MAX_INDEX_POSITIONS = 1
 
