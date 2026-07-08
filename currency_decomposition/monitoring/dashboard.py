@@ -52,7 +52,8 @@ class Dashboard:
                pipeline_metrics: dict = None,
                total_lots: float = 0.0, max_total_lots: float = 0.0,
                lot_size: float = 0.0, profit_target: float = 0.0,
-               cooldown_active: bool = False, cooldown_remaining: int = 0) -> None:
+                cooldown_active: bool = False, cooldown_remaining: int = 0,
+                range_states: dict = None) -> None:
         now = time.time()
         if now - self._last_update < 1.0:
             return
@@ -101,6 +102,19 @@ class Dashboard:
                 bar = "█" * bar_len if bar_len > 0 else ""
                 sign = "+" if val >= 0 else ""
                 print(f"║    {ccy}: {sign}{val:+.5f}  {bar:<{bar_max}}  ║")
+        if range_states:
+            state_strs = []
+            for ccy, info in sorted(range_states.items(), key=lambda x: x[0]):
+                p = info.get("percentile")
+                s = info.get("state", "")
+                d = info.get("drift")
+                if p is not None:
+                    drift_str = f"d={d:+.2e}" if d is not None else ""
+                    state_strs.append(f"{ccy}:{s}({p:.0f}%){drift_str}")
+                else:
+                    state_strs.append(f"{ccy}:N/A")
+            line = "  ".join(state_strs)
+            print(f"║  RANGE BUCKET:          {line:<52}  ║")
         print("╠══════════════════════════════════════════════════════════════════════╣")
 
         # ── GRAPH STATE ──────────────────────────────────────────
@@ -285,6 +299,7 @@ class Dashboard:
                 "missing_symbols": len(missing_symbols or []),
                 "health_conf": (health_report or {}).get("confidence_level"),
                 "production_ready": production_ready,
+                "range_states": {c: {"pct": s.get("percentile"), "state": s.get("state"), "median": s.get("median"), "drift": s.get("drift"), "samples": s.get("sample_size")} for c, s in (range_states or {}).items()},
                 "max_concentration": round(max(concentration.values()), 3) if concentration else 0.0,
                 "stress_test_stable": sum(1 for v in (stress_test or {}).values() if v is not None),
             }

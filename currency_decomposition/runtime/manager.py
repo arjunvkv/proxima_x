@@ -6,11 +6,12 @@ from queue import Queue, Empty
 from pathlib import Path
 from typing import Optional
 
-from config.settings import EXECUTION_MODE, MAX_POSITIONS, LOT_SIZE, MAX_TOTAL_LOTS, PROFIT_TARGET
+from config.settings import EXECUTION_MODE, MAX_POSITIONS, LOT_SIZE, MAX_TOTAL_LOTS, PROFIT_TARGET, CURRENCY_LIST
 from data.models import TickBatch
 from data.mt5_adapter import MT5Adapter
 from data.tick_store import TickStore
 from currency.graph import CurrencyGraph
+from currency.range_bucket import CurrencyRangeBucket
 from direction.hypothesis import HypothesisGenerator
 from portfolio.drs import DRS
 from portfolio.concentration import CurrencyConcentration
@@ -40,6 +41,7 @@ class RuntimeManager:
         self.snapshot = SnapshotManager()
         self.dashboard = Dashboard()
         self.health = HealthMonitor()
+        self.range_bucket = CurrencyRangeBucket(window=20)
 
         self._tick_queue = Queue(maxsize=1000)
         self._tick_thread: Optional[threading.Thread] = None
@@ -83,6 +85,8 @@ class RuntimeManager:
                     print("STOP file detected. Shutting down...")
                     self.shutdown_event.set()
                     break
+                if self.risk.check_profit_target(self.executor.positions):
+                    self._close_all_positions("PROFIT_TARGET")
                 time.sleep(1.0)
         except KeyboardInterrupt:
             pass
@@ -115,7 +119,7 @@ class RuntimeManager:
         print("Shutdown complete.")
 
     def _tick_worker(self) -> None:
-        poll_interval = 5.0
+        poll_interval = 2.0
         while not self.shutdown_event.is_set():
             try:
                 batch = self.mt5.poll_ticks()
@@ -168,6 +172,9 @@ class RuntimeManager:
             topology_weights = self.graph.topology.pair_weights([s for s, v in returns.items() if v != 0.0])
             weights = {sym: freshness_weights.get(sym, 0) * topology_weights.get(sym, 0) for sym in returns}
             self.graph.update(returns, weights, now)
+            strengths = self.graph.state.strengths
+            if strengths and len(strengths) >= len(CURRENCY_LIST) * 0.75:
+                self.range_bucket.update(strengths)
             solve_ms = (time.time() - solve_start) * 1000
             self.health.record_solve(solve_ms)
 
@@ -313,6 +320,7 @@ class RuntimeManager:
             health_report=health_report,
             concentration=concentration,
             production_ready=self._production_ready,
+            range_states=self.range_bucket.get_all_states(),
             stress_test=stress_test,
             recent_failures=recent_fails,
             pipeline_metrics=self._pipeline_metrics,
