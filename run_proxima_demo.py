@@ -4940,6 +4940,15 @@ class ProximaDemo:
                                         _pers_obs.get("streak", 0), _entropy_obs, combined_regime)
                                     _obs_state["observer_state"] = _decayed["state"]
                                     _obs_state["reality_score"] = _decayed["confidence"]
+                                    # RF-probability override: if RF gate passed (prob >= 0.30), don't let observer state stay SUPPRESS
+                                    # ObserverDecayEngine uses TPI confidence (near zero in low vol) but signal may come from OSS/RF
+                                    # Router requires EXECUTE state — map SUPPRESS→EXECUTE when RF confirms signal quality
+                                    if _obs_state["observer_state"] == "SUPPRESS":
+                                        _rf_override_p = self._rf_gate.prob(sym) if (hasattr(self, '_rf_gate') and self._rf_gate.ready(sym)) else 0.0
+                                        if _rf_override_p >= getattr(self._rf_gate, 'prob_thresh', 0.30):
+                                            _obs_state["observer_state"] = "EXECUTE"
+                                            _obs_state["reality_score"] = max(_obs_state.get("reality_score", 0.0), _rf_override_p)
+                                            logger.info(f"[RF_OBSERVER_OVERRIDE] {sym}: SUPPRESS→EXECUTE rf_prob={_rf_override_p:.3f}")
                                     # Startup grace: override non-EXECUTE→EXECUTE when OSS has real conviction
                                     if _obs_state["observer_state"] != "EXECUTE" and self._cycle_id < 10:
                                         _ed_state = eval_data.get(sym, {})

@@ -6,7 +6,7 @@ from queue import Queue, Empty
 from pathlib import Path
 from typing import Optional
 
-from config.settings import EXECUTION_MODE, MAX_POSITIONS, LOT_SIZE, MAX_TOTAL_LOTS, PROFIT_TARGET, DIRECTION_PERSISTENCE_CYCLES
+from config.settings import EXECUTION_MODE, MAX_POSITIONS, LOT_SIZE, MAX_TOTAL_LOTS, PROFIT_TARGET
 from data.models import TickBatch
 from data.mt5_adapter import MT5Adapter
 from data.tick_store import TickStore
@@ -160,9 +160,10 @@ class RuntimeManager:
             self._close_all_positions("PROFIT_TARGET")
             self.dashboard.latest_event = {"event": "PROFIT_TARGET", "time": now}
 
+        returns = self.store.calculate_returns()
+
         if now - self._last_decision >= 5.0:
             solve_start = time.time()
-            returns = self.store.calculate_returns()
             freshness_weights = {sym: self.store.freshness(sym) for sym in returns}
             topology_weights = self.graph.topology.pair_weights([s for s, v in returns.items() if v != 0.0])
             weights = {sym: freshness_weights.get(sym, 0) * topology_weights.get(sym, 0) for sym in returns}
@@ -185,14 +186,14 @@ class RuntimeManager:
             self.risk.set_positions(self.executor.positions)
             self.drs.set_positions(self.executor.positions)
 
-            if self.graph.execution_allowed(returns) and self._production_ready:
+            import sys
+            _a = self.graph.execution_allowed(returns)
+            _c = self.graph.connectivity_score(returns)
+            _ap = self.graph._active_pair_count
+            _q = self.graph.state.quality
+            print(f"[GATE] allowed={_a} prod={self._production_ready} hyp={len(hypotheses)} ap={_ap} q={_q:.3f} conn={_c:.3f}", file=sys.stderr)
+            if _a and self._production_ready:
                 ranked = self.drs.rank(hypotheses)
-                self._pipeline_metrics["ranked"] = len(ranked)
-                import sys
-                before = len(ranked)
-                ranked = [h for h in ranked if self.graph.spread_is_persistent(h.symbol)]
-                if len(ranked) != before:
-                    print(f"[PERSISTENCE FILTER] {before} -> {len(ranked)} hypotheses survived (need {DIRECTION_PERSISTENCE_CYCLES} solves stable)", file=sys.stderr)
                 self._pipeline_metrics["ranked"] = len(ranked)
                 pos_count = self.executor.position_count()
                 open_count = pos_count

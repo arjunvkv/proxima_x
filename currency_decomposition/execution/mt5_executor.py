@@ -39,9 +39,13 @@ class MT5Executor:
         try:
             positions = self.mt5.call_mt5(mt5.positions_get)
             if positions is None:
-                self.sync_failed = True
-                import sys
-                print("[SYNC] MT5 positions unavailable", file=sys.stderr)
+                if self.positions:
+                    import sys
+                    print(f"[SYNC] MT5 positions unavailable — using {len(self.positions)} cached positions", file=sys.stderr)
+                else:
+                    import sys
+                    print("[SYNC] MT5 positions unavailable — assuming 0 open positions (fresh start)", file=sys.stderr)
+                self.sync_failed = False
                 return
 
             self.sync_failed = False
@@ -143,7 +147,7 @@ class MT5Executor:
                 "type_filling": int(filling),
             }
             self._log_ledger("order_send", hypothesis.symbol, hypothesis.direction, ticket=None, filling=filling)
-            result = self.mt5.call_mt5(mt5.order_send, request)
+            result = self.mt5.call_mt5(mt5.order_send, **request, timeout=30.0)
             if result is None:
                 last_error = "ORDER_SEND_NONE"
                 continue
@@ -202,7 +206,7 @@ class MT5Executor:
                 del request["type_filling"]
             fill_label = "DEFAULT" if fill is None else f"FILL_{fill}"
             self._log_ledger("close_send", pos.symbol, "BUY" if close_type == mt5.ORDER_TYPE_BUY else "SELL", ticket=ticket, filling=fill_label)
-            result = self.mt5.call_mt5(mt5.order_send, request)
+            result = self.mt5.call_mt5(mt5.order_send, **request, timeout=30.0)
             if result is None:
                 last_error = "CLOSE_NONE"
                 continue
