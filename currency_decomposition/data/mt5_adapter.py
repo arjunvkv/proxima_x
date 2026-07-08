@@ -39,9 +39,14 @@ class MT5Adapter:
 
         while self.running:
             try:
-                rid, command, args = self._cmd_queue.get(timeout=0.1)
+                item = self._cmd_queue.get(timeout=0.1)
+                if len(item) == 4:
+                    rid, command, args, kwargs = item
+                else:
+                    rid, command, args = item
+                    kwargs = {}
                 try:
-                    result = command(*args)
+                    result = command(*args, **kwargs)
                 except Exception as exc:
                     result = exc
                 self._deliver(rid, result)
@@ -60,12 +65,12 @@ class MT5Adapter:
         if ev is not None:
             ev.set()
 
-    def call_mt5(self, fn, *args, timeout: float = 10.0) -> Any:
+    def call_mt5(self, fn, *args, timeout: float = 10.0, **kwargs) -> Any:
         rid = str(uuid.uuid4())
         ev = threading.Event()
         with self._results_lock:
             self._result_events[rid] = ev
-        self._cmd_queue.put((rid, fn, args))
+        self._cmd_queue.put((rid, fn, args, kwargs))
         if not ev.wait(timeout=timeout):
             with self._results_lock:
                 self._result_events.pop(rid, None)
