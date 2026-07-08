@@ -39,6 +39,14 @@ deployment/vpl_regime_signals.json
 *.duckdb
 *.duckdb.wal
 
+# Large replay data files
+data/replay/
+
+# Currency decomposition runtime artifacts
+currency_decomposition/logs/
+currency_decomposition/run_*.txt
+currency_decomposition/_diagnose*.py
+
 # Data - parquet, numpy, model files
 *.parquet
 *.npy
