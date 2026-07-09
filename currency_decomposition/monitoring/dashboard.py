@@ -115,8 +115,8 @@ class Dashboard:
                 streak = sp.get("streak", 0)
                 peak = sp.get("peak", 0.0)
                 trough = sp.get("trough", 0.0)
-                arrow = "▲" if direction > 0 else "▼"
-                ext = f"pk={peak:.5f}" if direction > 0 else f"tr={trough:.5f}"
+                arrow = "▲" if direction > 0 else "▼" if direction < 0 else "○"
+                ext = f"pk={peak:.5f}" if direction > 0 else f"tr={trough:.5f}" if direction < 0 else "─"
                 line = f"    {ccy}: {sign}{val:+.5f}  {bar:<{bar_max}}  {arrow}{streak:<3d}  {ext}  "
                 if rank < 2:
                     print(f"║\033[92m{line}\033[0m║")
@@ -145,9 +145,11 @@ class Dashboard:
                 streak = p.get("streak", 0)
                 peak = p.get("peak", 0.0)
                 trough = p.get("trough", 0.0)
-                arrow = "▲" if direction > 0 else "▼"
-                ext = f"pk={peak:.3f}" if direction > 0 else f"tr={trough:.3f}"
-                line = f"    {ccy}: {sign}{val:+.3f}  {bar:<{bar_max}}  {arrow}{streak:<3d}  {ext}  "
+                gap = p.get("neutral_gap", 0)
+                arrow = "▲" if direction > 0 else "▼" if direction < 0 else "○"
+                gap_str = f" g={gap}" if gap else ""
+                ext = f"pk={peak:.3f}" if direction > 0 else f"tr={trough:.3f}" if direction < 0 else "─"
+                line = f"    {ccy}: {sign}{val:+.3f}  {bar:<{bar_max}}  {arrow}{streak:<3d}{gap_str:<4s}  {ext}  "
                 if rank < 2:
                     print(f"║\033[92m{line}\033[0m║")
                 elif rank >= n - 2:
@@ -372,6 +374,10 @@ class Dashboard:
                 "strength_persistence": {
                     k: {"dir": v.get("direction", 0), "streak": v.get("streak", 0)}
                     for k, v in (strength_persistence or {}).items()
+                },
+                "burst_persistence": {
+                    k: {"dir": v.get("direction", 0), "streak": v.get("streak", 0), "gap": v.get("neutral_gap", 0)}
+                    for k, v in (persistence or {}).items()
                 },
             }
             self._log_jsonl(record)

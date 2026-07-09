@@ -3,6 +3,8 @@ from config.settings import CURRENCY_LIST, BASE_CURRENCY_MAP
 
 
 class ParticipationBurstEngine:
+    MIN_HISTORY = 10
+
     def __init__(self, history_size: int = 60, mad_epsilon: float = 1e-6):
         self.history_size = history_size
         self.mad_epsilon = mad_epsilon
@@ -13,13 +15,14 @@ class ParticipationBurstEngine:
         self._streak: dict[str, int] = {}
         self._peak: dict[str, float] = {}
         self._trough: dict[str, float] = {}
+        self._neutral_gap: dict[str, int] = {}
 
     def update(self, symbol: str, volume: float) -> None:
         self._volumes[symbol].append(volume)
 
     def get_burst(self, symbol: str) -> float:
         hist = list(self._volumes.get(symbol, []))
-        if len(hist) < 10:
+        if len(hist) < self.MIN_HISTORY:
             return 0.0
         current = hist[-1]
         sorted_hist = sorted(hist)
@@ -28,19 +31,12 @@ class ParticipationBurstEngine:
         mad = devs[len(devs) // 2] + self.mad_epsilon
         return (current - median) / mad
 
-    def get_paired_weights(self, symbols: list[str]) -> dict[str, float]:
-        raw = {}
-        for sym in symbols:
-            burst = self.get_burst(sym)
-            raw[sym] = burst
-        if not raw:
-            return {}
-        ranked = self._cross_sectional_ranks(raw)
-        weights = {}
-        for sym in symbols:
-            rank = ranked.get(sym, 0.0)
-            weights[sym] = 0.5 + rank * 2.0
-        return weights
+    def get_quality(self, symbol: str) -> dict:
+        hist = list(self._volumes.get(symbol, []))
+        n = len(hist)
+        if n < self.MIN_HISTORY:
+            return {"samples": n, "status": "cold", "needed": self.MIN_HISTORY - n}
+        return {"samples": n, "status": "normal" if n >= self.history_size else "warming"}
 
     def _cross_sectional_ranks(self, values: dict[str, float]) -> dict[str, float]:
         if not values:
@@ -49,7 +45,7 @@ class ParticipationBurstEngine:
         n = len(sorted_items)
         return {sym: i / max(n - 1, 1) for i, (sym, _) in enumerate(sorted_items)}
 
-    def _compute_currency_bursts_raw(self) -> dict[str, float]:
+    def _compute_currency_bursts_raw(self, pair_returns: dict[str, float] = None) -> dict[str, float]:
         pair_bursts = {}
         for sym in BASE_CURRENCY_MAP:
             pair_bursts[sym] = self.get_burst(sym)
@@ -58,12 +54,20 @@ class ParticipationBurstEngine:
         for sym, (base, quote) in BASE_CURRENCY_MAP.items():
             rank = pair_ranks.get(sym, 0.5)
             score = (rank - 0.5) * 2.0
-            currency_scores[base].append(score)
-            currency_scores[quote].append(score)
+            if pair_returns:
+                ret = pair_returns.get(sym, 0.0)
+                direction = 1 if ret > 0 else (-1 if ret < 0 else 0)
+                base_score = score * direction
+                quote_score = -score * direction
+                currency_scores[base].append(base_score)
+                currency_scores[quote].append(quote_score)
+            else:
+                currency_scores[base].append(score)
+                currency_scores[quote].append(score)
         return {c: (sum(vs) / len(vs)) if vs else 0.0 for c, vs in currency_scores.items()}
 
-    def get_currency_bursts(self) -> dict[str, float]:
-        bursts = self._compute_currency_bursts_raw()
+    def get_currency_bursts(self, pair_returns: dict[str, float] = None) -> dict[str, float]:
+        bursts = self._compute_currency_bursts_raw(pair_returns)
         self._update_persistence(bursts)
         return bursts
 
@@ -72,6 +76,9 @@ class ParticipationBurstEngine:
             sign = 1 if val > 0 else (-1 if val < 0 else 0)
             prev = self._prev_sign.get(ccy, 0)
             if sign == 0:
+                if prev != 0:
+                    self._neutral_gap[ccy] = self._neutral_gap.get(ccy, 0) + 1
+                self._streak[ccy] = 0
                 continue
             if sign == prev:
                 self._streak[ccy] = self._streak.get(ccy, 0) + 1
@@ -84,6 +91,7 @@ class ParticipationBurstEngine:
                 self._streak[ccy] = 1
                 self._peak[ccy] = val
                 self._trough[ccy] = val
+                self._neutral_gap[ccy] = 0
 
     def get_top_burst_pairs(self, n: int = 3) -> list[str]:
         bursts = {}
@@ -100,6 +108,14 @@ class ParticipationBurstEngine:
                 "streak": self._streak.get(c, 0),
                 "peak": self._peak.get(c, 0.0),
                 "trough": self._trough.get(c, 0.0),
+                "neutral_gap": self._neutral_gap.get(c, 0),
             }
             for c in CURRENCY_LIST
         }
+
+    def get_burst_alignment(self, symbol: str, pair_return: float) -> float:
+        burst = self.get_burst(symbol)
+        if burst == 0.0 or pair_return == 0.0:
+            return 0.0
+        direction = 1 if pair_return > 0 else -1
+        return burst * direction

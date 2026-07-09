@@ -69,6 +69,8 @@ class RuntimeManager:
         self.last_exec_fail: Optional[str] = None
         self._swps_pick: Optional[tuple] = None
         self._top_burst_pairs: list[str] = []
+        self._currency_bursts: dict[str, float] | None = None
+        self._persistence: dict[str, dict] | None = None
 
     def start(self) -> None:
         self._setup_signal_handlers()
@@ -194,8 +196,7 @@ class RuntimeManager:
             solve_start = time.time()
             freshness_weights = {sym: self.store.freshness(sym) for sym in returns}
             topology_weights = self.graph.topology.pair_weights([s for s, v in returns.items() if v != 0.0])
-            burst_weights = self.burst.get_paired_weights(list(returns.keys()))
-            weights = {sym: freshness_weights.get(sym, 0) * topology_weights.get(sym, 0) * burst_weights.get(sym, 1.0) for sym in returns}
+            weights = {sym: freshness_weights.get(sym, 0) * topology_weights.get(sym, 0) for sym in returns}
             self.graph.update(returns, weights, now)
             self._strength_capture.append(self.graph.strengths())
             solve_ms = (time.time() - solve_start) * 1000
@@ -221,10 +222,20 @@ class RuntimeManager:
             hypotheses = [h for h in hypotheses if h.symbol in self._available_symbols]
             self._pipeline_metrics["generated"] = len(hypotheses)
             self._top_burst_pairs = self.burst.get_top_burst_pairs(3)
+            self._currency_bursts = None
+            self._persistence = None
             if self._top_burst_pairs:
                 burst_filtered = [h for h in hypotheses if h.symbol in self._top_burst_pairs]
                 if burst_filtered:
-                    hypotheses = burst_filtered
+                    currency_bursts = self.burst.get_currency_bursts(returns)
+                    aligned = [
+                        h for h in burst_filtered
+                        if (currency_bursts.get(h.symbol[:3], 0) - currency_bursts.get(h.symbol[3:6], 0)) * h.direction > 0
+                    ]
+                    hypotheses = aligned
+                    if aligned:
+                        self._currency_bursts = currency_bursts
+                        self._persistence = self.burst.get_persistence()
             self._pipeline_metrics["burst_hyp"] = len(hypotheses)
 
             self.executor.sync()
@@ -424,8 +435,12 @@ class RuntimeManager:
             health.state = "DEGRADED"
 
         stress_test = self.graph.currency_stress_test(returns)
-        currency_bursts = self.burst.get_currency_bursts()
-        persistence = self.burst.get_persistence()
+        if self._currency_bursts is None:
+            currency_bursts = self.burst.get_currency_bursts(returns)
+            persistence = self.burst.get_persistence()
+        else:
+            currency_bursts = self._currency_bursts
+            persistence = self._persistence
         strength_persistence = self.graph.get_strength_persistence()
         recent_fails = self.executor.recent_failures()
 
