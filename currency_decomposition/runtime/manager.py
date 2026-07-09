@@ -68,6 +68,7 @@ class RuntimeManager:
         self._last_discovery = 0.0
         self.last_exec_fail: Optional[str] = None
         self._swps_pick: Optional[tuple] = None
+        self._top_burst_pairs: list[str] = []
 
     def start(self) -> None:
         self._setup_signal_handlers()
@@ -205,6 +206,7 @@ class RuntimeManager:
 
             self._pipeline_metrics.update({
                 "generated": 0,
+                "burst_hyp": 0,
                 "ranked": 0,
                 "selected": 0,
                 "risk_approved": 0,
@@ -218,6 +220,12 @@ class RuntimeManager:
             hypotheses = self.generator.generate_all(self.graph, now)
             hypotheses = [h for h in hypotheses if h.symbol in self._available_symbols]
             self._pipeline_metrics["generated"] = len(hypotheses)
+            self._top_burst_pairs = self.burst.get_top_burst_pairs(3)
+            if self._top_burst_pairs:
+                burst_filtered = [h for h in hypotheses if h.symbol in self._top_burst_pairs]
+                if burst_filtered:
+                    hypotheses = burst_filtered
+            self._pipeline_metrics["burst_hyp"] = len(hypotheses)
 
             self.executor.sync()
 
@@ -466,6 +474,7 @@ class RuntimeManager:
             persistence=persistence,
             strength_persistence=strength_persistence,
             wls_direct=WLS_DIRECT_MODE,
+            top_burst_pairs=self._top_burst_pairs,
         )
 
     def _close_all_positions(self, reason: str) -> None:

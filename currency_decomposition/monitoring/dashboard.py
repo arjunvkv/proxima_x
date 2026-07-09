@@ -60,7 +60,8 @@ class Dashboard:
                 currency_bursts: dict = None,
                 persistence: dict = None,
                 strength_persistence: dict = None,
-                wls_direct: bool = False) -> None:
+                wls_direct: bool = False,
+                top_burst_pairs: list = None) -> None:
         now = time.time()
         if now - self._last_update < 1.0:
             return
@@ -128,6 +129,9 @@ class Dashboard:
         # ── PARTICIPATION BURST ────────────────────────────────────
         if currency_bursts:
             print("║  BURST & PERSISTENCE (volume activity / streak)                        ║")
+            if top_burst_pairs:
+                pairs_str = " ".join(top_burst_pairs[:3])
+                print(f"║    ACTIVE: {pairs_str:<62}║")
             items = sorted(currency_bursts.items(), key=lambda x: abs(x[1]), reverse=True)
             bar_max = 14
             n = len(items)
@@ -218,11 +222,12 @@ class Dashboard:
                 print(f"║  ! EXEC FAIL: {sym:<6s} {ev:<12s} {reason:<44s}  ║")
         if pipeline_metrics:
             gen = pipeline_metrics.get("generated", 0)
+            bst = pipeline_metrics.get("burst_hyp", 0)
             rnk = pipeline_metrics.get("ranked", 0)
             sel = pipeline_metrics.get("selected", 0)
             rsk = pipeline_metrics.get("risk_approved", 0)
             exe = pipeline_metrics.get("executed", 0)
-            print(f"║  PIPELINE: gen={gen:<2d} ranked={rnk:<2d} selected={sel:<2d} risk={rsk:<2d} executed={exe:<2d}      ║")
+            print(f"║  PIPELINE: gen={gen:<2d} burst={bst:<2d} ranked={rnk:<2d} selected={sel:<2d} risk={rsk:<2d} exe={exe:<2d}║")
 
         # ── SWPS PERSISTENCE SIGNAL ─────────────────────────────
         from config.settings import SWPS_WINDOW_SIZE

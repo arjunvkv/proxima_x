@@ -85,6 +85,14 @@ class ParticipationBurstEngine:
                 self._peak[ccy] = val
                 self._trough[ccy] = val
 
+    def get_top_burst_pairs(self, n: int = 3) -> list[str]:
+        bursts = {}
+        for sym in BASE_CURRENCY_MAP:
+            hist = self._volumes.get(sym, [])
+            bursts[sym] = abs(self.get_burst(sym)) if len(hist) >= 10 else 0.0
+        sorted_pairs = sorted(bursts.items(), key=lambda x: x[1], reverse=True)
+        return [sym for sym, _ in sorted_pairs[:n]]
+
     def get_persistence(self) -> dict[str, dict]:
         return {
             c: {
