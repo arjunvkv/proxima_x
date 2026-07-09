@@ -9,7 +9,7 @@ from typing import Optional
 
 from config.settings import EXECUTION_MODE, MAX_POSITIONS, LOT_SIZE, MAX_TOTAL_LOTS, PROFIT_TARGET
 from config.settings import SWPS_MIN_SCORE, SWPS_WINDOW_SIZE
-from config.settings import CURRENCY_LIST, BASE_CURRENCY_MAP, WLS_DIRECT_MODE
+from config.settings import CURRENCY_LIST, BASE_CURRENCY_MAP, WLS_DIRECT_MODE, BURST_CONFLICT_THRESHOLD
 from data.models import TickBatch
 from data.mt5_adapter import MT5Adapter
 from data.tick_store import TickStore
@@ -224,19 +224,22 @@ class RuntimeManager:
             self._top_burst_pairs = self.burst.get_top_burst_pairs(3)
             self._currency_bursts = None
             self._persistence = None
-            if self._top_burst_pairs:
-                burst_filtered = [h for h in hypotheses if h.symbol in self._top_burst_pairs]
-                if burst_filtered:
-                    currency_bursts = self.burst.get_currency_bursts(returns)
-                    aligned = [
-                        h for h in burst_filtered
-                        if (currency_bursts.get(h.symbol[:3], 0) - currency_bursts.get(h.symbol[3:6], 0)) * h.direction > 0
-                    ]
-                    hypotheses = aligned
-                    if aligned:
-                        self._currency_bursts = currency_bursts
-                        self._persistence = self.burst.get_persistence()
+            burst_state = self.burst.get_state()
+            if burst_state != "cold":
+                currency_bursts = self.burst.get_currency_bursts(returns)
+                self._currency_bursts = currency_bursts
+                self._persistence = self.burst.get_persistence()
+                survived = []
+                for h in hypotheses:
+                    base = h.symbol[:3]
+                    quote = h.symbol[3:6]
+                    spread = currency_bursts.get(base, 0) - currency_bursts.get(quote, 0)
+                    conflict = spread * h.direction
+                    if conflict > -BURST_CONFLICT_THRESHOLD:
+                        survived.append(h)
+                hypotheses = survived
             self._pipeline_metrics["burst_hyp"] = len(hypotheses)
+            self._pipeline_metrics["burst_state"] = burst_state
 
             self.executor.sync()
 
@@ -490,6 +493,7 @@ class RuntimeManager:
             strength_persistence=strength_persistence,
             wls_direct=WLS_DIRECT_MODE,
             top_burst_pairs=self._top_burst_pairs,
+            burst_state=self._pipeline_metrics.get("burst_state"),
         )
 
     def _close_all_positions(self, reason: str) -> None:

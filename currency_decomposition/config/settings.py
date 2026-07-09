@@ -58,6 +58,13 @@ PROFIT_COOLDOWN = 300
 
 EXECUTION_MODE = "live"  # "paper" for simulated, "live" for real MT5 order placement
 WLS_DIRECT_MODE = True  # bypass SWPS, GATE, and other WLS-blocking layers
+
+# Burst conflict threshold (normalized participation spread × direction).
+# Hypotheses with conflict_score < -BURST_CONFLICT_THRESHOLD are rejected.
+# 0.30 = reject when participation strongly contradicts WLS direction.
+# Higher = more aggressive rejection, lower = more permissive.
+
+BURST_CONFLICT_THRESHOLD = 0.30
 MAX_DAILY_LOSS = 100
 MAX_DRAWDOWN = 500
 MAX_CURRENCY_POSITIONS = 2
