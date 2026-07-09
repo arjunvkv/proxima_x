@@ -59,7 +59,8 @@ class Dashboard:
                 swps_capture_count: int = 0,
                 currency_bursts: dict = None,
                 persistence: dict = None,
-                strength_persistence: dict = None) -> None:
+                strength_persistence: dict = None,
+                wls_direct: bool = False) -> None:
         now = time.time()
         if now - self._last_update < 1.0:
             return
@@ -73,8 +74,8 @@ class Dashboard:
         health_icon = "OK" if health.state == "OK" else ("DEG" if health.state == "DEGRADED" else "ERR")
         health_color = "\033[92m" if health.state == "OK" else ("\033[93m" if health.state == "DEGRADED" else "\033[91m")
         reset = "\033[0m"
-        ready_str = "READY" if production_ready else "BLOCKED"
-        ready_color = "\033[92m" if production_ready else "\033[91m"
+        ready_str = "WLS DIRECT" if wls_direct else ("READY" if production_ready else "BLOCKED")
+        ready_color = "\033[92m" if (wls_direct or production_ready) else "\033[91m"
 
         # ── HEADER ──────────────────────────────────────────────
         print("╔══════════════════════════════════════════════════════════════════════╗")
@@ -225,7 +226,9 @@ class Dashboard:
 
         # ── SWPS PERSISTENCE SIGNAL ─────────────────────────────
         from config.settings import SWPS_WINDOW_SIZE
-        if swps_signal:
+        if wls_direct:
+            print(f"║  SWPS: \033[91mDISABLED\033[0m (WLS_DIRECT_MODE)                                    ║")
+        elif swps_signal:
             swp_sym = swps_signal.get("symbol", "")
             swp_dir = swps_signal.get("direction", "")
             swp_sc = swps_signal.get("score", 0)
@@ -324,7 +327,8 @@ class Dashboard:
         me = f"{health.memory_mb:.0f}".rjust(3)
         hr = health_report or {}
         conf = hr.get("confidence_level", "?").rjust(4)
-        print(f"  MT5={m}  TICK={t}  GRAPH={g}  SNAP={s}  SOLVE={l}ms  MEM={me}MB  CONF={conf}  |  "
+        mode_str = "DIRECT" if wls_direct else conf
+        print(f"  MT5={m}  TICK={t}  GRAPH={g}  SNAP={s}  SOLVE={l}ms  MEM={me}MB  MODE={mode_str}  |  "
               f"POS={len(positions)}  PnL={pnl_str}")
 
         # ── PERSISTENT LOG (JSONL, 30s interval) ─────────────────

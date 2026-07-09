@@ -57,6 +57,7 @@ PROFIT_TARGET = 50.0
 PROFIT_COOLDOWN = 300
 
 EXECUTION_MODE = "live"  # "paper" for simulated, "live" for real MT5 order placement
+WLS_DIRECT_MODE = True  # bypass SWPS, GATE, and other WLS-blocking layers
 MAX_DAILY_LOSS = 100
 MAX_DRAWDOWN = 500
 MAX_CURRENCY_POSITIONS = 2

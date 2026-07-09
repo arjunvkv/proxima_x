@@ -9,7 +9,7 @@ from typing import Optional
 
 from config.settings import EXECUTION_MODE, MAX_POSITIONS, LOT_SIZE, MAX_TOTAL_LOTS, PROFIT_TARGET
 from config.settings import SWPS_MIN_SCORE, SWPS_WINDOW_SIZE
-from config.settings import CURRENCY_LIST, BASE_CURRENCY_MAP
+from config.settings import CURRENCY_LIST, BASE_CURRENCY_MAP, WLS_DIRECT_MODE
 from data.models import TickBatch
 from data.mt5_adapter import MT5Adapter
 from data.tick_store import TickStore
@@ -234,11 +234,12 @@ class RuntimeManager:
             _c = self.graph.connectivity_score(returns)
             _ap = self.graph._active_pair_count
             _q = self.graph.state.quality
-            print(f"[GATE] allowed={_a} prod={self._production_ready} hyp={len(hypotheses)} ap={_ap} q={_q:.3f} conn={_c:.3f}", file=sys.stderr)
-            if _a and self._production_ready:
+            print(f"[GATE] allowed={_a} prod={self._production_ready} hyp={len(hypotheses)} ap={_ap} q={_q:.3f} conn={_c:.3f} direct={WLS_DIRECT_MODE}", file=sys.stderr)
+            gate_pass = WLS_DIRECT_MODE or (_a and self._production_ready)
+            if gate_pass:
                 self._swps_pick = None
 
-                if len(self._strength_capture) >= SWPS_WINDOW_SIZE:
+                if not WLS_DIRECT_MODE and len(self._strength_capture) >= SWPS_WINDOW_SIZE:
                     swps_ranked = self.swps.rank(list(self._strength_capture))
 
                     for candidate_symbol, candidate_direction, candidate_score in swps_ranked:
@@ -464,6 +465,7 @@ class RuntimeManager:
             currency_bursts=currency_bursts,
             persistence=persistence,
             strength_persistence=strength_persistence,
+            wls_direct=WLS_DIRECT_MODE,
         )
 
     def _close_all_positions(self, reason: str) -> None:
@@ -482,6 +484,9 @@ class RuntimeManager:
         self.risk.set_positions(self.executor.positions)
 
     def _update_production_readiness(self, health_report: dict, max_concentration: float) -> None:
+        if WLS_DIRECT_MODE:
+            self._production_ready = True
+            return
         if self.executor.sync_failed:
             self._production_ready = False
             return
