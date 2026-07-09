@@ -4,7 +4,8 @@ from itertools import combinations
 from typing import Optional
 from config.settings import (
     DRS_LAMBDA_DECAY, DRS_SLOT_INERTIA,
-    MAX_POSITIONS, MAX_CURRENCY_FACTOR_EXPOSURE, DRS_CANDIDATE_POOL_SIZE
+    MAX_POSITIONS, MAX_CURRENCY_FACTOR_EXPOSURE,
+    DRS_CANDIDATE_POOL_SIZE
 )
 from data.models import DirectionHypothesis, PaperPosition
 

@@ -27,6 +27,10 @@ class CurrencyGraph:
         self._solve_times = deque(maxlen=20)
         self._active_pair_count = 0
         self._spread_history: dict[str, deque] = defaultdict(lambda: deque(maxlen=10))
+        self._strength_prev_sign: dict[str, int] = {}
+        self._strength_streak: dict[str, int] = {}
+        self._strength_peak: dict[str, float] = {}
+        self._strength_trough: dict[str, float] = {}
 
     def _init_state(self):
         self.state.strengths = {c: 0.0 for c in CURRENCY_LIST}
@@ -49,6 +53,7 @@ class CurrencyGraph:
             self.state.strengths = strengths
             self.state.prior = strengths
             self.state.last_solve_timestamp = timestamp
+            self._update_strength_persistence(strengths)
             self.state.solve_count += 1
             active_symbols = [s for s, v in returns.items() if v != 0.0]
             self.state.observability = self.observability.calculate(active_symbols)
@@ -81,6 +86,35 @@ class CurrencyGraph:
         active_ratio = len(active_pairs) / max(len(BASE_CURRENCY_MAP), 1)
         new_quality = fit_quality * active_ratio
         self.state.quality = 0.7 * self.state.quality + 0.3 * new_quality
+
+    def _update_strength_persistence(self, strengths: dict[str, float]) -> None:
+        for ccy, val in strengths.items():
+            sign = 1 if val > 0 else (-1 if val < 0 else 0)
+            prev = self._strength_prev_sign.get(ccy, 0)
+            if sign == 0:
+                continue
+            if sign == prev:
+                self._strength_streak[ccy] = self._strength_streak.get(ccy, 0) + 1
+                if val > self._strength_peak.get(ccy, float("-inf")):
+                    self._strength_peak[ccy] = val
+                if val < self._strength_trough.get(ccy, float("inf")):
+                    self._strength_trough[ccy] = val
+            else:
+                self._strength_prev_sign[ccy] = sign
+                self._strength_streak[ccy] = 1
+                self._strength_peak[ccy] = val
+                self._strength_trough[ccy] = val
+
+    def get_strength_persistence(self) -> dict[str, dict]:
+        return {
+            c: {
+                "direction": self._strength_prev_sign.get(c, 0),
+                "streak": self._strength_streak.get(c, 0),
+                "peak": self._strength_peak.get(c, 0.0),
+                "trough": self._strength_trough.get(c, 0.0),
+            }
+            for c in CURRENCY_LIST
+        }
 
     def _compute_graph_state(self) -> GraphState:
         if self._active_pair_count < MIN_SOLVE_PAIRS:

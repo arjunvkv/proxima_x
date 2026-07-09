@@ -2,16 +2,20 @@ import time
 import signal
 import threading
 import sys
+from collections import deque
 from queue import Queue, Empty
 from pathlib import Path
 from typing import Optional
 
 from config.settings import EXECUTION_MODE, MAX_POSITIONS, LOT_SIZE, MAX_TOTAL_LOTS, PROFIT_TARGET
+from config.settings import SWPS_MIN_SCORE, SWPS_WINDOW_SIZE
+from config.settings import CURRENCY_LIST, BASE_CURRENCY_MAP
 from data.models import TickBatch
 from data.mt5_adapter import MT5Adapter
 from data.tick_store import TickStore
 from currency.graph import CurrencyGraph
 from direction.hypothesis import HypothesisGenerator
+from direction.short_window_persistence import ShortWindowPersistenceScanner
 from portfolio.drs import DRS
 from portfolio.concentration import CurrencyConcentration
 from risk.safety import RiskEngine
@@ -20,6 +24,7 @@ from execution.mt5_executor import MT5Executor
 from persistence.snapshot import SnapshotManager
 from monitoring.dashboard import Dashboard
 from .health import HealthMonitor
+from features.participation_burst import ParticipationBurstEngine
 
 class RuntimeManager:
     def __init__(self):
@@ -29,9 +34,15 @@ class RuntimeManager:
 
         self.mt5 = MT5Adapter()
         self.store = TickStore()
+        self.burst = ParticipationBurstEngine()
         self.graph = CurrencyGraph()
         self.generator = HypothesisGenerator()
         self.drs = DRS()
+        self.swps = ShortWindowPersistenceScanner(
+            currencies=CURRENCY_LIST,
+            pairs=BASE_CURRENCY_MAP
+        )
+        self._strength_capture = deque(maxlen=SWPS_WINDOW_SIZE)
         self.risk = RiskEngine()
         if EXECUTION_MODE == "live":
             self.executor = MT5Executor(self.mt5)
@@ -52,6 +63,11 @@ class RuntimeManager:
         self._mt5_audit = None
         self._production_ready = False
         self._pipeline_metrics = {"generated": 0, "ranked": 0, "selected": 0, "risk_approved": 0, "executed": 0}
+        self._available_symbols: list[str] = []
+        self._excluded_symbols: list[dict] = []
+        self._last_discovery = 0.0
+        self.last_exec_fail: Optional[str] = None
+        self._swps_pick: Optional[tuple] = None
 
     def start(self) -> None:
         self._setup_signal_handlers()
@@ -60,6 +76,13 @@ class RuntimeManager:
             print("ERROR: Cannot connect to MT5. Ensure terminal is running.")
             sys.exit(1)
         print("MT5 connected.")
+        if EXECUTION_MODE == "live":
+            discovery = self.executor.discover_symbols()
+            self._available_symbols = discovery["available"]
+            self._excluded_symbols = discovery["excluded"]
+        else:
+            from config.settings import SYMBOLS
+            self._available_symbols = list(SYMBOLS)
 
         state = self.snapshot.load()
         if state:
@@ -154,6 +177,8 @@ class RuntimeManager:
 
         for batch in batches:
             self.store.add_ticks(batch.ticks)
+            for tick in batch.ticks:
+                self.burst.update(tick.symbol, tick.volume)
             self.executor.update_prices(batch.ticks)
 
         if self.risk.check_profit_target(self.executor.positions):
@@ -161,19 +186,37 @@ class RuntimeManager:
             self.dashboard.latest_event = {"event": "PROFIT_TARGET", "time": now}
 
         returns = self.store.calculate_returns()
+        if self._available_symbols:
+            returns = {s: v for s, v in returns.items() if s in self._available_symbols}
 
         if now - self._last_decision >= 5.0:
             solve_start = time.time()
             freshness_weights = {sym: self.store.freshness(sym) for sym in returns}
             topology_weights = self.graph.topology.pair_weights([s for s, v in returns.items() if v != 0.0])
-            weights = {sym: freshness_weights.get(sym, 0) * topology_weights.get(sym, 0) for sym in returns}
+            burst_weights = self.burst.get_paired_weights(list(returns.keys()))
+            weights = {sym: freshness_weights.get(sym, 0) * topology_weights.get(sym, 0) * burst_weights.get(sym, 1.0) for sym in returns}
             self.graph.update(returns, weights, now)
+            self._strength_capture.append(self.graph.strengths())
             solve_ms = (time.time() - solve_start) * 1000
             self.health.record_solve(solve_ms)
 
         if now - self._last_decision >= 30.0:
             self._last_decision = now
+
+            self._pipeline_metrics.update({
+                "generated": 0,
+                "ranked": 0,
+                "selected": 0,
+                "risk_approved": 0,
+                "executed": 0,
+            })
+
+            if self._cycle_count % 10 == 0 and EXECUTION_MODE == "live":
+                discovery = self.executor.discover_symbols()
+                self._available_symbols = discovery["available"]
+                self._excluded_symbols = discovery["excluded"]
             hypotheses = self.generator.generate_all(self.graph, now)
+            hypotheses = [h for h in hypotheses if h.symbol in self._available_symbols]
             self._pipeline_metrics["generated"] = len(hypotheses)
 
             self.executor.sync()
@@ -193,6 +236,70 @@ class RuntimeManager:
             _q = self.graph.state.quality
             print(f"[GATE] allowed={_a} prod={self._production_ready} hyp={len(hypotheses)} ap={_ap} q={_q:.3f} conn={_c:.3f}", file=sys.stderr)
             if _a and self._production_ready:
+                self._swps_pick = None
+
+                if len(self._strength_capture) >= SWPS_WINDOW_SIZE:
+                    swps_ranked = self.swps.rank(list(self._strength_capture))
+
+                    for candidate_symbol, candidate_direction, candidate_score in swps_ranked:
+                        print(
+                            f"[SWPS CANDIDATE] {candidate_symbol} "
+                            f"{candidate_direction} score={candidate_score:.4f}",
+                            file=sys.stderr
+                        )
+
+                        if candidate_score < SWPS_MIN_SCORE:
+                            continue
+
+                        if candidate_symbol not in self._available_symbols:
+                            print(
+                                f"[SWPS SKIP] {candidate_symbol} unavailable in MT5",
+                                file=sys.stderr
+                            )
+                            continue
+
+                        self._swps_pick = (
+                            candidate_symbol,
+                            candidate_direction,
+                            candidate_score
+                        )
+                        break
+
+                if self._swps_pick:
+                    symbol, direction, score = self._swps_pick
+                    print(
+                        f"[SWPS SELECTED] {symbol} {direction} score={score:.4f}",
+                        file=sys.stderr
+                    )
+
+                    matching = [
+                        h for h in hypotheses
+                        if h.symbol == symbol
+                    ]
+
+                    if not matching:
+                        generated = self.generator.generate_all(self.graph, now)
+                        matching = [
+                            h for h in generated
+                            if h.symbol == symbol
+                        ]
+
+                    if matching:
+                        h = matching[0]
+                        h.direction = 1.0 if direction == "BUY" else -1.0
+                        h.confidence = min(h.confidence * (1.0 + score), 1.0)
+                        hypotheses = [h]
+                        print(
+                            f"[SWPS OVERRIDE] {symbol} {direction} score={score:.4f}",
+                            file=sys.stderr
+                        )
+                    else:
+                        print(
+                            f"[SWPS ABORT] {symbol} no executable hypothesis",
+                            file=sys.stderr
+                        )
+                        hypotheses = []
+
                 ranked = self.drs.rank(hypotheses)
                 self._pipeline_metrics["ranked"] = len(ranked)
                 pos_count = self.executor.position_count()
@@ -200,20 +307,38 @@ class RuntimeManager:
                 print(f"[POSITION STATE] executor={len(self.executor.positions)} count={pos_count}", file=sys.stderr)
                 if open_count >= MAX_POSITIONS:
                     selected = []
-                    print(f"[DRS SELECT] skipped — open_count={open_count} >= MAX={MAX_POSITIONS}", file=sys.stderr)
+                    print(
+                        f"[DRS SELECT] skipped — open_count={open_count} >= MAX={MAX_POSITIONS}",
+                        file=sys.stderr
+                    )
+
                 elif self.risk.cooldown_active():
                     selected = []
                     remain = int(self.risk._profit_cooldown_until - now)
                     print(f"[DRS SELECT] skipped — profit cooldown {remain}s remaining", file=sys.stderr)
                 else:
-                    selected = self.drs.select(ranked, open_count)
-                    print(f"[DRS SELECT] {self.drs.last_selection_trace}", file=sys.stderr)
-                    replacements = self.drs.replacement_candidates(ranked)
-                    if replacements:
-                        print(f"[DRS REPLACE] candidates: {replacements}", file=sys.stderr)
+                    if (
+                        self._swps_pick
+                        and len(ranked) == 1
+                        and open_count < MAX_POSITIONS
+                    ):
+                        selected = [ranked[0]]
+                        print(
+                            f"[SWPS DIRECT SELECT] "
+                            f"{ranked[0].symbol} "
+                            f"drs={ranked[0].drs_score:.3f}",
+                            file=sys.stderr
+                        )
+                    else:
+                        selected = self.drs.select(ranked, open_count)
+                        print(f"[DRS SELECT] {self.drs.last_selection_trace}", file=sys.stderr)
+                        replacements = self.drs.replacement_candidates(ranked)
+                        if replacements:
+                            print(f"[DRS REPLACE] candidates: {replacements}", file=sys.stderr)
 
                 self._pipeline_metrics["selected"] = len(selected)
                 cycle_submitted = set()
+                self.last_exec_fail = None
                 for h in selected:
                     if self.executor.position_count() >= MAX_POSITIONS:
                         break
@@ -234,6 +359,7 @@ class RuntimeManager:
                         self.risk.set_positions(self.executor.positions)
                     else:
                         import sys
+                        self.last_exec_fail = f"{h.symbol} {result.reason}"
                         print(f"[EXEC FAIL] {h.symbol} {result.reason}", file=sys.stderr)
 
         prices = {p.symbol: p.current_price for p in self.executor.positions}
@@ -289,12 +415,21 @@ class RuntimeManager:
             health.state = "DEGRADED"
 
         stress_test = self.graph.currency_stress_test(returns)
+        currency_bursts = self.burst.get_currency_bursts()
+        persistence = self.burst.get_persistence()
+        strength_persistence = self.graph.get_strength_persistence()
         recent_fails = self.executor.recent_failures()
 
         self._update_production_readiness(health_report, max_conc)
 
         self._cycle_count += 1
         cd_remain = max(0, int(self.risk._profit_cooldown_until - now)) if self.risk.cooldown_active() else 0
+
+        swps_signal = None
+        if self._swps_pick:
+            sym, d, sc = self._swps_pick
+            swps_signal = {"symbol": sym, "direction": d, "score": sc}
+
         self.dashboard.render(
             mode=EXECUTION_MODE.upper(),
             health=health,
@@ -315,6 +450,8 @@ class RuntimeManager:
             production_ready=self._production_ready,
             stress_test=stress_test,
             recent_failures=recent_fails,
+            exec_fail=self.last_exec_fail,
+            unavailable_symbols=[e["symbol"] for e in self._excluded_symbols],
             pipeline_metrics=self._pipeline_metrics,
             total_lots=self.executor.total_lots(),
             max_total_lots=MAX_TOTAL_LOTS,
@@ -322,6 +459,11 @@ class RuntimeManager:
             profit_target=PROFIT_TARGET,
             cooldown_active=self.risk.cooldown_active(),
             cooldown_remaining=cd_remain,
+            swps_signal=swps_signal,
+            swps_capture_count=len(self._strength_capture),
+            currency_bursts=currency_bursts,
+            persistence=persistence,
+            strength_persistence=strength_persistence,
         )
 
     def _close_all_positions(self, reason: str) -> None:

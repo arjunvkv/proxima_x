@@ -49,10 +49,17 @@ class Dashboard:
                production_ready: bool = False,
                stress_test: dict = None,
                recent_failures: list = None,
-               pipeline_metrics: dict = None,
-               total_lots: float = 0.0, max_total_lots: float = 0.0,
+                pipeline_metrics: dict = None,
+                exec_fail: str = None,
+                unavailable_symbols: list = None,
+                total_lots: float = 0.0, max_total_lots: float = 0.0,
                lot_size: float = 0.0, profit_target: float = 0.0,
-               cooldown_active: bool = False, cooldown_remaining: int = 0) -> None:
+               cooldown_active: bool = False, cooldown_remaining: int = 0,
+                swps_signal: dict = None,
+                swps_capture_count: int = 0,
+                currency_bursts: dict = None,
+                persistence: dict = None,
+                strength_persistence: dict = None) -> None:
         now = time.time()
         if now - self._last_update < 1.0:
             return
@@ -91,17 +98,58 @@ class Dashboard:
         print("╠══════════════════════════════════════════════════════════════════════╣")
 
         # ── CURRENCY STRENGTHS ──────────────────────────────────
-        print("║  CURRENCY STRENGTHS (latent WLS decomposition)                      ║")
+        print("║  CURRENCY STRENGTHS (latent WLS decomposition / streak)                ║")
         if currency_strengths:
             items = sorted(currency_strengths.items(), key=lambda x: abs(x[1]), reverse=True)
-            bar_max = 18
-            for ccy, val in items:
-                bar_len = int(abs(val) * bar_max / 2.0)
+            bar_max = 14
+            n = len(items)
+            for rank, (ccy, val) in enumerate(items):
+                bar_len = int(abs(val) * bar_max / 0.02)
                 bar_len = min(bar_len, bar_max)
                 bar = "█" * bar_len if bar_len > 0 else ""
                 sign = "+" if val >= 0 else ""
-                print(f"║    {ccy}: {sign}{val:+.5f}  {bar:<{bar_max}}  ║")
+                sp = (strength_persistence or {}).get(ccy, {})
+                direction = sp.get("direction", 0)
+                streak = sp.get("streak", 0)
+                peak = sp.get("peak", 0.0)
+                trough = sp.get("trough", 0.0)
+                arrow = "▲" if direction > 0 else "▼"
+                ext = f"pk={peak:.5f}" if direction > 0 else f"tr={trough:.5f}"
+                line = f"    {ccy}: {sign}{val:+.5f}  {bar:<{bar_max}}  {arrow}{streak:<3d}  {ext}  "
+                if rank < 2:
+                    print(f"║\033[92m{line}\033[0m║")
+                elif rank >= n - 2:
+                    print(f"║\033[91m{line}\033[0m║")
+                else:
+                    print(f"║{line}║")
         print("╠══════════════════════════════════════════════════════════════════════╣")
+
+        # ── PARTICIPATION BURST ────────────────────────────────────
+        if currency_bursts:
+            print("║  BURST & PERSISTENCE (volume activity / streak)                        ║")
+            items = sorted(currency_bursts.items(), key=lambda x: abs(x[1]), reverse=True)
+            bar_max = 14
+            n = len(items)
+            for rank, (ccy, val) in enumerate(items):
+                bar_len = int(abs(val) * bar_max / 3.0)
+                bar_len = min(bar_len, bar_max)
+                bar = "█" * bar_len if bar_len > 0 else ""
+                sign = "+" if val >= 0 else ""
+                p = (persistence or {}).get(ccy, {})
+                direction = p.get("direction", 0)
+                streak = p.get("streak", 0)
+                peak = p.get("peak", 0.0)
+                trough = p.get("trough", 0.0)
+                arrow = "▲" if direction > 0 else "▼"
+                ext = f"pk={peak:.3f}" if direction > 0 else f"tr={trough:.3f}"
+                line = f"    {ccy}: {sign}{val:+.3f}  {bar:<{bar_max}}  {arrow}{streak:<3d}  {ext}  "
+                if rank < 2:
+                    print(f"║\033[92m{line}\033[0m║")
+                elif rank >= n - 2:
+                    print(f"║\033[91m{line}\033[0m║")
+                else:
+                    print(f"║{line}║")
+            print("╠══════════════════════════════════════════════════════════════════════╣")
 
         # ── GRAPH STATE ──────────────────────────────────────────
         qual = health.graph_quality
@@ -142,6 +190,10 @@ class Dashboard:
                 imp = sorted(missing_impact.items(), key=lambda x: x[1], reverse=True)
                 imp_str = "  ".join(f"{c}: -{v}" for c, v in imp if v > 0)
                 print(f"║  CURRENCIES AFFECTED: {imp_str:<48}  ║")
+        if unavailable_symbols:
+            print(f"║  EXCLUDED SYMBOLS ({len(unavailable_symbols)} not in MT5):               ║")
+            exc_str = ", ".join(unavailable_symbols)
+            print(f"║    {exc_str:<62}  ║")
         print("╠══════════════════════════════════════════════════════════════════════╣")
 
         # ── GRAPH HEALTH REPORT ──────────────────────────────────
@@ -155,6 +207,8 @@ class Dashboard:
             stable_currencies = [c for c, s in stress_test.items() if s is not None]
             if stable_currencies:
                 print(f"║  STRESS TEST: all {len(stable_currencies)} currencies stable on removal              ║")
+        if exec_fail:
+            print(f"║  ! EXEC FAIL: {exec_fail:<62s}  ║")
         if recent_failures:
             for f in recent_failures:
                 sym = f.get("symbol", "?")
@@ -168,6 +222,21 @@ class Dashboard:
             rsk = pipeline_metrics.get("risk_approved", 0)
             exe = pipeline_metrics.get("executed", 0)
             print(f"║  PIPELINE: gen={gen:<2d} ranked={rnk:<2d} selected={sel:<2d} risk={rsk:<2d} executed={exe:<2d}      ║")
+
+        # ── SWPS PERSISTENCE SIGNAL ─────────────────────────────
+        from config.settings import SWPS_WINDOW_SIZE
+        if swps_signal:
+            swp_sym = swps_signal.get("symbol", "")
+            swp_dir = swps_signal.get("direction", "")
+            swp_sc = swps_signal.get("score", 0)
+            bar = "█" * int(swp_sc * 20)
+            print(f"║  SWPS: {swp_sym:<6s} {swp_dir:<4s}  score={swp_sc:.3f}  {bar:<20}  ║")
+        elif swps_capture_count < SWPS_WINDOW_SIZE:
+            bar = "░" * swps_capture_count + " " * (SWPS_WINDOW_SIZE - swps_capture_count)
+            print(f"║  SWPS: warming up  {bar:<20}  ({swps_capture_count}/{SWPS_WINDOW_SIZE})          ║")
+        else:
+            print(f"║  SWPS: scanning — no pair above threshold                    ║")
+        print("╠══════════════════════════════════════════════════════════════════════╣")
 
         # ── RISK STATE ───────────────────────────────────────────
         cooldown_str = f"COOLDOWN: {cooldown_remaining}s" if cooldown_active else "COOLDOWN: INACTIVE"
@@ -287,5 +356,13 @@ class Dashboard:
                 "production_ready": production_ready,
                 "max_concentration": round(max(concentration.values()), 3) if concentration else 0.0,
                 "stress_test_stable": sum(1 for v in (stress_test or {}).values() if v is not None),
+                "swps_symbol": (swps_signal or {}).get("symbol"),
+                "swps_direction": (swps_signal or {}).get("direction"),
+                "swps_score": round((swps_signal or {}).get("score", 0), 4),
+                "currency_bursts": {k: round(v, 3) for k, v in (currency_bursts or {}).items()},
+                "strength_persistence": {
+                    k: {"dir": v.get("direction", 0), "streak": v.get("streak", 0)}
+                    for k, v in (strength_persistence or {}).items()
+                },
             }
             self._log_jsonl(record)

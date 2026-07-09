@@ -28,8 +28,9 @@ class MT5Adapter:
                 for sym in SYMBOLS:
                     try:
                         mt5.symbol_select(sym, True)
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        import sys as _sys
+                        print(f"[MT5 SYMBOL SELECT INIT FAIL] {sym}: {exc}", file=_sys.stderr)
         except Exception:
             ok = False
         self._deliver("__init__", ok)
@@ -46,8 +47,16 @@ class MT5Adapter:
                     rid, command, args = item
                     kwargs = {}
                 try:
-                    result = command(*args, **kwargs)
+                    if kwargs:
+                        result = command(*args, **kwargs)
+                    else:
+                        result = command(*args)
+                    if result is None:
+                        import sys as _sys
+                        print(f"[MT5 WORKER] {command.__name__} returned None  last_error={mt5.last_error()}", file=_sys.stderr)
                 except Exception as exc:
+                    import traceback
+                    traceback.print_exc()
                     result = exc
                 self._deliver(rid, result)
             except Empty:
@@ -167,6 +176,15 @@ class MT5Adapter:
             else:
                 missing.append(expected)
         return {"available": available, "missing": missing}
+
+    def health_check(self) -> dict:
+        return {
+            "version": self.call_mt5(mt5.version),
+            "terminal": self.call_mt5(mt5.terminal_info) is not None,
+            "account": self.call_mt5(mt5.account_info) is not None,
+            "last_error": self.call_mt5(mt5.last_error),
+            "connected": self.connected,
+        }
 
     def latest_tick(self, symbol: str) -> Optional[Tick]:
         rates = self.call_mt5(mt5.copy_rates_from_pos, symbol, mt5.TIMEFRAME_M1, 0, 1)

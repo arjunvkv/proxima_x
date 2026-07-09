@@ -2,7 +2,7 @@
 import time
 from typing import Optional
 import MetaTrader5 as mt5
-from config.settings import LOT_SIZE, MAX_TOTAL_LOTS, STOP_LOSS_PIPS, TAKE_PROFIT_PIPS
+from config.settings import LOT_SIZE, MAX_TOTAL_LOTS, STOP_LOSS_PIPS, TAKE_PROFIT_PIPS, SYMBOLS
 from data.models import DirectionHypothesis, ExecutionResult, PaperPosition
 
 CD_MAGIC = 236000
@@ -17,6 +17,40 @@ class MT5Executor:
         self.sync_failed = False
         self.execution_ledger: list[dict] = []
         self._ledger_maxlen = 200
+
+    def discover_symbols(self, symbols: list[str] = None) -> dict:
+        import sys
+        targets = symbols or SYMBOLS
+        result = {"available": [], "excluded": []}
+        info = self.mt5.call_mt5(mt5.symbols_total)
+        if info is None or info == 0:
+            print("[SYMBOL DISCOVERY] MT5 symbol_info_total unavailable — allowing all symbols", file=sys.stderr)
+            result["available"] = list(targets)
+            return result
+        for sym in targets:
+            resolved = self._resolve_symbol(sym)
+            sym_info = self.mt5.call_mt5(mt5.symbol_info, resolved)
+            if sym_info is None:
+                result["excluded"].append({"symbol": sym, "reason": "NOT_FOUND"})
+                continue
+            if not self.mt5.call_mt5(mt5.symbol_select, resolved, True):
+                result["excluded"].append({"symbol": sym, "reason": "NOT_SELECTABLE"})
+                continue
+            tm = getattr(sym_info, 'trade_mode', -1)
+            if tm == 0:
+                result["excluded"].append({"symbol": sym, "reason": "CLOSE_ONLY"})
+                continue
+            if tm < 0:
+                result["excluded"].append({"symbol": sym, "reason": "TRADE_DISABLED"})
+                continue
+            result["available"].append(sym)
+        n_avail = len(result["available"])
+        n_total = len(targets)
+        print(f"[SYMBOL DISCOVERY] {n_avail}/{n_total} available", file=sys.stderr)
+        if result["excluded"]:
+            for ex in result["excluded"]:
+                print(f"[SYMBOL DISCOVERY]   excluded: {ex['symbol']} ({ex['reason']})", file=sys.stderr)
+        return result
 
     def _resolve_symbol(self, symbol: str) -> str:
         if self.mt5.call_mt5(mt5.symbol_info, symbol) is not None:
@@ -115,6 +149,18 @@ class MT5Executor:
         sym_info = self.mt5.call_mt5(mt5.symbol_info, symbol)
         if sym_info is None:
             return ExecutionResult(success=False, reason="NO_SYMBOL_INFO")
+
+        import sys
+        print(
+            f"[MT5 SYMBOL DEBUG] {symbol} "
+            f"digits={sym_info.digits} "
+            f"point={sym_info.point} "
+            f"volume_min={sym_info.volume_min} "
+            f"volume_step={sym_info.volume_step} "
+            f"filling_mode={sym_info.filling_mode}",
+            file=sys.stderr
+        )
+
         point = sym_info.point
         sl_dist = STOP_LOSS_PIPS * 10 * point
         tp_dist = TAKE_PROFIT_PIPS * 10 * point
@@ -124,18 +170,37 @@ class MT5Executor:
         else:
             sl = price + sl_dist
             tp = price - tp_dist
-        filling_modes = [mt5.ORDER_FILLING_IOC, mt5.ORDER_FILLING_FOK, mt5.ORDER_FILLING_RETURN]
+        import sys
+
+        filling_modes = [
+            None,
+            mt5.ORDER_FILLING_IOC,
+            mt5.ORDER_FILLING_FOK,
+            mt5.ORDER_FILLING_RETURN,
+        ]
+
+        print(
+            f"[MT5 FILL MODE] {symbol} raw={getattr(sym_info, 'filling_mode', None)}",
+            file=sys.stderr
+        )
+
         last_error = None
         result = None
         used_filling = None
+
+        volume = LOT_SIZE
+        volume = max(sym_info.volume_min, volume)
+        steps = round(volume / sym_info.volume_step)
+        volume = steps * sym_info.volume_step
+
         current_lots = self.total_lots()
-        if current_lots + LOT_SIZE > MAX_TOTAL_LOTS:
-            return ExecutionResult(success=False, reason=f"EXCEEDS_MAX_TOTAL_LOTS ({current_lots}+{LOT_SIZE}>{MAX_TOTAL_LOTS})")
+        if current_lots + volume > MAX_TOTAL_LOTS:
+            return ExecutionResult(success=False, reason=f"EXCEEDS_MAX_TOTAL_LOTS ({current_lots}+{volume}>{MAX_TOTAL_LOTS})")
         for filling in filling_modes:
             request = {
                 "action": mt5.TRADE_ACTION_DEAL,
                 "symbol": symbol,
-                "volume": LOT_SIZE,
+                "volume": volume,
                 "type": int(direction_type),
                 "price": price,
                 "sl": sl,
@@ -144,10 +209,43 @@ class MT5Executor:
                 "magic": CD_MAGIC,
                 "comment": STRATEGY_NAME,
                 "type_time": mt5.ORDER_TIME_GTC,
-                "type_filling": int(filling),
             }
+            if filling is not None:
+                request["type_filling"] = int(filling)
+
             self._log_ledger("order_send", hypothesis.symbol, hypothesis.direction, ticket=None, filling=filling)
-            result = self.mt5.call_mt5(mt5.order_send, **request, timeout=30.0)
+
+            import sys
+            print(
+                f"[MT5 ORDER REQUEST] {symbol} "
+                f"action={request['action']} "
+                f"type={request['type']} "
+                f"volume={request['volume']} "
+                f"price={request['price']:.5f} "
+                f"filling={'DEFAULT' if filling is None else filling} "
+                f"sl={request['sl']:.5f} "
+                f"tp={request['tp']:.5f}",
+                file=sys.stderr
+            )
+
+            print(
+                f"[MT5 PRE-SEND DIAGNOSTIC] {symbol} "
+                f"version={self.mt5.call_mt5(mt5.version)} "
+                f"terminal={self.mt5.call_mt5(mt5.terminal_info) is not None} "
+                f"last_error={self.mt5.call_mt5(mt5.last_error)}",
+                file=sys.stderr
+            )
+
+            check_result = self.mt5.call_mt5(mt5.order_check, request, timeout=10.0)
+            if check_result is not None and check_result.retcode != mt5.TRADE_RETCODE_DONE:
+                print(
+                    f"[MT5 ORDER CHECK FAIL] {symbol} "
+                    f"retcode={check_result.retcode} "
+                    f"comment={check_result.comment}",
+                    file=sys.stderr
+                )
+
+            result = self.mt5.call_mt5(mt5.order_send, request, timeout=30.0)
             if result is None:
                 last_error = "ORDER_SEND_NONE"
                 continue
@@ -155,6 +253,11 @@ class MT5Executor:
                 used_filling = filling
                 break
             last_error = f"MT5_{result.retcode}"
+            print(
+                f"[MT5 ORDER FAIL] {symbol} retcode={result.retcode} "
+                f"filling={filling} comment={result.comment}",
+                file=sys.stderr
+            )
             self._log_ledger("order_fail", hypothesis.symbol, hypothesis.direction, reason=last_error, filling=filling)
         if result is None or result.retcode != mt5.TRADE_RETCODE_DONE:
             return ExecutionResult(success=False, reason=last_error or "ORDER_SEND_NONE")
@@ -206,7 +309,7 @@ class MT5Executor:
                 del request["type_filling"]
             fill_label = "DEFAULT" if fill is None else f"FILL_{fill}"
             self._log_ledger("close_send", pos.symbol, "BUY" if close_type == mt5.ORDER_TYPE_BUY else "SELL", ticket=ticket, filling=fill_label)
-            result = self.mt5.call_mt5(mt5.order_send, **request, timeout=30.0)
+            result = self.mt5.call_mt5(mt5.order_send, request, timeout=30.0)
             if result is None:
                 last_error = "CLOSE_NONE"
                 continue
