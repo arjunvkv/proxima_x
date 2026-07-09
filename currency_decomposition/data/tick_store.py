@@ -32,10 +32,13 @@ class TickStore:
         target = symbols or SYMBOLS
         for symbol in target:
             bars = self._bars.get(symbol, [])
-            if len(bars) < window:
+            if len(bars) < 2:
                 results[symbol] = 0.0
                 continue
-            open_ = bars[-window].mid
+            if len(bars) < window:
+                open_ = bars[0].mid
+            else:
+                open_ = bars[-window].mid
             close_ = bars[-1].mid
             if open_ > 0 and close_ > 0:
                 results[symbol] = float(np.log(close_ / open_))
