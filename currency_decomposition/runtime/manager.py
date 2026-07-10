@@ -128,7 +128,7 @@ class RuntimeManager:
 
         state = {
             "market_timestamp": time.time(),
-            "currency_strengths": self.graph.strengths(),
+            "currency_strengths": self.graph.strengths_raw(),
             "graph_quality": self.graph.quality(),
             "positions": [(p.id, p.symbol, p.direction, p.entry_price) for p in self.executor.positions],
             "trade_count": len(self.risk.trades),
@@ -392,7 +392,7 @@ class RuntimeManager:
                             volume=LOT_SIZE,
                             confidence=h.confidence,
                             drs_score=h.drs_score,
-                            strengths=self.graph.strengths(),
+                            strengths=self.graph.strengths_raw(),
                             peaks={c: v["peak"] for c, v in sp.items()},
                             troughs={c: v["trough"] for c, v in sp.items()},
                             streaks={c: v["streak"] for c, v in sp.items()},
@@ -406,7 +406,7 @@ class RuntimeManager:
         prices = {p.symbol: p.current_price for p in self.executor.positions}
         to_close = self.risk.check_stops(prices)
         sp = self.graph.get_strength_persistence()
-        strengths_now = self.graph.strengths()
+        strengths_now = self.graph.strengths_raw()
         bursts_now = self.burst.get_currency_bursts(returns) if self._currency_bursts is None else (self._currency_bursts or {})
         for pos in to_close:
             r = self.executor.close_position(pos.id, prices.get(pos.symbol, pos.entry_price), "STOP_LOSS")
@@ -427,7 +427,7 @@ class RuntimeManager:
             self._last_snapshot = now
             state = {
                 "market_timestamp": now,
-                "currency_strengths": self.graph.strengths(),
+                "currency_strengths": self.graph.strengths_raw(),
                 "graph_quality": self.graph.quality(),
                 "positions": [(p.id, p.symbol, p.direction, p.entry_price) for p in self.executor.positions],
             }
@@ -492,7 +492,7 @@ class RuntimeManager:
         self.dashboard.render(
             mode=EXECUTION_MODE.upper(),
             health=health,
-            currency_strengths=self.graph.strengths(),
+            currency_strengths=self.graph.strengths_raw(),
             positions=self.executor.positions_summary(),
             top_hypothesis=top_h,
             pnl=total_pnl,
@@ -533,7 +533,7 @@ class RuntimeManager:
     def _close_all_positions(self, reason: str) -> None:
         held = list(self.executor.positions)
         sp = self.graph.get_strength_persistence()
-        strengths_now = self.graph.strengths()
+        strengths_now = self.graph.strengths_raw()
         bursts_now = self.burst.get_currency_bursts({}) if self._currency_bursts is None else (self._currency_bursts or {})
         results = self.executor.close_all({}, reason)
         ok = sum(1 for r in results if r.success)

@@ -2,7 +2,7 @@ import enum
 import numpy as np
 from collections import defaultdict, deque
 from typing import Optional
-from config.settings import CURRENCY_LIST, BASE_CURRENCY_MAP, WLS_REGULARIZATION, MIN_SOLVE_PAIRS, MIN_GRAPH_CONNECTIVITY, DIRECTION_PERSISTENCE_CYCLES
+from config.settings import CURRENCY_LIST, BASE_CURRENCY_MAP, WLS_REGULARIZATION, MIN_SOLVE_PAIRS, MIN_GRAPH_CONNECTIVITY, DIRECTION_PERSISTENCE_CYCLES, WLS_SMOOTH_ALPHA
 from .wls_solver import WLSSolver
 from .observability import CurrencyObservability
 from .topology import GraphTopology
@@ -31,6 +31,7 @@ class CurrencyGraph:
         self._strength_streak: dict[str, int] = {}
         self._strength_peak: dict[str, float] = {}
         self._strength_trough: dict[str, float] = {}
+        self._smoothed_strengths: dict[str, float] = {}
 
     def _init_state(self):
         self.state.strengths = {c: 0.0 for c in CURRENCY_LIST}
@@ -54,6 +55,10 @@ class CurrencyGraph:
             self.state.strengths = strengths
             self.state.prior = strengths
             self.state.last_solve_timestamp = timestamp
+            for ccy in CURRENCY_LIST:
+                val = strengths.get(ccy, 0.0)
+                prev = self._smoothed_strengths.get(ccy, val)
+                self._smoothed_strengths[ccy] = WLS_SMOOTH_ALPHA * val + (1 - WLS_SMOOTH_ALPHA) * prev
             self._update_strength_persistence(strengths)
             self.state.solve_count += 1
             active_symbols = [s for s, v in returns.items() if v != 0.0]
@@ -243,10 +248,17 @@ class CurrencyGraph:
                 results[removed] = None
         return results
 
-    def strength(self, currency: str) -> float:
-        return self.state.strengths.get(currency, 0.0)
+    def strength(self, currency: str, raw: bool = False) -> float:
+        if raw:
+            return self.state.strengths.get(currency, 0.0)
+        return self._smoothed_strengths.get(currency, self.state.strengths.get(currency, 0.0))
+
+    def strengths_raw(self) -> dict[str, float]:
+        return dict(self.state.strengths)
 
     def strengths(self) -> dict[str, float]:
+        if self._smoothed_strengths:
+            return dict(self._smoothed_strengths)
         return dict(self.state.strengths)
 
     def residual(self, symbol: str) -> float:
