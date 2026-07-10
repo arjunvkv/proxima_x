@@ -272,6 +272,18 @@ class CurrencyGraph:
     def coverage(self) -> float:
         return self.state.coverage
 
+    def reset(self) -> None:
+        self._init_state()
+        self._smoothed_strengths.clear()
+        self._strength_history.clear()
+        self._residuals_history.clear()
+        self._strength_prev_sign.clear()
+        self._strength_streak.clear()
+        self._strength_peak.clear()
+        self._strength_trough.clear()
+        self._spread_history.clear()
+        self.state.solve_count = 0
+
     def get_state_snapshot(self) -> CurrencyState:
         return self.state
 

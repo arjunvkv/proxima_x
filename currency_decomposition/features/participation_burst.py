@@ -113,6 +113,14 @@ class ParticipationBurstEngine:
             for c in CURRENCY_LIST
         }
 
+    def reset(self) -> None:
+        self._volumes.clear()
+        self._prev_sign.clear()
+        self._streak.clear()
+        self._peak.clear()
+        self._trough.clear()
+        self._neutral_gap.clear()
+
     def get_state(self) -> str:
         """'cold' = most pairs below MIN_HISTORY, 'warming' = accumulating, 'active' = ready.
         Only symbols that have ever produced data are counted (excludes unavailable pairs)."""

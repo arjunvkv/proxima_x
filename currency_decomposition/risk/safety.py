@@ -83,6 +83,14 @@ class RiskEngine:
     
     def reset_daily(self) -> None:
         self._daily_pnl = 0.0
+
+    def reset_state(self) -> None:
+        self._daily_pnl = 0.0
+        self._profit_target_triggered = False
+        self._profit_cooldown_until = 0.0
+        self.profit_target_hit_time = 0.0
+        self._halted = False
+        self._halt_reason = ""
     
     def _halt(self, reason: str) -> None:
         self._halted = True

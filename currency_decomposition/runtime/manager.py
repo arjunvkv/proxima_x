@@ -185,10 +185,11 @@ class RuntimeManager:
             for tick in batch.ticks:
                 self.burst.update(tick.symbol, tick.volume)
             self.executor.update_prices(batch.ticks)
-
-        if self.risk.check_profit_target(self.executor.positions):
-            self._close_all_positions("PROFIT_TARGET")
-            self.dashboard.latest_event = {"event": "PROFIT_TARGET", "time": now}
+            if self.risk.check_profit_target(self.executor.positions):
+                self._close_all_positions("PROFIT_TARGET")
+                self._reset_after_profit_target()
+                self.dashboard.latest_event = {"event": "PROFIT_TARGET", "time": now}
+                return
 
         returns = self.store.calculate_returns()
         if self._available_symbols:
@@ -557,6 +558,24 @@ class RuntimeManager:
             self.drs.remove_position(pos.symbol)
         self.executor.sync()
         self.risk.set_positions(self.executor.positions)
+
+    def _reset_after_profit_target(self) -> None:
+        self.graph.reset()
+        self.store.clear()
+        self.burst.reset()
+        self._strength_capture.clear()
+        self._swps_pick = None
+        self._top_burst_pairs = []
+        self._currency_bursts = None
+        self._persistence = None
+        self._cycle_count = 0
+        self._pipeline_metrics = {k: 0 for k in self._pipeline_metrics}
+        self.drs = None
+        from portfolio.drs import DRS
+        self.drs = DRS()
+        self.risk.reset_state()
+        import sys
+        print("[HARD RESET] WLS state, burst data, tick store, DRS, and risk cleared", file=sys.stderr)
 
     def _update_production_readiness(self, health_report: dict, max_concentration: float) -> None:
         if WLS_DIRECT_MODE:
