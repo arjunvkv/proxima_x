@@ -133,6 +133,18 @@ class DRS:
                 symbols_seen.add(h.symbol)
                 vec = self._currency_vector(h.symbol, h.direction)
                 for c, v in vec.items():
+                    if v != 0:
+                        existing = sim_exposure.get(c, 0)
+                        if existing != 0 and (1 if v > 0 else -1) != (1 if existing > 0 else -1):
+                            valid = False
+                            break
+                if not valid:
+                    trace["rejections"].append({
+                        "symbols": [h.symbol for h in combo],
+                        "reason": "MIXED_SIGN"
+                    })
+                    break
+                for c, v in vec.items():
                     sim_exposure[c] += v
                 if self._exceeds_currency_limit(sim_exposure):
                     valid = False
