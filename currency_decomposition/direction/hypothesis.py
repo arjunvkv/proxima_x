@@ -1,7 +1,7 @@
 import numpy as np
 import time
 from typing import Optional
-from config.settings import SYMBOLS, BASE_CURRENCY_MAP, MIN_CONFIDENCE
+from config.settings import SYMBOLS, BASE_CURRENCY_MAP, MIN_CONFIDENCE, MIN_SPREAD
 from data.models import DirectionHypothesis
 
 
@@ -18,6 +18,9 @@ class HypothesisGenerator:
         residual = graph.residual(symbol)
         graph_quality = graph.quality()
         spread = base_strength - quote_strength
+
+        if abs(spread) < MIN_SPREAD:
+            return None
 
         direction = 1.0 if spread >= 0 else -1.0
 

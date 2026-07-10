@@ -57,12 +57,15 @@ class Dashboard:
                cooldown_active: bool = False, cooldown_remaining: int = 0,
                 swps_signal: dict = None,
                 swps_capture_count: int = 0,
-                currency_bursts: dict = None,
-                persistence: dict = None,
-                strength_persistence: dict = None,
-                 wls_direct: bool = False,
-                 top_burst_pairs: list = None,
-                 burst_state: str = None,
+                 currency_bursts: dict = None,
+                 persistence: dict = None,
+                 strength_persistence: dict = None,
+                 currency_der: dict = None,
+                 der_persistence: dict = None,
+                 top_der_pairs: list = None,
+                  wls_direct: bool = False,
+                  top_burst_pairs: list = None,
+                  burst_state: str = None,
                  available_symbols_count: int = 0,
                  configured_symbols_count: int = 0) -> None:
         now = time.time()
@@ -153,6 +156,36 @@ class Dashboard:
                 gap_str = f" g={gap}" if gap else ""
                 ext = f"pk={peak:.3f}" if direction > 0 else f"tr={trough:.3f}" if direction < 0 else "─"
                 line = f"    {ccy}: {sign}{val:+.3f}  {bar:<{bar_max}}  {arrow}{streak:<3d}{gap_str:<4s}  {ext}  "
+                if rank < 2:
+                    print(f"║\033[92m{line}\033[0m║")
+                elif rank >= n - 2:
+                    print(f"║\033[91m{line}\033[0m║")
+                else:
+                    print(f"║{line}║")
+            print("╠══════════════════════════════════════════════════════════════════════╣")
+
+        # ── DIRECTIONAL EFFICIENCY ───────────────────────────────
+        if currency_der:
+            print("║  DIRECTIONAL EFFICIENCY (DER — price movement quality / streak)            ║")
+            if top_der_pairs:
+                pairs_str = " ".join(top_der_pairs[:3])
+                print(f"║    EFFICIENT: {pairs_str:<62}║")
+            items = sorted(currency_der.items(), key=lambda x: abs(x[1]), reverse=True)
+            bar_max = 14
+            n = len(items)
+            for rank, (ccy, val) in enumerate(items):
+                bar_len = int(abs(val) * bar_max / 1.0)
+                bar_len = min(bar_len, bar_max)
+                bar = "█" * bar_len if bar_len > 0 else ""
+                sign = "+" if val >= 0 else ""
+                p = (der_persistence or {}).get(ccy, {})
+                pval = p.get("value", 0.0)
+                streak = p.get("streak", 0)
+                peak = p.get("peak", 0.0)
+                trough = p.get("trough", 0.0)
+                arrow = "▲" if pval > 0 else "▼" if pval < 0 else "○"
+                ext = f"pk={peak:.3f}" if pval > 0 else f"tr={trough:.3f}" if pval < 0 else "─"
+                line = f"    {ccy}: {sign}{val:.3f}  {bar:<{bar_max}}  {arrow}{streak:<3d}   {ext}  "
                 if rank < 2:
                     print(f"║\033[92m{line}\033[0m║")
                 elif rank >= n - 2:

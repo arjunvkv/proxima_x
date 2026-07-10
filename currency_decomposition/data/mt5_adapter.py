@@ -51,7 +51,7 @@ class MT5Adapter:
                         result = command(*args, **kwargs)
                     else:
                         result = command(*args)
-                    if result is None:
+                    if result is None and command.__name__ not in ("symbol_info",):
                         import sys as _sys
                         print(f"[MT5 WORKER] {command.__name__} returned None  last_error={mt5.last_error()}", file=_sys.stderr)
                 except Exception as exc:

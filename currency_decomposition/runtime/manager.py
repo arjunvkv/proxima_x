@@ -7,7 +7,7 @@ from queue import Queue, Empty
 from pathlib import Path
 from typing import Optional
 
-from config.settings import EXECUTION_MODE, MAX_POSITIONS, LOT_SIZE, MAX_TOTAL_LOTS, PROFIT_TARGET
+from config.settings import EXECUTION_MODE, MAX_POSITIONS, LOT_SIZE, MAX_TOTAL_LOTS, PROFIT_TARGET, STOP_LOSS_AMOUNT, BURST_TOP_N
 from config.settings import SWPS_MIN_SCORE, SWPS_WINDOW_SIZE
 from config.settings import CURRENCY_LIST, BASE_CURRENCY_MAP, WLS_DIRECT_MODE
 from data.models import TickBatch
@@ -26,6 +26,7 @@ from monitoring.dashboard import Dashboard
 from monitoring.trade_journal import TradeJournal
 from .health import HealthMonitor
 from features.participation_burst import ParticipationBurstEngine
+from features.directional_efficiency import DirectionalEfficiency
 
 class RuntimeManager:
     def __init__(self):
@@ -36,6 +37,7 @@ class RuntimeManager:
         self.mt5 = MT5Adapter()
         self.store = TickStore()
         self.burst = ParticipationBurstEngine()
+        self.efficiency = DirectionalEfficiency()
         self.graph = CurrencyGraph()
         self.generator = HypothesisGenerator()
         self.drs = DRS()
@@ -73,6 +75,9 @@ class RuntimeManager:
         self._top_burst_pairs: list[str] = []
         self._currency_bursts: dict[str, float] | None = None
         self._persistence: dict[str, dict] | None = None
+        self._currency_der: dict[str, float] | None = None
+        self._der_persistence: dict[str, dict] | None = None
+        self._top_der_pairs: list[str] = []
 
     def start(self) -> None:
         self._setup_signal_handlers()
@@ -173,8 +178,19 @@ class RuntimeManager:
 
                 self._process_batches(batches)
             except Empty:
+                self.executor.sync()
+                if self.risk.check_profit_target(self.executor.positions):
+                    self._close_all_positions("PROFIT_TARGET")
+                    self._reset_after_profit_target()
+                    self.dashboard.latest_event = {"event": "PROFIT_TARGET", "time": time.time()}
+                elif self.risk.check_stop_loss(self.executor.positions):
+                    self._close_all_positions("STOP_LOSS")
+                    self._reset_after_profit_target()
+                    self.dashboard.latest_event = {"event": "STOP_LOSS", "time": time.time()}
                 continue
-            except Exception:
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
                 continue
 
     def _process_batches(self, batches: list[TickBatch]) -> None:
@@ -184,11 +200,17 @@ class RuntimeManager:
             self.store.add_ticks(batch.ticks)
             for tick in batch.ticks:
                 self.burst.update(tick.symbol, tick.volume)
+                self.efficiency.update(tick.symbol, tick.mid)
             self.executor.update_prices(batch.ticks)
             if self.risk.check_profit_target(self.executor.positions):
                 self._close_all_positions("PROFIT_TARGET")
                 self._reset_after_profit_target()
                 self.dashboard.latest_event = {"event": "PROFIT_TARGET", "time": now}
+                return
+            if self.risk.check_stop_loss(self.executor.positions):
+                self._close_all_positions("STOP_LOSS")
+                self._reset_after_profit_target()
+                self.dashboard.latest_event = {"event": "STOP_LOSS", "time": now}
                 return
 
         returns = self.store.calculate_returns()
@@ -204,6 +226,8 @@ class RuntimeManager:
             self._strength_capture.append(self.graph.strengths())
             solve_ms = (time.time() - solve_start) * 1000
             self.health.record_solve(solve_ms)
+
+        hypotheses = []
 
         if now - self._last_decision >= 30.0:
             self._last_decision = now
@@ -224,38 +248,54 @@ class RuntimeManager:
             hypotheses = self.generator.generate_all(self.graph, now)
             hypotheses = [h for h in hypotheses if h.symbol in self._available_symbols]
             self._pipeline_metrics["generated"] = len(hypotheses)
-            self._top_burst_pairs = self.burst.get_top_burst_pairs(3)
+            self._top_burst_pairs = self.burst.get_top_burst_pairs(BURST_TOP_N)
             self._currency_bursts = None
             self._persistence = None
+            if hypotheses:
+                print(f"[TRACE] gen={len(hypotheses)} top.conf={hypotheses[0].confidence:.3f} "
+                      f"top.symbol={hypotheses[0].symbol} top.dir={'BUY' if hypotheses[0].direction>0 else 'SELL'} "
+                      f"top.spread={hypotheses[0].base_strength-hypotheses[0].quote_strength:.6f}",
+                      file=sys.stderr)
             if self._top_burst_pairs:
-                burst_filtered = [h for h in hypotheses if h.symbol in self._top_burst_pairs]
-                if burst_filtered:
-                    currency_bursts = self.burst.get_currency_bursts(returns)
-                    aligned = [
-                        h for h in burst_filtered
-                        if (currency_bursts.get(h.symbol[:3], 0) - currency_bursts.get(h.symbol[3:6], 0)) * h.direction > 0
-                    ]
-                    hypotheses = aligned
-                    if aligned:
-                        self._currency_bursts = currency_bursts
-                        self._persistence = self.burst.get_persistence()
-                else:
-                    hypotheses = []
-            else:
-                hypotheses = []
+                self._currency_bursts = self.burst.get_currency_bursts(returns)
+                self._persistence = self.burst.get_persistence()
+                burst_lookup = {p: i for i, p in enumerate(self._top_burst_pairs)}
+                for h in hypotheses:
+                    rank = burst_lookup.get(h.symbol)
+                    if rank is None:
+                        h.confidence = h.confidence * 0.5
+                    elif rank >= 3:
+                        h.confidence = h.confidence * 0.8
+            # ── DIRECTIONAL EFFICIENCY FILTER ─────────────────────
+            if hypotheses:
+                der_values = self.efficiency.get_all_der()
+                der_filtered = []
+                for h in hypotheses:
+                    der = der_values.get(h.symbol, 0.0)
+                    if der < 0.10:
+                        print(f"[TRACE] der_reject={h.symbol} der={der:.3f}", file=sys.stderr)
+                        continue
+                    prev_der = self.efficiency.get_previous_der(h.symbol)
+                    der_change = der - prev_der
+                    effective_der = der + 0.5 * der_change
+                    der_factor = 0.8 + 0.4 * effective_der
+                    der_factor = min(1.2, max(0.0, der_factor))
+                    h.confidence = min(1.0, h.confidence * der_factor)
+                    der_filtered.append(h)
+                print(f"[TRACE] der_pass={len(der_filtered)}/{len(hypotheses)}", file=sys.stderr)
+                hypotheses = der_filtered
+                self.efficiency.finalize_cycle()
             self._pipeline_metrics["burst_hyp"] = len(hypotheses)
 
             self.executor.sync()
 
             if self.executor.sync_failed:
-                import sys
                 print("[EXECUTION BLOCKED] Position state unknown — sync failed", file=sys.stderr)
                 return
 
             self.risk.set_positions(self.executor.positions)
             self.drs.set_positions(self.executor.positions)
 
-            import sys
             _a = self.graph.execution_allowed(returns)
             _c = self.graph.connectivity_score(returns)
             _ap = self.graph._active_pair_count
@@ -376,6 +416,10 @@ class RuntimeManager:
                         print(f"[RISK BLOCK] {h.symbol} drs={h.drs_score:.3f}", file=sys.stderr)
                         continue
                     self._pipeline_metrics["risk_approved"] += 1
+                    print(f"[ENTRY] {h.symbol} dir={'BUY' if h.direction>0 else 'SELL'} "
+                          f"base_str={h.base_strength:.6f} quote_str={h.quote_strength:.6f} "
+                          f"spread={h.base_strength-h.quote_strength:.6f} conf={h.confidence:.3f}",
+                          file=sys.stderr)
                     result = self.executor.execute(h)
                     if result.success:
                         cycle_submitted.add(h.symbol)
@@ -400,7 +444,6 @@ class RuntimeManager:
                             bursts=self.burst.get_currency_bursts(returns) if self._currency_bursts is None else (self._currency_bursts or {}),
                         )
                     else:
-                        import sys
                         self.last_exec_fail = f"{h.symbol} {result.reason}"
                         print(f"[EXEC FAIL] {h.symbol} {result.reason}", file=sys.stderr)
 
@@ -478,6 +521,10 @@ class RuntimeManager:
             currency_bursts = self._currency_bursts
             persistence = self._persistence
         strength_persistence = self.graph.get_strength_persistence()
+        self._currency_der = self.efficiency.get_currency_efficiency(returns)
+        self.efficiency.update_persistence(self._currency_der)
+        self._der_persistence = self.efficiency.get_persistence()
+        self._top_der_pairs = self.efficiency.get_top_pairs(3)
         recent_fails = self.executor.recent_failures()
 
         self._update_production_readiness(health_report, max_conc)
@@ -524,6 +571,9 @@ class RuntimeManager:
             currency_bursts=currency_bursts,
             persistence=persistence,
             strength_persistence=strength_persistence,
+            currency_der=self._currency_der,
+            der_persistence=self._der_persistence,
+            top_der_pairs=self._top_der_pairs,
             wls_direct=WLS_DIRECT_MODE,
             top_burst_pairs=self._top_burst_pairs,
             burst_state=self._pipeline_metrics.get("burst_state"),
@@ -539,7 +589,6 @@ class RuntimeManager:
         results = self.executor.close_all({}, reason)
         ok = sum(1 for r in results if r.success)
         total_pnl = sum(p.pnl or 0 for p in held)
-        import sys
         print(f"[PROFIT TARGET] close_all: {ok}/{len(results)} ok, total_pnl={total_pnl:.2f}", file=sys.stderr)
         for pos, r in zip(held, results):
             if not r.success:
@@ -563,18 +612,21 @@ class RuntimeManager:
         self.graph.reset()
         self.store.clear()
         self.burst.reset()
+        self.efficiency.reset()
         self._strength_capture.clear()
         self._swps_pick = None
         self._top_burst_pairs = []
         self._currency_bursts = None
         self._persistence = None
+        self._currency_der = None
+        self._der_persistence = None
+        self._top_der_pairs = []
         self._cycle_count = 0
         self._pipeline_metrics = {k: 0 for k in self._pipeline_metrics}
         self.drs = None
         from portfolio.drs import DRS
         self.drs = DRS()
         self.risk.reset_state()
-        import sys
         print("[HARD RESET] WLS state, burst data, tick store, DRS, and risk cleared", file=sys.stderr)
 
     def _update_production_readiness(self, health_report: dict, max_concentration: float) -> None:

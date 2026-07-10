@@ -3,7 +3,7 @@ from config.settings import (
     MAX_POSITIONS, MAX_EXPOSURE_PER_CURRENCY, MAX_CURRENCY_POSITIONS,
     STOP_LOSS_PIPS, TAKE_PROFIT_PIPS, MAX_HOLD_HOURS,
     MAX_DAILY_LOSS, MAX_DRAWDOWN, INITIAL_CAPITAL, LOT_SIZE,
-    BASE_CURRENCY_MAP, PROFIT_TARGET, PROFIT_COOLDOWN
+    BASE_CURRENCY_MAP, PROFIT_TARGET, STOP_LOSS_AMOUNT, PROFIT_COOLDOWN
 )
 from data.models import DirectionHypothesis, PaperPosition, TradeRecord, HealthStatus
 
@@ -22,7 +22,12 @@ class RiskEngine:
         self._profit_target_triggered = False
         self._profit_cooldown_until = 0.0
         self.profit_target_hit_time = 0.0
+        self._stop_loss_triggered = False
+        self._stop_loss_cooldown_until = 0.0
+        self.stop_loss_hit_time = 0.0
     
+
+
     def set_positions(self, positions: list[PaperPosition]) -> None:
         self.positions = positions
     
@@ -89,6 +94,12 @@ class RiskEngine:
         self._profit_target_triggered = False
         self._profit_cooldown_until = 0.0
         self.profit_target_hit_time = 0.0
+        self._stop_loss_triggered = False
+        self._stop_loss_cooldown_until = 0.0
+        self.stop_loss_hit_time = 0.0
+        self._stop_loss_triggered = False
+        self._stop_loss_cooldown_until = 0.0
+        self.stop_loss_hit_time = 0.0
         self._halted = False
         self._halt_reason = ""
     
@@ -122,6 +133,30 @@ class RiskEngine:
 
     def cooldown_active(self) -> bool:
         return time.time() < self._profit_cooldown_until
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self._stop_loss_triggered = getattr(self, '_stop_loss_triggered', False)
+        self._stop_loss_cooldown_until = getattr(self, '_stop_loss_cooldown_until', 0.0)
+        self.stop_loss_hit_time = getattr(self, 'stop_loss_hit_time', 0.0)
+
+    def check_stop_loss(self, positions: list[PaperPosition]) -> bool:
+        now = time.time()
+        if self._stop_loss_triggered:
+            if now >= self._stop_loss_cooldown_until and not positions:
+                self._stop_loss_triggered = False
+            return True
+        if now < self._stop_loss_cooldown_until:
+            return False
+        total = sum(p.pnl or 0 for p in positions)
+        if total <= STOP_LOSS_AMOUNT:
+            self._stop_loss_triggered = True
+            self.stop_loss_hit_time = now
+            self._stop_loss_cooldown_until = now + PROFIT_COOLDOWN
+            import sys
+            print(f"[STOP LOSS] total_pnl={total:.2f} <= {STOP_LOSS_AMOUNT} — closing all", file=sys.stderr)
+            return True
+        return False
 
     def reset_profit_target(self) -> None:
         self._profit_target_triggered = False
