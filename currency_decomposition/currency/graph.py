@@ -39,11 +39,12 @@ class CurrencyGraph:
         self.state.quality = 0.5
 
     def update(self, returns: dict[str, float], weights: Optional[dict[str, float]] = None,
-               timestamp: float = 0.0) -> None:
+               timestamp: float = 0.0, available_count: int = None) -> None:
         weights = weights or {}
         active = sum(1 for v in returns.values() if v != 0.0)
         self._active_pair_count = active
-        self.state.coverage = min(1.0, active / max(len(BASE_CURRENCY_MAP), 1))
+        self._known_pairs = max(available_count if available_count else len(returns), 1)
+        self.state.coverage = min(1.0, active / self._known_pairs)
         if active < MIN_SOLVE_PAIRS:
             self._update_quality_no_solve(active)
             return
@@ -83,7 +84,8 @@ class CurrencyGraph:
         residual_norm = float(np.mean(np.abs(res_vals)))
         return_norm = float(np.mean(np.abs(r_vals))) + 1e-10
         fit_quality = 1.0 - min(residual_norm / return_norm, 1.0)
-        active_ratio = len(active_pairs) / max(len(BASE_CURRENCY_MAP), 1)
+        total_known = getattr(self, '_known_pairs', max(len(BASE_CURRENCY_MAP), 1))
+        active_ratio = len(active_pairs) / total_known
         new_quality = fit_quality * active_ratio
         self.state.quality = 0.7 * self.state.quality + 0.3 * new_quality
 

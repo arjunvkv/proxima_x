@@ -23,6 +23,7 @@ from execution.paper import PaperExecutor
 from execution.mt5_executor import MT5Executor
 from persistence.snapshot import SnapshotManager
 from monitoring.dashboard import Dashboard
+from monitoring.trade_journal import TradeJournal
 from .health import HealthMonitor
 from features.participation_burst import ParticipationBurstEngine
 
@@ -50,6 +51,7 @@ class RuntimeManager:
             self.executor = PaperExecutor()
         self.snapshot = SnapshotManager()
         self.dashboard = Dashboard()
+        self.journal = TradeJournal()
         self.health = HealthMonitor()
 
         self._tick_queue = Queue(maxsize=1000)
@@ -197,7 +199,7 @@ class RuntimeManager:
             freshness_weights = {sym: self.store.freshness(sym) for sym in returns}
             topology_weights = self.graph.topology.pair_weights([s for s, v in returns.items() if v != 0.0])
             weights = {sym: freshness_weights.get(sym, 0) * topology_weights.get(sym, 0) for sym in returns}
-            self.graph.update(returns, weights, now)
+            self.graph.update(returns, weights, now, available_count=len(self._available_symbols))
             self._strength_capture.append(self.graph.strengths())
             solve_ms = (time.time() - solve_start) * 1000
             self.health.record_solve(solve_ms)
@@ -236,6 +238,10 @@ class RuntimeManager:
                     if aligned:
                         self._currency_bursts = currency_bursts
                         self._persistence = self.burst.get_persistence()
+                else:
+                    hypotheses = []
+            else:
+                hypotheses = []
             self._pipeline_metrics["burst_hyp"] = len(hypotheses)
 
             self.executor.sync()
@@ -377,6 +383,21 @@ class RuntimeManager:
                             next(p for p in self.executor.positions if p.id == result.position_id)
                         )
                         self.risk.set_positions(self.executor.positions)
+                        sp = self.graph.get_strength_persistence()
+                        self.journal.record_open(
+                            position_id=result.position_id,
+                            symbol=h.symbol,
+                            direction="BUY" if h.direction > 0 else "SELL",
+                            entry_price=result.price,
+                            volume=LOT_SIZE,
+                            confidence=h.confidence,
+                            drs_score=h.drs_score,
+                            strengths=self.graph.strengths(),
+                            peaks={c: v["peak"] for c, v in sp.items()},
+                            troughs={c: v["trough"] for c, v in sp.items()},
+                            streaks={c: v["streak"] for c, v in sp.items()},
+                            bursts=self.burst.get_currency_bursts(returns) if self._currency_bursts is None else (self._currency_bursts or {}),
+                        )
                     else:
                         import sys
                         self.last_exec_fail = f"{h.symbol} {result.reason}"
@@ -384,9 +405,23 @@ class RuntimeManager:
 
         prices = {p.symbol: p.current_price for p in self.executor.positions}
         to_close = self.risk.check_stops(prices)
+        sp = self.graph.get_strength_persistence()
+        strengths_now = self.graph.strengths()
+        bursts_now = self.burst.get_currency_bursts(returns) if self._currency_bursts is None else (self._currency_bursts or {})
         for pos in to_close:
-            self.executor.close_position(pos.id, prices.get(pos.symbol, pos.entry_price), "STOP_LOSS")
+            r = self.executor.close_position(pos.id, prices.get(pos.symbol, pos.entry_price), "STOP_LOSS")
             self.drs.remove_position(pos.symbol)
+            self.journal.record_close(
+                position_id=pos.id,
+                exit_price=r.price,
+                pnl=pos.pnl or 0,
+                reason=r.reason or "STOP_LOSS",
+                strengths=strengths_now,
+                peaks={c: v["peak"] for c, v in sp.items()},
+                troughs={c: v["trough"] for c, v in sp.items()},
+                streaks={c: v["streak"] for c, v in sp.items()},
+                bursts=bursts_now,
+            )
 
         if now - self._last_snapshot >= 300.0:
             self._last_snapshot = now
@@ -490,20 +525,36 @@ class RuntimeManager:
             strength_persistence=strength_persistence,
             wls_direct=WLS_DIRECT_MODE,
             top_burst_pairs=self._top_burst_pairs,
+            burst_state=self._pipeline_metrics.get("burst_state"),
+            available_symbols_count=len(self._available_symbols),
+            configured_symbols_count=len(self._available_symbols) + len(self._excluded_symbols),
         )
 
     def _close_all_positions(self, reason: str) -> None:
-        held_symbols = [(p.symbol, p.id) for p in self.executor.positions]
+        held = list(self.executor.positions)
+        sp = self.graph.get_strength_persistence()
+        strengths_now = self.graph.strengths()
+        bursts_now = self.burst.get_currency_bursts({}) if self._currency_bursts is None else (self._currency_bursts or {})
         results = self.executor.close_all({}, reason)
         ok = sum(1 for r in results if r.success)
-        total_pnl = sum(p.pnl or 0 for p in self.executor.positions)
+        total_pnl = sum(p.pnl or 0 for p in held)
         import sys
         print(f"[PROFIT TARGET] close_all: {ok}/{len(results)} ok, total_pnl={total_pnl:.2f}", file=sys.stderr)
-        for r in results:
+        for pos, r in zip(held, results):
             if not r.success:
                 print(f"[PROFIT TARGET]   close fail: id={r.position_id} reason={r.reason}", file=sys.stderr)
-        for sym, pid in held_symbols:
-            self.drs.remove_position(sym)
+            self.journal.record_close(
+                position_id=pos.id,
+                exit_price=r.price,
+                pnl=pos.pnl or 0,
+                reason=reason,
+                strengths=strengths_now,
+                peaks={c: v["peak"] for c, v in sp.items()},
+                troughs={c: v["trough"] for c, v in sp.items()},
+                streaks={c: v["streak"] for c, v in sp.items()},
+                bursts=bursts_now,
+            )
+            self.drs.remove_position(pos.symbol)
         self.executor.sync()
         self.risk.set_positions(self.executor.positions)
 

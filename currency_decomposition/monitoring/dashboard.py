@@ -60,8 +60,11 @@ class Dashboard:
                 currency_bursts: dict = None,
                 persistence: dict = None,
                 strength_persistence: dict = None,
-                wls_direct: bool = False,
-                top_burst_pairs: list = None) -> None:
+                 wls_direct: bool = False,
+                 top_burst_pairs: list = None,
+                 burst_state: str = None,
+                 available_symbols_count: int = 0,
+                 configured_symbols_count: int = 0) -> None:
         now = time.time()
         if now - self._last_update < 1.0:
             return
@@ -162,6 +165,9 @@ class Dashboard:
         qual = health.graph_quality
         qual_bar = int(qual * 20)
         print(f"║  GRAPH: quality={qual:.3f} {'█' * qual_bar:<20}  ║")
+        if configured_symbols_count:
+            uni_color = "\033[92m" if available_symbols_count == configured_symbols_count else "\033[93m"
+            print(f"║  UNIVERSE: {uni_color}{available_symbols_count}/{configured_symbols_count}{reset} symbols available                         ║")
         if observability:
             obs_sorted = sorted(observability.items(), key=lambda x: x[1], reverse=True)
             obs_str = "  ".join(f"{c}={v:.2f}" for c, v in obs_sorted)
@@ -225,11 +231,12 @@ class Dashboard:
         if pipeline_metrics:
             gen = pipeline_metrics.get("generated", 0)
             bst = pipeline_metrics.get("burst_hyp", 0)
+            rej = pipeline_metrics.get("burst_rejected", 0)
             rnk = pipeline_metrics.get("ranked", 0)
             sel = pipeline_metrics.get("selected", 0)
             rsk = pipeline_metrics.get("risk_approved", 0)
             exe = pipeline_metrics.get("executed", 0)
-            print(f"║  PIPELINE: gen={gen:<2d} burst={bst:<2d} ranked={rnk:<2d} selected={sel:<2d} risk={rsk:<2d} exe={exe:<2d}║")
+            print(f"║  PIPELINE: gen={gen:<2d} burst={bst:<2d} reject={rej:<2d} ranked={rnk:<2d} selected={sel:<2d} risk={rsk:<2d} exe={exe:<2d}║")
 
         # ── SWPS PERSISTENCE SIGNAL ─────────────────────────────
         from config.settings import SWPS_WINDOW_SIZE
@@ -325,6 +332,13 @@ class Dashboard:
               f"UPTIME: {uptime_str}                               ║")
         print("╚══════════════════════════════════════════════════════════════════════╝")
 
+        # ── TRADE JOURNAL ────────────────────────────────────────
+        import os as _os
+        j_path = _os.path.join("logs", "trade_journal.jsonl")
+        print(f"║  TRADE JOURNAL: {j_path:<48s}    ║")
+        print(f"║  Tracks entry/exit WLS, reach, burst, streaks — analyze post-session         ║")
+        print("╠══════════════════════════════════════════════════════════════════════╣")
+
         # ── RAW METRICS BAR (compact health line) ─────────────────
         m = "OK  " if health.mt5_ok else "FAIL"
         t = f"{health.tick_quality:.2f}".rjust(4)
@@ -379,5 +393,8 @@ class Dashboard:
                     k: {"dir": v.get("direction", 0), "streak": v.get("streak", 0), "gap": v.get("neutral_gap", 0)}
                     for k, v in (persistence or {}).items()
                 },
+                "pipeline": pipeline_metrics,
+                "universe_available": available_symbols_count,
+                "universe_configured": configured_symbols_count,
             }
             self._log_jsonl(record)

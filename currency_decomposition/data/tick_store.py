@@ -29,16 +29,13 @@ class TickStore:
 
     def calculate_returns(self, symbols: Optional[list[str]] = None, window: int = 15) -> dict[str, float]:
         results = {}
-        target = symbols or SYMBOLS
+        target = symbols or list(self._bars.keys())
         for symbol in target:
             bars = self._bars.get(symbol, [])
-            if len(bars) < 2:
+            if len(bars) < window:
                 results[symbol] = 0.0
                 continue
-            if len(bars) < window:
-                open_ = bars[0].mid
-            else:
-                open_ = bars[-window].mid
+            open_ = bars[-window].mid
             close_ = bars[-1].mid
             if open_ > 0 and close_ > 0:
                 results[symbol] = float(np.log(close_ / open_))

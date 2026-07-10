@@ -260,6 +260,18 @@ class MT5Executor:
             )
             self._log_ledger("order_fail", hypothesis.symbol, hypothesis.direction, reason=last_error, filling=filling)
         if result is None or result.retcode != mt5.TRADE_RETCODE_DONE:
+            if last_error == "MT5_10016":
+                self.sync()
+                matched = [p for p in self.positions if p.symbol == hypothesis.symbol and p.type == int(direction_type)]
+                if matched:
+                    p = matched[0]
+                    self._log_ledger("sync_recovered", hypothesis.symbol, hypothesis.direction, ticket=int(p.id))
+                    self._position_meta[int(p.id)] = {
+                        "drs_entry": hypothesis.drs_score,
+                        "currency_strengths": {"base": hypothesis.base_strength, "quote": hypothesis.quote_strength},
+                        "confidence": hypothesis.confidence,
+                    }
+                    return ExecutionResult(success=True, position_id=str(p.id), price=float(p.price_open))
             return ExecutionResult(success=False, reason=last_error or "ORDER_SEND_NONE")
         self._position_meta[result.order] = {
             "drs_entry": hypothesis.drs_score,
