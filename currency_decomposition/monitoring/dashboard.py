@@ -60,9 +60,8 @@ class Dashboard:
                 currency_bursts: dict = None,
                 persistence: dict = None,
                 strength_persistence: dict = None,
-                 wls_direct: bool = False,
-                 top_burst_pairs: list = None,
-                 burst_state: str = None) -> None:
+                wls_direct: bool = False,
+                top_burst_pairs: list = None) -> None:
         now = time.time()
         if now - self._last_update < 1.0:
             return
@@ -129,10 +128,7 @@ class Dashboard:
 
         # ── PARTICIPATION BURST ────────────────────────────────────
         if currency_bursts:
-            bstate = burst_state or "active"
-            bcolor = "\033[92m" if bstate == "active" else ("\033[93m" if bstate == "warming" else "\033[91m")
-            state_tag = f"[{bcolor}{bstate.upper()}\033[0m]"
-            print(f"║  BURST & PERSISTENCE (volume activity / streak)  {state_tag:<28s}║")
+            print("║  BURST & PERSISTENCE (volume activity / streak)                        ║")
             if top_burst_pairs:
                 pairs_str = " ".join(top_burst_pairs[:3])
                 print(f"║    ACTIVE: {pairs_str:<62}║")

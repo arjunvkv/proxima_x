@@ -113,24 +113,6 @@ class ParticipationBurstEngine:
             for c in CURRENCY_LIST
         }
 
-    def get_state(self) -> str:
-        """'cold' = most pairs below MIN_HISTORY, 'warming' = accumulating, 'active' = ready."""
-        from config.settings import BASE_CURRENCY_MAP as _BCM
-        cold = 0
-        warming = 0
-        for sym in _BCM:
-            q = self.get_quality(sym)
-            if q["status"] == "cold":
-                cold += 1
-            elif q["status"] == "warming":
-                warming += 1
-        total = len(_BCM)
-        if cold > total // 2:
-            return "cold"
-        if warming > total // 2:
-            return "warming"
-        return "active"
-
     def get_burst_alignment(self, symbol: str, pair_return: float) -> float:
         burst = self.get_burst(symbol)
         if burst == 0.0 or pair_return == 0.0:
