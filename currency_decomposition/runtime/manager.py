@@ -507,6 +507,14 @@ class RuntimeManager:
                         print(f"[LEADER CHECK] none of {len(selected)} involve leader={leader} symbols={symbols} — skipping", file=sys.stderr)
                         selected = []
 
+                # ── SYMBOL DUPLICATE CHECK ──────────────────────────
+                if selected and self.executor.positions:
+                    open_symbols = {p.symbol for p in self.executor.positions}
+                    before = len(selected)
+                    selected = [h for h in selected if h.symbol not in open_symbols]
+                    if len(selected) < before:
+                        print(f"[SYMBOL DUP] filtered {before - len(selected)} hyps already in open positions — open={open_symbols}", file=sys.stderr)
+
                 self._pipeline_metrics["selected"] = len(selected)
                 cycle_submitted = set()
                 self.last_exec_fail = None

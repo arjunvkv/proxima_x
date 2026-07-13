@@ -1,44 +1,14 @@
-def fmt_val(v, decimals=2):
-    if v is None:
-        return "--"
-    return f"{v:.{decimals}f}"
+from rich.progress_bar import ProgressBar
 
-def fmt_pct(v):
-    if v is None:
-        return "--"
-    return f"{v*100:.0f}%"
+G = "#10b981"
+R = "#ef4444"
+A = "#f59e0b"
+C = "#06b6d4"
+W = "#e2e8f0"
+D = "#64748b"
 
-def fmt_delta(v):
-    if v is None:
-        return " →"
-    if v > 0:
-        return " ▲"
-    if v < 0:
-        return " ▼"
-    return " →"
 
-def bar(v, max_v=1.0, width=10):
-    if v is None or v <= 0:
-        return " " * width
-    ratio = min(v / max_v, 1.0)
-    filled = max(1, int(ratio * width)) if ratio > 0 else 0
-    filled = min(filled, width)
-    return "▰" * filled + " " * (width - filled)
-
-def status_dot(v, threshold_green=0.7, threshold_amber=0.4):
-    if v is None:
-        return "○"
-    if v >= threshold_green:
-        return "●"
-    if v >= threshold_amber:
-        return "◉"
-    return "○"
-
-def trajectory_symbol(v):
-    if v is None:
-        return "→"
-    if v > 0.02:
-        return "▲"
-    if v < -0.02:
-        return "▼"
-    return "→"
+def pb(val, mx=1.0, w=6, clr=G):
+    if val is None:
+        return ProgressBar(completed=0, total=1, width=w, complete_style=clr, style=D)
+    return ProgressBar(completed=val, total=mx, width=w, complete_style=clr, style=D)

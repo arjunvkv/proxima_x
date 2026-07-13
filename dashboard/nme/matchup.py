@@ -1,33 +1,44 @@
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
+from rich.columns import Columns
+from rich import box
+
 from .model import NMEViewModel
-from .formatter import bar
+from .formatter import pb, G, A, C, D, W, R
 
-W = 70
 
-def render(model: NMEViewModel) -> str:
-    lines = []
-    lines.append(f"║{' ' * 68}║")
-    lines.append(f"║  ◄ NARRATIVE MATCHUP{' ' * 47}║")
-    lines.append(f"║{' ' * 68}║")
+def render(model: NMEViewModel) -> Columns:
+    def ccy_panel(name, val, delta, is_leader):
+        clr = G if val >= 0 else R
+        label = "LEADER" if is_leader else "OPPONENT"
+        bclr = G if is_leader else R
+        t = Table.grid(padding=0)
+        t.add_column()
+        t.add_row(
+            Text(f" {name} ", style=f"bold {W}"),
+            Text(f" {label}", style=bclr),
+        )
+        t.add_row(
+            pb(abs(val), mx=0.001, w=16, clr=clr),
+            Text(f" {val:+.5f} ", style=W),
+            Text("▲" if val >= 0 else "▼", style=f"bold {clr}"),
+        )
+        if delta is not None:
+            d_sym = "▲" if delta >= 0 else "▼"
+            d_clr = G if delta >= 0 else R
+            t.add_row(Text(f"  Δ {delta:+.5f} {d_sym}", style=d_clr))
+        else:
+            t.add_row(Text(""))
+        return Panel(t, box=box.SQUARE, border_style=bclr, padding=(0, 1), width=41)
 
-    leader = model.leader
-    l_str = model.leader_strength
-    l_bar = bar(abs(l_str), max_v=0.001, width=16)
-    l_dir = "▲" if model.direction > 0 else "▼"
-    if model.active:
-        l_delta = f"+{model.leader_delta:.5f}" if model.leader_delta >= 0 else f"{model.leader_delta:.5f}"
-        lines.append(f"║  {leader} {l_bar} {l_str:+.5f}  {l_dir}   Δ {l_delta:<10s}      ║")
-    else:
-        tag = "CANDIDATE" if leader.startswith("?") else "NO LEADER "
-        lines.append(f"║  {leader[1:] if leader.startswith('?') else leader} {l_bar} {l_str:+.5f}  {l_dir}   {tag:<16s}      ║")
+    panels = [ccy_panel(model.leader, model.leader_strength, model.leader_delta, True)]
 
     if model.opponent_strengths:
         first_opp = list(model.opponent_strengths.items())[0]
-        o_ccy, o_val = first_opp
-        o_bar = bar(abs(o_val), max_v=0.001, width=16)
-        o_dir = "▲" if o_val > 0 else "▼"
-        lines.append(f"║  {o_ccy} {o_bar} {o_val:+.5f}  {o_dir}                     ║")
+        panels.append(ccy_panel(first_opp[0], first_opp[1], None, False))
     else:
-        lines.append(f"║{' ' * 68}║")
+        panels.append(Panel(Text("  -- no opponent --", style=D),
+                            box=box.SQUARE, border_style=R, padding=(0, 1), width=41))
 
-    lines.append(f"║{' ' * 68}║")
-    return "\n".join(lines)
+    return Columns(panels, equal=True, expand=True)
