@@ -126,14 +126,23 @@ class MT5Executor:
             tick = tick_map.get(p.symbol)
             if tick:
                 p.current_price = tick.bid if p.direction == "BUY" else tick.ask
-        mt5_positions = self.mt5.call_mt5(mt5.positions_get)
-        if mt5_positions is None:
-            return
-        mt5_by_ticket = {str(pt.ticket): pt for pt in mt5_positions if CD_MAGIC <= pt.magic < CD_MAGIC + 200}
-        for p in self.positions:
-            mp = mt5_by_ticket.get(p.id)
-            if mp:
-                p.pnl = mp.profit + (getattr(mp, 'swap', 0) or 0) + (getattr(mp, 'commission', 0) or 0)
+                p.pnl = self._calculate_pnl(p, p.current_price)
+        try:
+            mt5_positions = self.mt5.call_mt5(mt5.positions_get, timeout=3.0)
+            if mt5_positions is not None:
+                mt5_by_ticket = {str(pt.ticket): pt for pt in mt5_positions if CD_MAGIC <= pt.magic < CD_MAGIC + 200}
+                for p in self.positions:
+                    mp = mt5_by_ticket.get(p.id)
+                    if mp:
+                        p.pnl = mp.profit + (getattr(mp, 'swap', 0) or 0) + (getattr(mp, 'commission', 0) or 0)
+        except Exception:
+            pass
+
+    @staticmethod
+    def _calculate_pnl(position: PaperPosition, exit_price: float) -> float:
+        if position.direction == "BUY":
+            return (exit_price - position.entry_price) * position.lots * 100000
+        return (position.entry_price - exit_price) * position.lots * 100000
 
     def execute(self, hypothesis: DirectionHypothesis, tick=None) -> ExecutionResult:
         symbol = self._resolve_symbol(hypothesis.symbol)

@@ -55,9 +55,7 @@ class Dashboard:
                 total_lots: float = 0.0, max_total_lots: float = 0.0,
                lot_size: float = 0.0, profit_target: float = 0.0,
                cooldown_active: bool = False, cooldown_remaining: int = 0,
-                swps_signal: dict = None,
-                swps_capture_count: int = 0,
-                 currency_bursts: dict = None,
+                currency_bursts: dict = None,
                  persistence: dict = None,
                  strength_persistence: dict = None,
                  currency_der: dict = None,
@@ -67,7 +65,9 @@ class Dashboard:
                   top_burst_pairs: list = None,
                   burst_state: str = None,
                  available_symbols_count: int = 0,
-                 configured_symbols_count: int = 0) -> None:
+                 configured_symbols_count: int = 0,
+                 nme_output: str = None,
+                 nme_trade_snapshots: list = None) -> None:
         now = time.time()
         if now - self._last_update < 1.0:
             return
@@ -77,6 +77,9 @@ class Dashboard:
         ts = time.strftime("%H:%M:%S")
 
         os.system("cls" if os.name == "nt" else "clear")
+
+        if nme_output:
+            print(nme_output)
 
         health_icon = "OK" if health.state == "OK" else ("DEG" if health.state == "DEGRADED" else "ERR")
         health_color = "\033[92m" if health.state == "OK" else ("\033[93m" if health.state == "DEGRADED" else "\033[91m")
@@ -271,21 +274,6 @@ class Dashboard:
             exe = pipeline_metrics.get("executed", 0)
             print(f"║  PIPELINE: gen={gen:<2d} burst={bst:<2d} reject={rej:<2d} ranked={rnk:<2d} selected={sel:<2d} risk={rsk:<2d} exe={exe:<2d}║")
 
-        # ── SWPS PERSISTENCE SIGNAL ─────────────────────────────
-        from config.settings import SWPS_WINDOW_SIZE
-        if wls_direct:
-            print(f"║  SWPS: \033[91mDISABLED\033[0m (WLS_DIRECT_MODE)                                    ║")
-        elif swps_signal:
-            swp_sym = swps_signal.get("symbol", "")
-            swp_dir = swps_signal.get("direction", "")
-            swp_sc = swps_signal.get("score", 0)
-            bar = "█" * int(swp_sc * 20)
-            print(f"║  SWPS: {swp_sym:<6s} {swp_dir:<4s}  score={swp_sc:.3f}  {bar:<20}  ║")
-        elif swps_capture_count < SWPS_WINDOW_SIZE:
-            bar = "░" * swps_capture_count + " " * (SWPS_WINDOW_SIZE - swps_capture_count)
-            print(f"║  SWPS: warming up  {bar:<20}  ({swps_capture_count}/{SWPS_WINDOW_SIZE})          ║")
-        else:
-            print(f"║  SWPS: scanning — no pair above threshold                    ║")
         print("╠══════════════════════════════════════════════════════════════════════╣")
 
         # ── RISK STATE ───────────────────────────────────────────
@@ -356,6 +344,19 @@ class Dashboard:
             print(f"║  TOP HYPOTHESIS: none (below MIN_CONFIDENCE or no signal)        ║")
         print("╠══════════════════════════════════════════════════════════════════════╣")
 
+        # ── NME TRADE SNAPSHOTS ──────────────────────────────────
+        if nme_trade_snapshots:
+            print(f"║  NME AT ENTRY {' ' * 57}║")
+            for s in nme_trade_snapshots[-5:]:
+                t = time.strftime("%H:%M:%S", time.localtime(s.get("time", 0)))
+                sym = s.get("symbol", "")
+                d = s.get("direction", "")
+                ldr = s.get("leader", "")
+                nmi = s.get("nmi", 0)
+                ph = s.get("phase", "")
+                print(f"║   {t}  {sym:<6s} {d:<4s}  leader={ldr}  nmi={nmi:.2f}  {ph:<12s}            ║")
+            print("╠══════════════════════════════════════════════════════════════════════╣")
+
         # ── SYSTEM ───────────────────────────────────────────────
         print(f"║  CYCLE: {trade_count:<8d}  │  "
               f"GRAPH QUALITY: {health.graph_quality:.3f}  │  "
@@ -414,9 +415,6 @@ class Dashboard:
                 "production_ready": production_ready,
                 "max_concentration": round(max(concentration.values()), 3) if concentration else 0.0,
                 "stress_test_stable": sum(1 for v in (stress_test or {}).values() if v is not None),
-                "swps_symbol": (swps_signal or {}).get("symbol"),
-                "swps_direction": (swps_signal or {}).get("direction"),
-                "swps_score": round((swps_signal or {}).get("score", 0), 4),
                 "currency_bursts": {k: round(v, 3) for k, v in (currency_bursts or {}).items()},
                 "strength_persistence": {
                     k: {"dir": v.get("direction", 0), "streak": v.get("streak", 0)}

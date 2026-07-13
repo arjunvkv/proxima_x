@@ -46,17 +46,26 @@ class DRS:
         overlap = sum(abs(v) for c, v in vector.items() if c in current_exposure)
         return min(overlap * 0.25, 1.0)
 
-    def rank(self, hypotheses: list[DirectionHypothesis]) -> list[DirectionHypothesis]:
+    def rank(self, hypotheses: list[DirectionHypothesis],
+             narrative_quality: dict[str, float] | None = None) -> list[DirectionHypothesis]:
         if not hypotheses:
             return []
 
         scored = []
         base_exposure = self._net_currency_exposure()
         for h in hypotheses:
-            conviction_weight = 0.35
-            confidence_weight = 0.25
-            quality_weight = 0.20
-            diversification_weight = 0.20
+            if narrative_quality and h.symbol in narrative_quality:
+                conviction_weight = 0.30
+                confidence_weight = 0.25
+                quality_weight = 0.20
+                diversification_weight = 0.15
+                narrative_weight = 0.10
+            else:
+                conviction_weight = 0.35
+                confidence_weight = 0.25
+                quality_weight = 0.20
+                diversification_weight = 0.20
+                narrative_weight = 0.0
 
             strength_diff = abs(h.base_strength - h.quote_strength)
             conviction_score = min(strength_diff * 5000, 1.0)
@@ -67,11 +76,14 @@ class DRS:
             penalty = self._factor_overlap_penalty(h, base_exposure)
             diversification_score = max(raw_div - penalty, 0.0)
 
+            nq_score = narrative_quality.get(h.symbol, 0.5) if narrative_quality else 0.5
+
             raw_score = (
                 conviction_weight * conviction_score +
                 confidence_weight * confidence_score +
                 quality_weight * quality_score +
-                diversification_weight * diversification_score
+                diversification_weight * diversification_score +
+                narrative_weight * nq_score
             )
 
             age_cycles = self._position_age(h.symbol)
@@ -118,48 +130,52 @@ class DRS:
         best_combo = None
         best_score = -1.0
 
-        for combo in combinations(pool, slots_needed):
-            trace["tested_combinations"] += 1
-            sim_exposure = Counter()
-            sim_exposure.update(live_exposure)
-            score = 0.0
-            valid = True
-            symbols_seen = set()
+        r_max = min(slots_needed, len(pool))
+        for r in range(r_max, 0, -1):
+            for combo in combinations(pool, r):
+                trace["tested_combinations"] += 1
+                sim_exposure = Counter()
+                sim_exposure.update(live_exposure)
+                score = 0.0
+                valid = True
+                symbols_seen = set()
 
-            for h in combo:
-                if h.symbol in symbols_seen:
-                    valid = False
-                    break
-                symbols_seen.add(h.symbol)
-                vec = self._currency_vector(h.symbol, h.direction)
-                for c, v in vec.items():
-                    if v != 0:
-                        existing = sim_exposure.get(c, 0)
-                        if existing != 0 and (1 if v > 0 else -1) != (1 if existing > 0 else -1):
-                            valid = False
-                            break
-                if not valid:
-                    trace["rejections"].append({
-                        "symbols": [h.symbol for h in combo],
-                        "reason": "MIXED_SIGN"
-                    })
-                    break
-                for c, v in vec.items():
-                    sim_exposure[c] += v
-                if self._exceeds_currency_limit(sim_exposure):
-                    valid = False
-                    trace["rejections"].append({
-                        "symbols": [h.symbol for h in combo],
-                        "reason": "CURRENCY_LIMIT"
-                    })
-                    break
-                score += h.drs_score
+                for h in combo:
+                    if h.symbol in symbols_seen:
+                        valid = False
+                        break
+                    symbols_seen.add(h.symbol)
+                    vec = self._currency_vector(h.symbol, h.direction)
+                    for c, v in vec.items():
+                        if v != 0:
+                            existing = sim_exposure.get(c, 0)
+                            if existing != 0 and (1 if v > 0 else -1) != (1 if existing > 0 else -1):
+                                valid = False
+                                break
+                    if not valid:
+                        trace["rejections"].append({
+                            "symbols": [h.symbol for h in combo],
+                            "reason": "MIXED_SIGN"
+                        })
+                        break
+                    for c, v in vec.items():
+                        sim_exposure[c] += v
+                    if self._exceeds_currency_limit(sim_exposure):
+                        valid = False
+                        trace["rejections"].append({
+                            "symbols": [h.symbol for h in combo],
+                            "reason": "CURRENCY_LIMIT"
+                        })
+                        break
+                    score += h.drs_score
 
-            if valid:
-                trace["valid_combinations"] += 1
-                if score > best_score:
-                    best_score = score
-                    best_combo = combo
+                if valid:
+                    trace["valid_combinations"] += 1
+                    if score > best_score:
+                        best_score = score
+                        best_combo = combo
+            if best_combo:
+                break
 
         selected = list(best_combo) if best_combo else []
         trace["best_score"] = best_score

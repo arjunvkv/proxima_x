@@ -131,6 +131,12 @@ class RiskEngine:
             return True
         return False
 
+    def check_individual_stop_loss(self, positions: list[PaperPosition]) -> list[PaperPosition]:
+        return [p for p in positions if (p.pnl or 0) <= STOP_LOSS_AMOUNT]
+
+    def check_individual_profit_target(self, positions: list[PaperPosition]) -> list[PaperPosition]:
+        return [p for p in positions if (p.pnl or 0) >= PROFIT_TARGET]
+
     def cooldown_active(self) -> bool:
         return time.time() < self._profit_cooldown_until
 
