@@ -35,7 +35,7 @@ def maturity_penalty(symbol: str, narrative: NarrativeState | None) -> float:
     """Overlay #2: Confidence penalty for late-stage narratives.
 
     Returns multiplier in range [0.70, 1.0].
-    Applied after SWPS override, before DRS ranking.
+    Applied after bar state alignment, before DRS ranking.
     Pure function — no side effects.
     """
     if narrative is None or not narrative.active:

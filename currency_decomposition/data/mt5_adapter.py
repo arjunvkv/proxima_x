@@ -161,6 +161,9 @@ class MT5Adapter:
     def get_rates(self, symbol: str, timeframe: int, count: int):
         return self.call_mt5(mt5.copy_rates_from_pos, symbol, timeframe, 0, count)
 
+    def get_rates_from(self, symbol: str, timeframe: int, start: int, count: int):
+        return self.call_mt5(mt5.copy_rates_from_pos, symbol, timeframe, start, count)
+
     def audit_symbols(self) -> dict:
         from config.settings import SYMBOLS
         symbols = self.call_mt5(mt5.symbols_get)

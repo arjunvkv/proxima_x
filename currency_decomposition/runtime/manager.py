@@ -1,19 +1,20 @@
+import os
 import time
 import signal
 import threading
 import sys
-from collections import deque
 from queue import Queue, Empty
 from pathlib import Path
 from typing import Optional
 
-from config.settings import EXECUTION_MODE, MAX_POSITIONS, LOT_SIZE, MAX_TOTAL_LOTS, PROFIT_TARGET, STOP_LOSS_AMOUNT, BURST_TOP_N
+from config.settings import EXECUTION_MODE, MAX_POSITIONS, LOT_SIZE, MAX_TOTAL_LOTS, PROFIT_TARGET, STOP_LOSS_AMOUNT, BURST_TOP_N, MIN_CONFIDENCE
 from config.settings import CURRENCY_LIST, BASE_CURRENCY_MAP, WLS_DIRECT_MODE
 from data.models import TickBatch
 from data.mt5_adapter import MT5Adapter
 from data.tick_store import TickStore
 from currency.graph import CurrencyGraph
 from direction.hypothesis import HypothesisGenerator
+from features.bar_state import BarStateEngine
 from portfolio.drs import DRS
 from portfolio.concentration import CurrencyConcentration
 from risk.safety import RiskEngine
@@ -27,8 +28,10 @@ from .trade_lifecycle import TradeLifecycleLogger
 from features.participation_burst import ParticipationBurstEngine
 from features.directional_efficiency import DirectionalEfficiency
 from narrative import NarrativeEngine, NarrativeInput, NarrativeState
-from narrative.overlay import narrative_alignment, maturity_penalty, narrative_quality, narrative_health_score
+from narrative.overlay import narrative_quality, narrative_health_score
 from dashboard.nme_dashboard import NMEDashboard
+from dashboard.bar_dashboard import BarStateDashboard
+
 
 class RuntimeManager:
     def __init__(self):
@@ -43,6 +46,7 @@ class RuntimeManager:
         self.graph = CurrencyGraph()
         self.generator = HypothesisGenerator()
         self.drs = DRS()
+        self.bar_state = BarStateEngine(self.mt5, self.store)
         self.risk = RiskEngine()
         if EXECUTION_MODE == "live":
             self.executor = MT5Executor(self.mt5)
@@ -52,6 +56,10 @@ class RuntimeManager:
         self.dashboard = Dashboard()
         self.journal = TradeJournal()
         self.health = HealthMonitor()
+        self.nme = NarrativeEngine()
+        self.nme_dashboard = NMEDashboard()
+        self.bar_dashboard = BarStateDashboard()
+        self._trade_lifecycle = TradeLifecycleLogger()
 
         self._tick_queue = Queue(maxsize=1000)
         self._tick_thread: Optional[threading.Thread] = None
@@ -63,7 +71,7 @@ class RuntimeManager:
         self._start_time = 0.0
         self._mt5_audit = None
         self._production_ready = False
-        self._pipeline_metrics = {"generated": 0, "confirmed": 0, "ranked": 0, "selected": 0, "risk_approved": 0, "executed": 0}
+        self._pipeline_metrics = {"generated": 0, "ranked": 0, "selected": 0, "risk_approved": 0, "executed": 0, "bar_aligned": 0}
         self._available_symbols: list[str] = []
         self._excluded_symbols: list[dict] = []
         self._last_discovery = 0.0
@@ -74,10 +82,7 @@ class RuntimeManager:
         self._currency_der: dict[str, float] | None = None
         self._der_persistence: dict[str, dict] | None = None
         self._top_der_pairs: list[str] = []
-        self.nme = NarrativeEngine()
-        self.nme_dashboard = NMEDashboard()
         self._nme_narrative: Optional[NarrativeState] = None
-        self._confirm_counts: dict[str, int] = {}
         self._pnl_reset_done = False
         self._nme_trade_snapshots: list[dict] = []
         self._position_trajectory: dict[str, list] = {}
@@ -85,14 +90,8 @@ class RuntimeManager:
         self._narrative_peak_health: float = 0.0
         self._narrative_decay_exit: bool = False
         self._narrative_decay_cycles: int = 0
-        self._mature_drawdown_count: int = 0
-        self._mature_drawdown_exit: bool = False
         self._last_batch_pnl: float = 0.0
-        self._all_positions_positive_flag: bool = False
-        self._load_bearing_exit: bool = False
         self._batch_open_cycle: int = 0
-        self._all_positive_exit: bool = False
-        self._trade_lifecycle = TradeLifecycleLogger()
 
     def start(self) -> None:
         self._setup_signal_handlers()
@@ -201,15 +200,15 @@ class RuntimeManager:
                     print(f"[PER-POSITION STOP LOSS] closing {len(to_close_indiv_sl)}: {', '.join(pnls)}", file=sys.stderr)
                     self._close_individual_positions(to_close_indiv_sl, "STOP_LOSS")
                 total_pnl = sum(p.pnl or 0 for p in self.executor.positions)
-                if total_pnl <= -100.0 and self.executor.positions:
-                    if not self._pnl_reset_done:
-                        print(f"[BATCH STOP LOSS] total_pnl={total_pnl:.2f} <= -$100 — closing all", file=sys.stderr)
-                        self._close_all_positions("STOP_LOSS")
-                        self._reset_after_profit_target()
-                        self.dashboard.latest_event = {"event": "STOP_LOSS", "time": time.time()}
-                        self._pnl_reset_done = True
-                else:
-                    self._pnl_reset_done = False
+                if total_pnl <= -50.0 and self.executor.positions:
+                    print(f"[BATCH STOP LOSS] total_pnl={total_pnl:.2f} <= -$50 — closing all", file=sys.stderr)
+                    self._close_all_positions("STOP_LOSS")
+                    self._reset_after_profit_target()
+                    self.dashboard.latest_event = {"event": "STOP_LOSS", "time": time.time()}
+                elif self.risk.check_profit_target(self.executor.positions):
+                    self._close_all_positions("PROFIT_TARGET")
+                    self._reset_after_profit_target()
+                    self.dashboard.latest_event = {"event": "PROFIT_TARGET", "time": time.time()}
                 continue
             except Exception as e:
                 import traceback
@@ -239,21 +238,15 @@ class RuntimeManager:
                 print(f"[PER-POSITION PROFIT TARGET] closing {len(to_close_indiv_pt)}: {', '.join(pnls)}", file=sys.stderr)
                 self._close_individual_positions(to_close_indiv_pt, "PROFIT_TARGET")
             total_pnl = sum(p.pnl or 0 for p in self.executor.positions)
-            if total_pnl <= -100.0 and self.executor.positions:
-                if not self._pnl_reset_done:
-                    print(f"[BATCH STOP LOSS] total_pnl={total_pnl:.2f} <= -$100 — closing all", file=sys.stderr)
-                    self._close_all_positions("STOP_LOSS")
-                    self._reset_after_profit_target()
-                    self.dashboard.latest_event = {"event": "STOP_LOSS", "time": now}
-                    self._pnl_reset_done = True
+            if total_pnl <= -50.0 and self.executor.positions:
+                print(f"[BATCH STOP LOSS] total_pnl={total_pnl:.2f} <= -$50 — closing all", file=sys.stderr)
+                self._close_all_positions("STOP_LOSS")
+                self._reset_after_profit_target()
+                self.dashboard.latest_event = {"event": "STOP_LOSS", "time": now}
             elif self.risk.check_profit_target(self.executor.positions):
-                if not self._pnl_reset_done:
-                    self._close_all_positions("PROFIT_TARGET")
-                    self._reset_after_profit_target()
-                    self.dashboard.latest_event = {"event": "PROFIT_TARGET", "time": now}
-                    self._pnl_reset_done = True
-            else:
-                self._pnl_reset_done = False
+                self._close_all_positions("PROFIT_TARGET")
+                self._reset_after_profit_target()
+                self.dashboard.latest_event = {"event": "PROFIT_TARGET", "time": now}
 
         returns = self.store.calculate_returns()
         if self._available_symbols:
@@ -276,7 +269,6 @@ class RuntimeManager:
             self._pipeline_metrics.update({
                 "generated": 0,
                 "burst_hyp": 0,
-                "confirmed": 0,
                 "ranked": 0,
                 "selected": 0,
                 "risk_approved": 0,
@@ -329,18 +321,19 @@ class RuntimeManager:
                 self.efficiency.finalize_cycle()
             self._pipeline_metrics["burst_hyp"] = len(hypotheses)
 
-            # ── CONFIRMATION GATE: require 2 consecutive cycles ──────
-            confirmed_hyp = set()
-            for h in hypotheses:
-                key = f"{h.symbol}_{('BUY' if h.direction>0 else 'SELL')}"
-                self._confirm_counts[key] = self._confirm_counts.get(key, 0) + 1
-                if self._confirm_counts[key] >= 2:
-                    confirmed_hyp.add(key)
-            for k in list(self._confirm_counts.keys()):
-                if k not in {f"{h.symbol}_{('BUY' if h.direction>0 else 'SELL')}" for h in hypotheses}:
-                    self._confirm_counts[k] = 0
-            hypotheses = [h for h in hypotheses if f"{h.symbol}_{('BUY' if h.direction>0 else 'SELL')}" in confirmed_hyp]
-            self._pipeline_metrics["confirmed"] = len(hypotheses)
+            # ── BAR STATE ALIGNMENT (replaces SWPS) ─────────────
+            if self.bar_state.update():
+                pre = len(hypotheses)
+                for h in hypotheses:
+                    align = self.bar_state.alignment(h.symbol, h.direction)
+                    h.confidence = min(1.0, h.confidence * align)
+                    if align < 0.20:
+                        print(f"[BAR STATE] reject={h.symbol} align={align:.3f}", file=sys.stderr)
+                hypotheses = [h for h in hypotheses if h.confidence >= MIN_CONFIDENCE]
+                print(f"[BAR STATE] aligned={len(hypotheses)}/{pre}  {self.bar_state.get_summary()}", file=sys.stderr)
+            else:
+                print("[BAR STATE] not ready — no bar alignment", file=sys.stderr)
+            self._pipeline_metrics["bar_aligned"] = len(hypotheses)
 
             self.executor.sync()
 
@@ -352,34 +345,13 @@ class RuntimeManager:
             self.drs.set_positions(self.executor.positions)
 
             # ── NARRATIVE DECAY EXIT ─────────────────────────────────
+            if os.environ.get("DISABLE_NARRATIVE_DECAY", "0") == "1":
+                if self._narrative_decay_exit:
+                    self._narrative_decay_exit = False
             if self._narrative_decay_exit and self.executor.positions:
                 total_pnl = sum(p.pnl or 0 for p in self.executor.positions)
                 print(f"[NARRATIVE DECAY] closing all — pos={len(self.executor.positions)} pnl=${total_pnl:.2f}", file=sys.stderr)
                 self._close_all_positions("NARRATIVE_DECAY")
-                self._reset_after_profit_target()
-                return
-
-            # ── MATURE DRAWDOWN EXIT ─────────────────────────────────
-            if self._mature_drawdown_exit and self.executor.positions:
-                total_pnl = sum(p.pnl or 0 for p in self.executor.positions)
-                print(f"[MATURE DRAWDOWN] closing all — 3 consecutive declines pos={len(self.executor.positions)} pnl=${total_pnl:.2f}", file=sys.stderr)
-                self._close_all_positions("MATURE_DRAWDOWN")
-                self._reset_after_profit_target()
-                return
-
-            # ── LOAD-BEARING RATIO EXIT ─────────────────────────────────
-            if self._load_bearing_exit and self.executor.positions:
-                total_pnl = sum(p.pnl or 0 for p in self.executor.positions)
-                print(f"[LOAD-BEARING RATIO] closing all — best/total>70% $5min pos={len(self.executor.positions)} pnl=${total_pnl:.2f}", file=sys.stderr)
-                self._close_all_positions("LOAD_BEARING_RATIO")
-                self._reset_after_profit_target()
-                return
-
-            # ── ALL-3-POSITIVE EXIT ─────────────────────────────────
-            if self._all_positive_exit and self.executor.positions:
-                total_pnl = sum(p.pnl or 0 for p in self.executor.positions)
-                print(f"[NO ALL-POSITIVE] batch never had all 3 positions positive — closing pnl=${total_pnl:.2f}", file=sys.stderr)
-                self._close_all_positions("NO_ALL_POSITIVE")
                 self._reset_after_profit_target()
                 return
 
@@ -391,91 +363,7 @@ class RuntimeManager:
             print(f"[GATE] allowed={_a} prod={self._production_ready} nme={nme_ready} hyp={len(hypotheses)} ap={_ap} q={_q:.3f} conn={_c:.3f} direct={WLS_DIRECT_MODE}", file=sys.stderr)
             gate_pass = (WLS_DIRECT_MODE or (_a and self._production_ready)) and nme_ready
             if gate_pass:
-                if hypotheses and self._nme_narrative is not None:
-                    for h in hypotheses:
-                        align = narrative_alignment(h.symbol, self._nme_narrative)
-                        mat = maturity_penalty(h.symbol, self._nme_narrative)
-                        h.confidence = min(1.0, max(0.0, h.confidence * align * mat))
-                    print(f"[NME OVERLAY] leader={self._nme_narrative.identity.leader} "
-                          f"phase={self._nme_narrative.phase.value} nmi={self._nme_narrative.nmi:.3f} "
-                          f"hyps={len(hypotheses)}", file=sys.stderr)
-
-                # ── STRENGTH SPREAD PENALTY ────────────────────────────
-                strengths_raw = self.graph.strengths_raw()
-                if strengths_raw:
-                    s_vals = list(strengths_raw.values())
-                    spread = max(s_vals) - min(s_vals)
-                    if spread < 0.00015:
-                        factor = spread / 0.00015
-                        for h in hypotheses:
-                            h.confidence *= max(factor, 0.3)
-                        print(f"[STRENGTH SPREAD] spread={spread:.6f} < 0.00015 — confidence *= {max(factor, 0.3):.3f}", file=sys.stderr)
-
-                # ── BURST HIERARCHY PENALTY ──────────────────────────
-                if hypotheses and self._nme_narrative is not None and self._currency_bursts:
-                    ident = self._nme_narrative.identity
-                    leader = ident.leader
-                    ldir = ident.direction
-                    if leader and ldir != 0:
-                        leader_burst = self._currency_bursts.get(leader, 0)
-                        burst_penalty = 1.0
-                        if (ldir > 0 and leader_burst <= 0) or (ldir < 0 and leader_burst >= 0):
-                            burst_penalty = 0.5
-                            print(f"[BURST PENALTY] leader={leader} dir={'BUY' if ldir>0 else 'SELL'} burst={leader_burst:.3f} — ×0.5", file=sys.stderr)
-                        opponents = getattr(ident, 'opponents', [])
-                        if opponents:
-                            aligned = sum(1 for opp in opponents
-                                          if (ldir > 0 and self._currency_bursts.get(opp, 0) < 0) or
-                                             (ldir < 0 and self._currency_bursts.get(opp, 0) > 0))
-                            if aligned < 2 and len(opponents) >= 3:
-                                burst_penalty = min(burst_penalty, 0.6)
-                                print(f"[BURST PENALTY] only {aligned}/3 opponents oppose dir — ×0.6", file=sys.stderr)
-                        if burst_penalty < 1.0:
-                            for h in hypotheses:
-                                h.confidence *= burst_penalty
-                                print(f"[BURST PENALTY] {h.symbol} conf now={h.confidence:.3f}", file=sys.stderr)
-
-                # ── SAME-SIGN PENALTY ────────────────────────────────────
-                for h in hypotheses:
-                    if (h.base_strength > 0) == (h.quote_strength > 0):
-                        h.confidence *= 0.5
-                        print(f"[SAME-SIGN PENALTY] {h.symbol} base={h.base_strength:.6f} quote={h.quote_strength:.6f} "
-                              f"conf now={h.confidence:.3f}", file=sys.stderr)
-
-                # ── DIRECTION-AWARE ALIGNMENT ────────────────────────────
-                if self._nme_narrative is not None:
-                    leader = self._nme_narrative.identity.leader
-                    ldir = self._nme_narrative.identity.direction
-                    for h in hypotheses:
-                        if leader in h.symbol:
-                            idx = h.symbol.index(leader)
-                            leader_is_base = (idx == 0)
-                            aligned_dir = ldir if leader_is_base else -ldir
-                            if h.direction != aligned_dir:
-                                h.confidence *= 0.5
-                                print(f"[DIRECTION PENALTY] {h.symbol} "
-                                      f"dir={'BUY' if h.direction>0 else 'SELL'} "
-                                      f"leader={leader} "
-                                      f"ldir={'BUY' if ldir>0 else 'SELL'} "
-                                      f"aligned={'BUY' if aligned_dir>0 else 'SELL'} "
-                                      f"conf now={h.confidence:.3f}", file=sys.stderr)
-
-                # ── CONFIDENCE FLOOR (after all modifiers) ──────────────
-                before = len(hypotheses)
-                hypotheses = [h for h in hypotheses if h.confidence >= 0.15]
-                if len(hypotheses) < before:
-                    print(f"[CONFIDENCE FLOOR] filtered {before - len(hypotheses)} hyps below 0.15", file=sys.stderr)
-
-                nme_nq = None
-                if self._nme_narrative is not None:
-                    nq = narrative_quality(self._nme_narrative)
-                    leader = self._nme_narrative.identity.leader
-                    nme_nq = {}
-                    for h in hypotheses:
-                        if leader in h.symbol:
-                            nme_nq[h.symbol] = nq
-
-                ranked = self.drs.rank(hypotheses, narrative_quality=nme_nq)
+                ranked = self.drs.rank(hypotheses)
                 self._pipeline_metrics["ranked"] = len(ranked)
                 pos_count = self.executor.position_count()
                 open_count = pos_count
@@ -498,23 +386,6 @@ class RuntimeManager:
                     if replacements:
                         print(f"[DRS REPLACE] candidates: {replacements}", file=sys.stderr)
 
-                # ── LEADER INVOLVEMENT CHECK ──────────────────────────
-                if selected and self._nme_narrative is not None:
-                    leader = self._nme_narrative.identity.leader
-                    leader_involved = any(leader in h.symbol for h in selected)
-                    if not leader_involved:
-                        symbols = [h.symbol for h in selected]
-                        print(f"[LEADER CHECK] none of {len(selected)} involve leader={leader} symbols={symbols} — skipping", file=sys.stderr)
-                        selected = []
-
-                # ── SYMBOL DUPLICATE CHECK ──────────────────────────
-                if selected and self.executor.positions:
-                    open_symbols = {p.symbol for p in self.executor.positions}
-                    before = len(selected)
-                    selected = [h for h in selected if h.symbol not in open_symbols]
-                    if len(selected) < before:
-                        print(f"[SYMBOL DUP] filtered {before - len(selected)} hyps already in open positions — open={open_symbols}", file=sys.stderr)
-
                 self._pipeline_metrics["selected"] = len(selected)
                 cycle_submitted = set()
                 self.last_exec_fail = None
@@ -522,6 +393,11 @@ class RuntimeManager:
                     if self.executor.position_count() >= MAX_POSITIONS:
                         break
                     if h.symbol in cycle_submitted:
+                        continue
+                    # ── BAR STATE ENTRY GATE (final check) ─────────
+                    bar_align = self.bar_state.alignment(h.symbol, h.direction)
+                    if bar_align < 0.20:
+                        print(f"[BAR GATE] reject={h.symbol} align={bar_align:.3f} conf={h.confidence:.3f}", file=sys.stderr)
                         continue
                     approved = self.risk.approve(h)
                     if not approved:
@@ -531,7 +407,8 @@ class RuntimeManager:
                     nme_info = f" nme_leader={self._nme_narrative.identity.leader} nme_dir={'BUY' if self._nme_narrative.identity.direction>0 else 'SELL'} nme_nmi={self._nme_narrative.nmi:.2f}" if self._nme_narrative is not None else " nme=None"
                     print(f"[ENTRY] {h.symbol} dir={'BUY' if h.direction>0 else 'SELL'} "
                           f"base_str={h.base_strength:.6f} quote_str={h.quote_strength:.6f} "
-                          f"spread={h.base_strength-h.quote_strength:.6f} conf={h.confidence:.3f}{nme_info}",
+                          f"spread={h.base_strength-h.quote_strength:.6f} conf={h.confidence:.3f} "
+                          f"bar_align={bar_align:.3f}{nme_info}",
                           file=sys.stderr)
                     result = self.executor.execute(h)
                     if result.success:
@@ -716,7 +593,8 @@ class RuntimeManager:
             elif detect_health < self._narrative_peak_health * DECAY_THRESHOLD:
                 self._narrative_decay_cycles += 1
                 if self._narrative_decay_cycles >= DECAY_REQUIRED_CYCLES:
-                    self._narrative_decay_exit = True
+                    if os.environ.get("DISABLE_NARRATIVE_DECAY", "0") != "1":
+                        self._narrative_decay_exit = True
                     print(f"[NARRATIVE DECAY] DETECTED — health {self._narrative_peak_health:.2f}→{detect_health:.2f} peak_nmi={self._nme_narrative.nmi:.2f} epoch={epoch_id}", file=sys.stderr)
             else:
                 self._narrative_decay_cycles = 0
@@ -725,7 +603,8 @@ class RuntimeManager:
             if detect_health < self._narrative_peak_health * DECAY_THRESHOLD:
                 self._narrative_decay_cycles += 1
                 if self._narrative_decay_cycles >= DEATH_REQUIRED_CYCLES:
-                    self._narrative_decay_exit = True
+                    if os.environ.get("DISABLE_NARRATIVE_DECAY", "0") != "1":
+                        self._narrative_decay_exit = True
                     print(f"[NARRATIVE DECAY] DETECTED — health {self._narrative_peak_health:.2f}→{detect_health:.2f} epoch={self._narrative_epoch_id} (narrative died, {self._narrative_decay_cycles} cycles)", file=sys.stderr)
             else:
                 self._narrative_decay_cycles = 0
@@ -735,7 +614,8 @@ class RuntimeManager:
             if detect_health < self._narrative_peak_health * DECAY_THRESHOLD:
                 self._narrative_decay_cycles += 1
                 if self._narrative_decay_cycles >= DEATH_REQUIRED_CYCLES:
-                    self._narrative_decay_exit = True
+                    if os.environ.get("DISABLE_NARRATIVE_DECAY", "0") != "1":
+                        self._narrative_decay_exit = True
                     print(f"[NARRATIVE DECAY] STALE POSITIONS ON RESTART — {self._narrative_decay_cycles} cycles without narrative pos={len(self.executor.positions)}", file=sys.stderr)
         if self.executor.positions:
             self._trade_lifecycle.log_cycle(
@@ -748,50 +628,6 @@ class RuntimeManager:
                 health.graph_quality,
             )
 
-        # ── MATURE PHASE DRAWDOWN DETECTION ────────────────────
-        if self._nme_narrative is not None and self._nme_narrative.phase.value == "MATURE" and self.executor.positions:
-            total_pnl = sum(p.pnl or 0 for p in self.executor.positions)
-            if total_pnl < self._last_batch_pnl:
-                self._mature_drawdown_count += 1
-                if self._mature_drawdown_count >= 3:
-                    self._mature_drawdown_exit = True
-                    print(f"[MATURE DRAWDOWN] {self._mature_drawdown_count} consecutive declines — closing batch pnl=${total_pnl:.2f}", file=sys.stderr)
-            else:
-                self._mature_drawdown_count = 0
-            self._last_batch_pnl = total_pnl
-        else:
-            self._mature_drawdown_count = 0
-            self._last_batch_pnl = 0.0
-
-        # ── LOAD-BEARING RATIO DETECTION ────────────────────
-        LOAD_BEARING_RATIO_THRESHOLD = 0.70
-        LOAD_BEARING_MIN_TOTAL = 5.0
-        LOAD_BEARING_MIN_CYCLES = 2
-        if self.executor.positions and not self._all_positions_positive_flag and not self._load_bearing_exit:
-            cycles_since_open = self._cycle_count - self._batch_open_cycle if self._batch_open_cycle > 0 else 0
-            if cycles_since_open >= LOAD_BEARING_MIN_CYCLES:
-                pnls = [p.pnl or 0 for p in self.executor.positions]
-                best = max(pnls)
-                movement = sum(abs(p) for p in pnls)
-                if movement > LOAD_BEARING_MIN_TOTAL and (best / movement) > LOAD_BEARING_RATIO_THRESHOLD:
-                    self._load_bearing_exit = True
-                    print(f"[LOAD-BEARING RATIO] best=${best:.2f} movement=${movement:.2f} ratio={(best/movement)*100:.0f}% >70% — broken batch", file=sys.stderr)
-
-        # ── ALL-POSITIONS-POSITIVE FLAG ────────────────────
-        if self.executor.positions:
-            pnls = [p.pnl or 0 for p in self.executor.positions]
-            if all(p > 0 for p in pnls):
-                if not self._all_positions_positive_flag:
-                    print(f"[ALL-POSITIVE FLAG] all 3 positions positive — batch protected from ratio exit", file=sys.stderr)
-                self._all_positions_positive_flag = True
-
-        # ── ALL-3-POSITIVE EXIT DETECTION ────────────────────
-        if self.executor.positions and self._batch_open_cycle > 0 and not self._all_positions_positive_flag and not self._all_positive_exit:
-            cycles_since_open = self._cycle_count - self._batch_open_cycle
-            if cycles_since_open >= 20:
-                self._all_positive_exit = True
-                print(f"[NO ALL-POSITIVE] {cycles_since_open} cycles without all 3 positions positive — batch thesis never materialized", file=sys.stderr)
-
         nme_snapshot = self.nme.get_state()
         nme_market = {
             "cycle": self._cycle_count,
@@ -803,6 +639,59 @@ class RuntimeManager:
             "reliability": observability,
         }
         nme_output = self.nme_dashboard.render(nme_snapshot, nme_market)
+
+        forming_returns = None
+        pair_agreements = None
+        terminal_trends = None
+        bar_state_dict = self.bar_state.get_state()
+        if self.bar_state._preloaded:
+            forming_returns = {s: self.bar_state.forming_return(s) for s in self._available_symbols}
+            if bar_state_dict:
+                scores = []
+                for sym, (base, quote) in BASE_CURRENCY_MAP.items():
+                    tick_v = self.graph.strength(base, raw=True) - self.graph.strength(quote, raw=True)
+                    tick_dir = 1 if tick_v > 1e-10 else (-1 if tick_v < -1e-10 else 0)
+                    bb = bar_state_dict.get(base, {}).get("direction", 0)
+                    bq = bar_state_dict.get(quote, {}).get("direction", 0)
+                    bar_dir = 1 if bb > 0 and bq <= 0 else (-1 if bb < 0 and bq >= 0 else 0)
+                    scores.append((abs(tick_v), sym, tick_dir, bar_dir))
+                scores.sort(reverse=True)
+                pair_agreements = [(s, td, bd) for _, s, td, bd in scores]
+
+                # Compute terminal trends: last 5 ticks vs last 5 bars per pair
+                tick_history = list(self.graph._strength_history)
+                bar_history = self.bar_state.get_strength_history()
+                terminal_trends = []
+                max_spreads = []
+                for _, sym, td, bd in scores[:10]:
+                    base, quote = BASE_CURRENCY_MAP[sym]
+                    tick_seq = []
+                    for snap in tick_history[-5:]:
+                        spread = snap.get(base, 0) - snap.get(quote, 0)
+                        tick_seq.append(1 if spread > 1e-10 else (-1 if spread < -1e-10 else 0))
+                    tick_spread_val = self.graph.strength(base, raw=True) - self.graph.strength(quote, raw=True)
+                    bar_seq = []
+                    bar_base = bar_history.get(base, [])
+                    bar_quote = bar_history.get(quote, [])
+                    n = min(len(bar_base), len(bar_quote))
+                    for i in range(n):
+                        spread = bar_base[i] - bar_quote[i]
+                        bar_seq.append(1 if spread > 1e-10 else (-1 if spread < -1e-10 else 0))
+                    bar_spread_val = (bar_base[-1] if bar_base else 0) - (bar_quote[-1] if bar_quote else 0)
+                    terminal_trends.append((sym, tick_seq, bar_seq, td, tick_spread_val, bar_spread_val))
+                    max_spreads.extend([abs(tick_spread_val), abs(bar_spread_val)])
+                max_mag = max(max_spreads) if max_spreads else 1e-12
+        bar_output = self.bar_dashboard.render(
+            bar_state=bar_state_dict,
+            bar_summary=self.bar_state.get_summary(),
+            currency_strengths=self.graph.strengths_raw(),
+            strength_persistence=strength_persistence,
+            cycle_count=self._cycle_count,
+            forming_returns=forming_returns,
+            pair_agreements=pair_agreements,
+            terminal_trends=terminal_trends,
+            max_mag=max_mag,
+        )
 
         self.dashboard.render(
             mode=EXECUTION_MODE.upper(),
@@ -842,9 +731,11 @@ class RuntimeManager:
             wls_direct=WLS_DIRECT_MODE,
             top_burst_pairs=self._top_burst_pairs,
             burst_state=self._pipeline_metrics.get("burst_state"),
+            bar_state_summary=self.bar_state.get_summary(),
             available_symbols_count=len(self._available_symbols),
             configured_symbols_count=len(self._available_symbols) + len(self._excluded_symbols),
             nme_output=nme_output,
+            bar_output=bar_output,
             nme_trade_snapshots=self._nme_trade_snapshots,
         )
 
@@ -874,7 +765,7 @@ class RuntimeManager:
                       f"exit: h={final['health']} n={final['nmi']} p={final['phase']} pnl=${final.get('pnl',0):.2f} "
                       f"phases={'→'.join(phases)} cycles={len(traj)} ({reason})", file=sys.stderr)
             if not r.success:
-                print(f"[PROFIT TARGET]   close fail: id={r.position_id} reason={r.reason}", file=sys.stderr)
+                print(f"[CLOSE ALL]   close fail: id={r.position_id} reason={r.reason}", file=sys.stderr)
             self.journal.record_close(
                 position_id=pos.id,
                 exit_price=r.price,
@@ -930,6 +821,7 @@ class RuntimeManager:
         self.store.clear()
         self.burst.reset()
         self.efficiency.reset()
+        self.bar_state.reset()
         self._top_burst_pairs = []
         self._currency_bursts = None
         self._persistence = None
@@ -944,7 +836,6 @@ class RuntimeManager:
         self.risk.reset_state()
         self.nme = NarrativeEngine()
         self._nme_narrative = None
-        self._confirm_counts.clear()
         self._pnl_reset_done = False
         self._nme_trade_snapshots.clear()
         self._position_trajectory.clear()
@@ -952,13 +843,8 @@ class RuntimeManager:
         self._narrative_peak_health = 0.0
         self._narrative_decay_exit = False
         self._narrative_decay_cycles = 0
-        self._mature_drawdown_exit = False
-        self._mature_drawdown_count = 0
         self._last_batch_pnl = 0.0
-        self._all_positions_positive_flag = False
-        self._load_bearing_exit = False
         self._batch_open_cycle = 0
-        self._all_positive_exit = False
         self._trade_lifecycle.discard()
         print("[HARD RESET] WLS state, burst data, tick store, DRS, risk, and NME cleared", file=sys.stderr)
 
@@ -1002,4 +888,3 @@ class RuntimeManager:
         stop_path = Path("STOP")
         if stop_path.exists():
             stop_path.unlink()
-

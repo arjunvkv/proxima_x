@@ -61,9 +61,11 @@ class Dashboard:
                  currency_der: dict = None,
                  der_persistence: dict = None,
                  top_der_pairs: list = None,
-                  wls_direct: bool = False,
-                  top_burst_pairs: list = None,
-                  burst_state: str = None,
+            wls_direct: bool = False,
+                   top_burst_pairs: list = None,
+                   burst_state: str = None,
+                   bar_state_summary: str = None,
+                   bar_output: str = None,
                  available_symbols_count: int = 0,
                  configured_symbols_count: int = 0,
                  nme_output: str = None,
@@ -80,6 +82,8 @@ class Dashboard:
 
         if nme_output:
             print(nme_output)
+        if bar_output:
+            print(bar_output)
 
         health_icon = "OK" if health.state == "OK" else ("DEG" if health.state == "DEGRADED" else "ERR")
         health_color = "\033[92m" if health.state == "OK" else ("\033[93m" if health.state == "DEGRADED" else "\033[91m")
@@ -267,12 +271,14 @@ class Dashboard:
         if pipeline_metrics:
             gen = pipeline_metrics.get("generated", 0)
             bst = pipeline_metrics.get("burst_hyp", 0)
+            con = pipeline_metrics.get("confirmed", 0)
             rej = pipeline_metrics.get("burst_rejected", 0)
             rnk = pipeline_metrics.get("ranked", 0)
             sel = pipeline_metrics.get("selected", 0)
             rsk = pipeline_metrics.get("risk_approved", 0)
             exe = pipeline_metrics.get("executed", 0)
-            print(f"║  PIPELINE: gen={gen:<2d} burst={bst:<2d} reject={rej:<2d} ranked={rnk:<2d} selected={sel:<2d} risk={rsk:<2d} exe={exe:<2d}║")
+            bar = pipeline_metrics.get("bar_aligned", 0)
+            print(f"║  PIPELINE: gen={gen:<2d} burst={bst:<2d} confirm={con:<2d} reject={rej:<2d} ranked={rnk:<2d} select={sel:<2d} risk={rsk:<2d} exe={exe:<2d} bar={bar:<2d}║")
 
         print("╠══════════════════════════════════════════════════════════════════════╣")
 
@@ -385,6 +391,7 @@ class Dashboard:
         mode_str = "DIRECT" if wls_direct else conf
         print(f"  MT5={m}  TICK={t}  GRAPH={g}  SNAP={s}  SOLVE={l}ms  MEM={me}MB  MODE={mode_str}  |  "
               f"POS={len(positions)}  PnL={pnl_str}")
+
 
         # ── PERSISTENT LOG (JSONL, 30s interval) ─────────────────
         if now - self._last_log_ts >= 30.0:

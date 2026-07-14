@@ -62,7 +62,7 @@ STOP_LOSS_AMOUNT = -60.0
 PROFIT_COOLDOWN = 300
 
 EXECUTION_MODE = "live"  # "paper" for simulated, "live" for real MT5 order placement
-WLS_DIRECT_MODE = True  # bypass SWPS, GATE, and other WLS-blocking layers
+WLS_DIRECT_MODE = True  # bypass legacy gate layers
 MAX_DAILY_LOSS = 100
 MAX_DRAWDOWN = 500
 MAX_CURRENCY_POSITIONS = 2
@@ -74,16 +74,4 @@ DRS_CANDIDATE_POOL_SIZE = 10
 MIN_GRAPH_CONNECTIVITY = 0.45
 DIRECTION_PERSISTENCE_CYCLES = 3
 
-# Short Window Persistence Scanner
-# Number of WLS solve snapshots needed before SWPS activates.
-# With 5s solve interval:
-#   SWPS_WINDOW_SIZE=5  → ~25s capture → usable at first 30s decision
-#   SWPS_WINDOW_SIZE=10 → ~50s capture → higher confidence, delayed entry
 
-SWPS_WINDOW_SIZE = 5
-
-# Minimum persistence score threshold.
-# Only pairs with score >= this value trigger SWPS override.
-# 0.75 = strong directional consistency across all snapshots.
-
-SWPS_MIN_SCORE = 0.75
