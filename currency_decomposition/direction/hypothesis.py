@@ -24,6 +24,14 @@ class HypothesisGenerator:
 
         direction = 1.0 if spread >= 0 else -1.0
 
+        _SIGN_EPS = 1e-8
+        if direction > 0:
+            if base_strength < _SIGN_EPS or quote_strength > -_SIGN_EPS:
+                return None
+        else:
+            if base_strength > -_SIGN_EPS or quote_strength < _SIGN_EPS:
+                return None
+
         raw_residual = abs(residual)
         spread_mag = abs(spread) + 1e-10
         residual_ratio = min(raw_residual / spread_mag, 1.0) if spread_mag > 1e-8 else 0.5

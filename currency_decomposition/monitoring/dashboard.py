@@ -1,16 +1,13 @@
-import time
+import time
 import os
 import json
+import threading
+import queue
 from pathlib import Path
 from data.models import HealthStatus
 
-
 _LOG_DIR = Path(__file__).parent.parent / "logs"
 _LOG_FILE = _LOG_DIR / "dashboard_log.jsonl"
-# Full spec terminal dashboard — verbose, exhaustive monitoring output.
-# CLEANUP: This is a dense all-in-one dashboard built for active debugging.
-# Future: migrate to a structured UI (Streamlit/fastAPI) and strip console spam.
-
 
 class Dashboard:
     def __init__(self):
@@ -22,10 +19,27 @@ class Dashboard:
         self._init_log()
         self.latest_event: dict = None
 
+        # Async background writer queue & thread for dashboard_latest.json
+        self._write_queue = queue.Queue(maxsize=1)
+        self._writer_thread = threading.Thread(target=self._async_writer_loop, daemon=True)
+        self._writer_thread.start()
+
     def _init_log(self):
         _LOG_DIR.mkdir(parents=True, exist_ok=True)
         fh = _LOG_FILE.open("a", encoding="utf-8")
         self._log_handle = fh
+
+    def _async_writer_loop(self):
+        latest_path = _LOG_DIR / "dashboard_latest.json"
+        tmp_path = latest_path.with_suffix(".tmp")
+        while True:
+            try:
+                record = self._write_queue.get()
+                with open(tmp_path, "w", encoding="utf-8") as f:
+                    json.dump(record, f, default=str)
+                tmp_path.replace(latest_path)
+            except Exception:
+                pass
 
     def _log_jsonl(self, record: dict):
         try:
@@ -348,6 +362,60 @@ class Dashboard:
                   f"Δ={spread:+.4f}  ║")
         else:
             print(f"║  TOP HYPOTHESIS: none (below MIN_CONFIDENCE or no signal)        ║")
+        
+        # Build the current state record
+        record = {
+            "ts": ts,
+            "uptime": uptime_s,
+            "mode": mode,
+            "health_state": health.state,
+            "mt5_ok": health.mt5_ok,
+            "tick_quality": health.tick_quality,
+            "graph_quality": health.graph_quality,
+            "solve_latency_ms": health.solve_latency_ms,
+            "memory_mb": health.memory_mb,
+            "positions": len(positions),
+            "pnl": round(pnl, 2),
+            "trade_count": trade_count,
+            "top_symbol": top_hypothesis.get("symbol") if top_hypothesis else None,
+            "top_conf": round(top_hypothesis.get("confidence", 0), 4) if top_hypothesis else None,
+            "top_drs": round(top_hypothesis.get("drs_score", 0), 4) if top_hypothesis else None,
+            "currency_strengths": {k: round(v, 5) for k, v in (currency_strengths or {}).items()},
+            "factor_exposure": {k: v for k, v in (factor_exposure or {}).items() if v != 0},
+            "observability": {k: round(v, 3) for k, v in (observability or {}).items()},
+            "z_scores": {k: round(v, 2) for k, v in (z_scores or {}).items()},
+            "stability": {k: round(v, 3) for k, v in (stability or {}).items()},
+            "missing_symbols": len(missing_symbols or []),
+            "health_conf": (health_report or {}).get("confidence_level"),
+            "production_ready": production_ready,
+            "max_concentration": round(max(concentration.values()), 3) if concentration else 0.0,
+            "stress_test_stable": sum(1 for v in (stress_test or {}).values() if v is not None),
+            "currency_bursts": {k: round(v, 3) for k, v in (currency_bursts or {}).items()},
+            "strength_persistence": {
+                k: {"dir": v.get("direction", 0), "streak": v.get("streak", 0)}
+                for k, v in (strength_persistence or {}).items()
+            },
+            "burst_persistence": {
+                k: {"dir": v.get("direction", 0), "streak": v.get("streak", 0), "gap": v.get("neutral_gap", 0)}
+                for k, v in (persistence or {}).items()
+            },
+            "pipeline": pipeline_metrics,
+            "universe_available": available_symbols_count,
+            "universe_configured": configured_symbols_count,
+        }
+
+        # Non-blocking push to the background writer queue
+        if self._write_queue.full():
+            try:
+                self._write_queue.get_nowait()
+            except Exception:
+                pass
+        self._write_queue.put(record)
+
+        # ── PERSISTENT LOG (JSONL, 30s interval) ─────────────────
+        if now - self._last_log_ts >= 30.0:
+            self._last_log_ts = now
+            self._log_jsonl(record)
         print("╠══════════════════════════════════════════════════════════════════════╣")
 
         # ── NME TRADE SNAPSHOTS ──────────────────────────────────
@@ -391,10 +459,11 @@ class Dashboard:
         mode_str = "DIRECT" if wls_direct else conf
         print(f"  MT5={m}  TICK={t}  GRAPH={g}  SNAP={s}  SOLVE={l}ms  MEM={me}MB  MODE={mode_str}  |  "
               f"POS={len(positions)}  PnL={pnl_str}")
+        print(f"  \033[92mWEB HUD:  http://localhost:7700 (Game-level Web Dashboard)\033[0m")
 
 
         # ── PERSISTENT LOG (JSONL, 30s interval) ─────────────────
-        if now - self._last_log_ts >= 30.0:
+        if False: # disabled redundant block
             self._last_log_ts = now
             record = {
                 "ts": ts,

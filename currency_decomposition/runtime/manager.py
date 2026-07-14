@@ -92,9 +92,25 @@ class RuntimeManager:
         self._narrative_decay_cycles: int = 0
         self._last_batch_pnl: float = 0.0
         self._batch_open_cycle: int = 0
+        self.dashboard_process = None
 
     def start(self) -> None:
         self._setup_signal_handlers()
+        
+        # Start standalone web dashboard in a separate background process
+        try:
+            import subprocess
+            dashboard_script = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "web_dashboard.py")
+            self.dashboard_process = subprocess.Popen(
+                [sys.executable, dashboard_script, "7700"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                close_fds=True
+            )
+            print("\033[92m[DASHBOARD ACTIVE] Game-level Web HUD running on http://localhost:7700\033[0m")
+        except Exception as e:
+            print(f"[DASHBOARD] Failed to auto-start web dashboard: {e}", file=sys.stderr)
+
         print("Connecting to MT5...")
         if not self.mt5.connect():
             print("ERROR: Cannot connect to MT5. Ensure terminal is running.")
@@ -139,6 +155,16 @@ class RuntimeManager:
     def shutdown(self) -> None:
         self.running = False
         self.shutdown_event.set()
+
+        if hasattr(self, 'dashboard_process') and self.dashboard_process:
+            try:
+                self.dashboard_process.terminate()
+                self.dashboard_process.wait(timeout=2.0)
+            except Exception:
+                try:
+                    self.dashboard_process.kill()
+                except Exception:
+                    pass
 
         if self._tick_thread and self._tick_thread.is_alive():
             self._tick_thread.join(timeout=3.0)
@@ -200,8 +226,8 @@ class RuntimeManager:
                     print(f"[PER-POSITION STOP LOSS] closing {len(to_close_indiv_sl)}: {', '.join(pnls)}", file=sys.stderr)
                     self._close_individual_positions(to_close_indiv_sl, "STOP_LOSS")
                 total_pnl = sum(p.pnl or 0 for p in self.executor.positions)
-                if total_pnl <= -50.0 and self.executor.positions:
-                    print(f"[BATCH STOP LOSS] total_pnl={total_pnl:.2f} <= -$50 — closing all", file=sys.stderr)
+                if total_pnl <= -100.0 and self.executor.positions:
+                    print(f"[BATCH STOP LOSS] total_pnl={total_pnl:.2f} <= -$100 — closing all", file=sys.stderr)
                     self._close_all_positions("STOP_LOSS")
                     self._reset_after_profit_target()
                     self.dashboard.latest_event = {"event": "STOP_LOSS", "time": time.time()}
@@ -238,8 +264,8 @@ class RuntimeManager:
                 print(f"[PER-POSITION PROFIT TARGET] closing {len(to_close_indiv_pt)}: {', '.join(pnls)}", file=sys.stderr)
                 self._close_individual_positions(to_close_indiv_pt, "PROFIT_TARGET")
             total_pnl = sum(p.pnl or 0 for p in self.executor.positions)
-            if total_pnl <= -50.0 and self.executor.positions:
-                print(f"[BATCH STOP LOSS] total_pnl={total_pnl:.2f} <= -$50 — closing all", file=sys.stderr)
+            if total_pnl <= -100.0 and self.executor.positions:
+                print(f"[BATCH STOP LOSS] total_pnl={total_pnl:.2f} <= -$100 — closing all", file=sys.stderr)
                 self._close_all_positions("STOP_LOSS")
                 self._reset_after_profit_target()
                 self.dashboard.latest_event = {"event": "STOP_LOSS", "time": now}
@@ -327,7 +353,7 @@ class RuntimeManager:
                 for h in hypotheses:
                     align = self.bar_state.alignment(h.symbol, h.direction)
                     h.confidence = min(1.0, h.confidence * align)
-                    if align < 0.20:
+                    if align < 0.40:
                         print(f"[BAR STATE] reject={h.symbol} align={align:.3f}", file=sys.stderr)
                 hypotheses = [h for h in hypotheses if h.confidence >= MIN_CONFIDENCE]
                 print(f"[BAR STATE] aligned={len(hypotheses)}/{pre}  {self.bar_state.get_summary()}", file=sys.stderr)
@@ -369,34 +395,34 @@ class RuntimeManager:
                 open_count = pos_count
                 print(f"[POSITION STATE] executor={len(self.executor.positions)} count={pos_count}", file=sys.stderr)
                 if open_count >= MAX_POSITIONS:
-                    selected = []
+                    candidates = []
                     print(
-                        f"[DRS SELECT] skipped — open_count={open_count} >= MAX={MAX_POSITIONS}",
+                        f"[ENTRY SKIP] — open_count={open_count} >= MAX={MAX_POSITIONS}",
                         file=sys.stderr
                     )
-
                 elif self.risk.cooldown_active():
-                    selected = []
+                    candidates = []
                     remain = int(self.risk._profit_cooldown_until - now)
-                    print(f"[DRS SELECT] skipped — profit cooldown {remain}s remaining", file=sys.stderr)
+                    print(f"[ENTRY SKIP] — profit cooldown {remain}s remaining", file=sys.stderr)
                 else:
-                    selected = self.drs.select(ranked, open_count)
-                    print(f"[DRS SELECT] {self.drs.last_selection_trace}", file=sys.stderr)
-                    replacements = self.drs.replacement_candidates(ranked)
-                    if replacements:
-                        print(f"[DRS REPLACE] candidates: {replacements}", file=sys.stderr)
+                    candidates = ranked
 
-                self._pipeline_metrics["selected"] = len(selected)
+                self._pipeline_metrics["selected"] = len(candidates)
                 cycle_submitted = set()
                 self.last_exec_fail = None
-                for h in selected:
+                for h in candidates:
                     if self.executor.position_count() >= MAX_POSITIONS:
                         break
                     if h.symbol in cycle_submitted:
                         continue
+                    # ── DUPLICATE POSITION CHECK ───────────────────
+                    dir_label = "BUY" if h.direction > 0 else "SELL"
+                    if any(p.symbol == h.symbol and p.direction == dir_label for p in self.executor.positions):
+                        print(f"[DUPLICATE BLOCK] {h.symbol} {dir_label} already active", file=sys.stderr)
+                        continue
                     # ── BAR STATE ENTRY GATE (final check) ─────────
                     bar_align = self.bar_state.alignment(h.symbol, h.direction)
-                    if bar_align < 0.20:
+                    if bar_align < 0.40:
                         print(f"[BAR GATE] reject={h.symbol} align={bar_align:.3f} conf={h.confidence:.3f}", file=sys.stderr)
                         continue
                     approved = self.risk.approve(h)
