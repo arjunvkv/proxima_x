@@ -17,7 +17,8 @@ class TradeJournal:
     def record_open(self, position_id: str, symbol: str, direction: str,
                      entry_price: float, volume: float, confidence: float,
                      drs_score: float, strengths: dict, peaks: dict,
-                     troughs: dict, streaks: dict, bursts: dict) -> None:
+                     troughs: dict, streaks: dict, bursts: dict,
+                     sl: float = 0.0, tp: float = 0.0) -> None:
         now = time.time()
         self._positions[position_id] = {
             "event": "open",
@@ -27,6 +28,8 @@ class TradeJournal:
             "direction": direction,
             "volume": volume,
             "entry_price": entry_price,
+            "sl": sl,
+            "tp": tp,
             "confidence": confidence,
             "drs_score": drs_score,
             "strengths_entry": dict(strengths),

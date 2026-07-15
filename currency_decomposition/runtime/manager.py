@@ -55,6 +55,43 @@ class RuntimeManager:
         self.snapshot = SnapshotManager()
         self.dashboard = Dashboard()
         self.journal = TradeJournal()
+        self._symbol_trade_history = {}
+        # Preload past trades from journal file
+        import os
+        import json
+        j_path = os.path.join("logs", "trade_journal.jsonl")
+        if os.path.exists(j_path):
+            try:
+                with open(j_path, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if not line.strip():
+                            continue
+                        record = json.loads(line)
+                        sym = record.get("symbol")
+                        event = record.get("event")
+                        if not sym:
+                            continue
+                        if event == "open":
+                            self._symbol_trade_history[sym] = {
+                                "status": "RUNNING",
+                                "direction": record.get("direction"),
+                                "entry_price": record.get("entry_price"),
+                                "sl": record.get("sl") or record.get("stop_loss", 0.0),
+                                "tp": record.get("tp") or record.get("take_profit", 0.0),
+                                "ts": record.get("ts", 0),
+                            }
+                        elif event == "close":
+                            self._symbol_trade_history[sym] = {
+                                "status": "CLOSED",
+                                "direction": record.get("direction"),
+                                "entry_price": record.get("entry_price"),
+                                "exit_price": record.get("exit_price"),
+                                "pnl": record.get("pnl"),
+                                "reason": record.get("exit_reason") or record.get("reason"),
+                                "ts": record.get("ts", 0),
+                            }
+            except Exception:
+                pass
         self.health = HealthMonitor()
         self.nme = NarrativeEngine()
         self.nme_dashboard = NMEDashboard()
@@ -258,11 +295,11 @@ class RuntimeManager:
                 pnls = [f"{p.symbol}=${p.pnl:.2f}" for p in to_close_indiv_sl]
                 print(f"[PER-POSITION STOP LOSS] closing {len(to_close_indiv_sl)}: {', '.join(pnls)}", file=sys.stderr)
                 self._close_individual_positions(to_close_indiv_sl, "STOP_LOSS")
-            to_close_indiv_pt = self.risk.check_individual_profit_target(self.executor.positions)
-            if to_close_indiv_pt:
-                pnls = [f"{p.symbol}=${p.pnl:.2f}" for p in to_close_indiv_pt]
-                print(f"[PER-POSITION PROFIT TARGET] closing {len(to_close_indiv_pt)}: {', '.join(pnls)}", file=sys.stderr)
-                self._close_individual_positions(to_close_indiv_pt, "PROFIT_TARGET")
+            # to_close_indiv_pt = self.risk.check_individual_profit_target(self.executor.positions)
+            # if to_close_indiv_pt:
+            #     pnls = [f"{p.symbol}=${p.pnl:.2f}" for p in to_close_indiv_pt]
+            #     print(f"[PER-POSITION PROFIT TARGET] closing {len(to_close_indiv_pt)}: {', '.join(pnls)}", file=sys.stderr)
+            #     self._close_individual_positions(to_close_indiv_pt, "PROFIT_TARGET")
             total_pnl = sum(p.pnl or 0 for p in self.executor.positions)
             if total_pnl <= -100.0 and self.executor.positions:
                 print(f"[BATCH STOP LOSS] total_pnl={total_pnl:.2f} <= -$100 — closing all", file=sys.stderr)
@@ -413,12 +450,13 @@ class RuntimeManager:
                 for h in candidates:
                     if self.executor.position_count() >= MAX_POSITIONS:
                         break
-                    if h.symbol in cycle_submitted:
+                    dir_label = "BUY" if h.direction > 0 else "SELL"
+                    symdir = f"{h.symbol}:{dir_label}"
+                    if symdir in cycle_submitted:
                         continue
                     # ── DUPLICATE POSITION CHECK ───────────────────
-                    dir_label = "BUY" if h.direction > 0 else "SELL"
                     if any(p.symbol == h.symbol and p.direction == dir_label for p in self.executor.positions):
-                        print(f"[DUPLICATE BLOCK] {h.symbol} {dir_label} already active", file=sys.stderr)
+                        print(f"[DUPLICATE BLOCK] {h.symbol} {dir_label} already active — open positions: {[(p.symbol, p.direction) for p in self.executor.positions]}", file=sys.stderr)
                         continue
                     # ── BAR STATE ENTRY GATE (final check) ─────────
                     bar_align = self.bar_state.alignment(h.symbol, h.direction)
@@ -436,9 +474,61 @@ class RuntimeManager:
                           f"spread={h.base_strength-h.quote_strength:.6f} conf={h.confidence:.3f} "
                           f"bar_align={bar_align:.3f}{nme_info}",
                           file=sys.stderr)
-                    result = self.executor.execute(h)
+                    # ── CALCULATE ENTRY SWING TP & DOLLAR SL ─────────
+                    open_price = self.bar_state._forming_open.get(h.symbol)
+                    current_price = getattr(self.executor, "_last_prices", {}).get(h.symbol, 0.0)
+                    if current_price == 0.0:
+                        current_price = self.mt5._last_bar_close.get(h.symbol, 0.0)
+                    if current_price == 0.0 and open_price is not None:
+                        current_price = open_price
+
+                    sl_price = None
+                    tp_price = None
+
+                    if current_price > 0.0:
+                        # 1. Calculate usd_quote_rate
+                        quote_ccy = h.symbol[3:6]
+                        suffix = h.symbol[6:] if len(h.symbol) > 6 else ""
+                        
+                        last_prices = {}
+                        last_prices.update(self.mt5._last_bar_close)
+                        last_prices.update(getattr(self.executor, "_last_prices", {}))
+                        
+                        usd_quote_rate = 1.0
+                        if quote_ccy != "USD":
+                            pair1 = f"USD{quote_ccy}{suffix}"
+                            if pair1 in last_prices:
+                                usd_quote_rate = last_prices[pair1]
+                            else:
+                                pair2 = f"{quote_ccy}USD{suffix}"
+                                if pair2 in last_prices:
+                                    rate = last_prices[pair2]
+                                    usd_quote_rate = 1.0 / rate if rate > 0 else 1.0
+                        
+                        # 2. Dollar-based stop loss (-60.0 USD)
+                        sl_usd_abs = abs(STOP_LOSS_AMOUNT) if STOP_LOSS_AMOUNT else 60.0
+                        sl_dist_usd = sl_usd_abs * usd_quote_rate / (LOT_SIZE * 100000)
+                        if h.direction > 0: # BUY
+                            sl_price = current_price - sl_dist_usd
+                        else: # SELL
+                            sl_price = current_price + sl_dist_usd
+                        
+                        # 3. Swing-based take profit
+                        stats = self.bar_state.get_swing_stats(h.symbol)
+                        if stats is not None and open_price is not None and open_price > 0:
+                            avg_dn = stats["avg_downside"]
+                            avg_up = stats["avg_upside"]
+                            rem_dn_price = max(0.0, current_price - (open_price + avg_dn))
+                            rem_up_price = max(0.0, (open_price + avg_up) - current_price)
+                            
+                            if h.direction > 0: # BUY
+                                tp_price = current_price + rem_up_price * 0.80
+                            else: # SELL
+                                tp_price = current_price - rem_dn_price * 0.80
+
+                    result = self.executor.execute(h, sl=sl_price, tp=tp_price)
                     if result.success:
-                        cycle_submitted.add(h.symbol)
+                        cycle_submitted.add(symdir)
                         self._pipeline_metrics["executed"] += 1
                         if self._batch_open_cycle == 0:
                             self._batch_open_cycle = self._cycle_count
@@ -456,6 +546,9 @@ class RuntimeManager:
                             })
                         self.risk.set_positions(self.executor.positions)
                         sp = self.graph.get_strength_persistence()
+                        pos = next((p for p in self.executor.positions if p.id == result.position_id), None)
+                        pos_sl = pos.stop_loss if pos else 0.0
+                        pos_tp = pos.take_profit if pos else 0.0
                         self.journal.record_open(
                             position_id=result.position_id,
                             symbol=h.symbol,
@@ -469,7 +562,17 @@ class RuntimeManager:
                             troughs={c: v["trough"] for c, v in sp.items()},
                             streaks={c: v["streak"] for c, v in sp.items()},
                             bursts=self.burst.get_currency_bursts(returns) if self._currency_bursts is None else (self._currency_bursts or {}),
+                            sl=pos_sl,
+                            tp=pos_tp,
                         )
+                        self._symbol_trade_history[h.symbol] = {
+                            "status": "RUNNING",
+                            "direction": "BUY" if h.direction > 0 else "SELL",
+                            "entry_price": result.price,
+                            "sl": pos_sl,
+                            "tp": pos_tp,
+                            "ts": time.time(),
+                        }
                     else:
                         self.last_exec_fail = f"{h.symbol} {result.reason}"
                         print(f"[EXEC FAIL] {h.symbol} {result.reason}", file=sys.stderr)
@@ -484,6 +587,15 @@ class RuntimeManager:
         bursts_now = self.burst.get_currency_bursts(returns) if self._currency_bursts is None else (self._currency_bursts or {})
         for pos in to_close:
             traj = self._position_trajectory.pop(pos.id, [])
+            price_now = prices.get(pos.symbol, pos.entry_price)
+            
+            # Determine close reason
+            close_reason = "STOP_LOSS"
+            if pos.direction == "BUY" and price_now >= pos.take_profit:
+                close_reason = "TAKE_PROFIT"
+            elif pos.direction == "SELL" and price_now <= pos.take_profit:
+                close_reason = "TAKE_PROFIT"
+
             if traj:
                 entry = traj[0]
                 final = traj[-1]
@@ -495,20 +607,29 @@ class RuntimeManager:
                       f"entry: h={entry['health']} n={entry['nmi']} p={entry['phase']} pnl=${entry.get('pnl',0):.2f} "
                       f"peak_pnl=${peak_pnl:.2f} peak_h={peak_h:.2f} "
                       f"exit: h={final['health']} n={final['nmi']} p={final['phase']} pnl=${final.get('pnl',0):.2f} "
-                      f"phases={'→'.join(phases)} cycles={len(traj)} (STOP_LOSS)", file=sys.stderr)
-            r = self.executor.close_position(pos.id, prices.get(pos.symbol, pos.entry_price), "STOP_LOSS")
+                      f"phases={'→'.join(phases)} cycles={len(traj)} ({close_reason})", file=sys.stderr)
+            r = self.executor.close_position(pos.id, price_now, close_reason)
             self.drs.remove_position(pos.symbol)
             self.journal.record_close(
                 position_id=pos.id,
                 exit_price=r.price,
                 pnl=pos.pnl or 0,
-                reason=r.reason or "STOP_LOSS",
+                reason=r.reason or close_reason,
                 strengths=strengths_now,
                 peaks={c: v["peak"] for c, v in sp.items()},
                 troughs={c: v["trough"] for c, v in sp.items()},
                 streaks={c: v["streak"] for c, v in sp.items()},
                 bursts=bursts_now,
             )
+            self._symbol_trade_history[pos.symbol] = {
+                "status": "CLOSED",
+                "direction": pos.direction,
+                "entry_price": pos.entry_price,
+                "exit_price": r.price,
+                "pnl": pos.pnl or 0,
+                "reason": r.reason or close_reason,
+                "ts": time.time(),
+            }
 
         if now - self._last_snapshot >= 300.0:
             self._last_snapshot = now
@@ -669,9 +790,151 @@ class RuntimeManager:
         forming_returns = None
         pair_agreements = None
         terminal_trends = None
+        swing_overlay = None
         bar_state_dict = self.bar_state.get_state()
         if self.bar_state._preloaded:
             forming_returns = {s: self.bar_state.forming_return(s) for s in self._available_symbols}
+            # ── SWING OVERLAY (M5 bar swing stats per symbol for display) ──
+            swing_overlay = {}
+            for sym in self._available_symbols:
+                if sym not in BASE_CURRENCY_MAP:
+                    continue
+                stats = self.bar_state.get_swing_stats(sym)
+                form_ret = self.bar_state.forming_return_from_open(sym)
+                if stats is None:
+                    continue
+                base, quote = BASE_CURRENCY_MAP[sym]
+                base_s = bar_state_dict.get(base, {}).get("current", 0)
+                quote_s = bar_state_dict.get(quote, {}).get("current", 0)
+                
+                open_price = self.bar_state._forming_open.get(sym)
+                if open_price is None or open_price <= 0:
+                    continue
+                
+                current_price = 0.0
+                for p in self.executor.positions:
+                    if p.symbol == sym:
+                        current_price = p.current_price or p.entry_price
+                        break
+                if current_price == 0.0:
+                    current_price = getattr(self.executor, "_last_prices", {}).get(sym, 0.0)
+                if current_price == 0.0:
+                    current_price = self.mt5._last_bar_close.get(sym, 0.0)
+                if current_price == 0.0:
+                    current_price = open_price
+                
+                # Downsides/upsides in price units
+                avg_dn = stats["avg_downside"]
+                avg_up = stats["avg_upside"]
+                form_price_diff = current_price - open_price
+                
+                # Pip size (handles JPY and broker suffixes)
+                is_jpy = "JPY" in sym
+                pip_size = 0.01 if is_jpy else 0.0001
+                
+                avg_dn_pips = round(avg_dn / pip_size, 1)
+                avg_up_pips = round(avg_up / pip_size, 1)
+                form_pips = round(form_price_diff / pip_size, 1)
+                
+                # Remaining downside / upside to stop in price units
+                rem_dn_price = max(0.0, current_price - (open_price + avg_dn))
+                rem_up_price = max(0.0, (open_price + avg_up) - current_price)
+                
+                # Extract quote currency and broker suffix (e.g. .m)
+                quote_ccy = sym[3:6]
+                suffix = sym[6:] if len(sym) > 6 else ""
+                
+                last_prices = {}
+                last_prices.update(self.mt5._last_bar_close)
+                last_prices.update(getattr(self.executor, "_last_prices", {}))
+                
+                usd_quote_rate = 1.0
+                if quote_ccy != "USD":
+                    pair1 = f"USD{quote_ccy}{suffix}"
+                    if pair1 in last_prices:
+                        usd_quote_rate = last_prices[pair1]
+                    else:
+                        pair2 = f"{quote_ccy}USD{suffix}"
+                        if pair2 in last_prices:
+                            rate = last_prices[pair2]
+                            usd_quote_rate = 1.0 / rate if rate > 0 else 1.0
+                
+                # Calculations in price units
+                buy_sl = open_price + avg_dn
+                buy_tp = current_price + rem_up_price * 0.80
+                buy_sl_usd = (rem_dn_price * LOT_SIZE * 100000) / usd_quote_rate
+                buy_tp_usd = ((buy_tp - current_price) * LOT_SIZE * 100000) / usd_quote_rate if buy_tp > current_price else 0.0
+                
+                sell_sl = open_price + avg_up
+                sell_tp = current_price - rem_dn_price * 0.80
+                sell_sl_usd = (rem_up_price * LOT_SIZE * 100000) / usd_quote_rate
+                sell_tp_usd = ((current_price - sell_tp) * LOT_SIZE * 100000) / usd_quote_rate if sell_tp < current_price else 0.0
+                
+                # Get historical trade record
+                hist = self._symbol_trade_history.get(sym)
+                hist_data = None
+                if hist:
+                    is_jpy = "JPY" in sym
+                    dec = 3 if is_jpy else 5
+                    if hist["status"] == "RUNNING":
+                        pos = next((p for p in self.executor.positions if p.symbol == sym), None)
+                        current_pnl = pos.pnl if pos else 0.0
+                        hist["peak_pnl"] = max(hist.get("peak_pnl", 0.0), current_pnl)
+                        
+                        hist_data = {
+                            "status": "RUNNING",
+                            "direction": hist["direction"],
+                            "entry_price": f"{hist['entry_price']:.{dec}f}",
+                            "peak_pnl": round(hist["peak_pnl"], 2),
+                        }
+                    else:
+                        hist_data = {
+                            "status": "CLOSED",
+                            "direction": hist["direction"],
+                            "exit_price": f"{hist['exit_price']:.{dec}f}",
+                            "pnl": round(hist.get("pnl", 0.0), 2),
+                            "reason": "SL" if "STOP_LOSS" in hist["reason"] else ("TP" if "TAKE_PROFIT" in hist["reason"] else hist["reason"]),
+                        }
+                
+                # Per-position swing reach (how far through the expected swing has this trade moved)
+                swing_reach = None
+                open_pos = next((p for p in self.executor.positions if p.symbol == sym), None)
+                if open_pos:
+                    entry_p = open_pos.entry_price
+                    curr_p = open_pos.current_price or entry_p
+                    if open_pos.direction == "BUY":
+                        price_moved = curr_p - entry_p
+                        expected_range = avg_up  # in price units
+                    else:
+                        price_moved = entry_p - curr_p
+                        expected_range = abs(avg_dn)  # avg_dn is negative
+                    reach_pct = (price_moved / expected_range * 100) if expected_range > 0 else 0.0
+                    moved_pips = round(price_moved / pip_size, 1)
+                    swing_reach = {
+                        "direction": open_pos.direction,
+                        "pct": round(reach_pct, 1),
+                        "moved_pips": moved_pips,
+                        "expected_pips": round(expected_range / pip_size, 1),
+                        "pnl": round(open_pos.pnl or 0.0, 2),
+                    }
+
+                swing_overlay[sym] = {
+                    "avg_down": avg_dn_pips,
+                    "avg_up": avg_up_pips,
+                    "forming_pips": form_pips,
+                    "buy_tp": round(buy_tp, 5),
+                    "buy_tp_usd": round(buy_tp_usd, 2),
+                    "buy_sl": round(buy_sl, 5),
+                    "buy_sl_usd": round(buy_sl_usd, 2),
+                    "sell_tp": round(sell_tp, 5),
+                    "sell_tp_usd": round(sell_tp_usd, 2),
+                    "sell_sl": round(sell_sl, 5),
+                    "sell_sl_usd": round(sell_sl_usd, 2),
+                    "base_str": round(base_s, 6),
+                    "quote_str": round(quote_s, 6),
+                    "history": hist_data,
+                    "swing_reach": swing_reach,
+                }
             if bar_state_dict:
                 scores = []
                 for sym, (base, quote) in BASE_CURRENCY_MAP.items():
@@ -746,6 +1009,7 @@ class RuntimeManager:
             max_total_lots=MAX_TOTAL_LOTS,
             lot_size=LOT_SIZE,
             profit_target=PROFIT_TARGET,
+            stop_loss_amount=STOP_LOSS_AMOUNT,
             cooldown_active=self.risk.cooldown_active(),
             cooldown_remaining=cd_remain,
             currency_bursts=currency_bursts,
@@ -763,6 +1027,7 @@ class RuntimeManager:
             nme_output=nme_output,
             bar_output=bar_output,
             nme_trade_snapshots=self._nme_trade_snapshots,
+            swing_overlay=swing_overlay,
         )
 
     def _close_all_positions(self, reason: str) -> None:
@@ -803,6 +1068,15 @@ class RuntimeManager:
                 streaks={c: v["streak"] for c, v in sp.items()},
                 bursts=bursts_now,
             )
+            self._symbol_trade_history[pos.symbol] = {
+                "status": "CLOSED",
+                "direction": pos.direction,
+                "entry_price": pos.entry_price,
+                "exit_price": r.price,
+                "pnl": pos.pnl or 0,
+                "reason": reason,
+                "ts": time.time(),
+            }
             self.drs.remove_position(pos.symbol)
         self.executor.sync()
         self.risk.set_positions(self.executor.positions)
@@ -838,6 +1112,15 @@ class RuntimeManager:
                     streaks={c: v["streak"] for c, v in sp.items()},
                     bursts=bursts_now,
                 )
+                self._symbol_trade_history[pos.symbol] = {
+                    "status": "CLOSED",
+                    "direction": pos.direction,
+                    "entry_price": pos.entry_price,
+                    "exit_price": r.price,
+                    "pnl": pos.pnl or 0,
+                    "reason": reason,
+                    "ts": time.time(),
+                }
                 self.drs.remove_position(pos.symbol)
         self.executor.sync()
         self.risk.set_positions(self.executor.positions)

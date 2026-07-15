@@ -14,11 +14,14 @@ class PaperExecutor:
     def sync(self) -> None:
         pass
 
+    def position_count(self) -> int:
+        return len(self.positions)
+
     def update_prices(self, ticks: list[Tick]) -> None:
         for tick in ticks:
             self._last_prices[tick.symbol] = tick.mid
     
-    def execute(self, hypothesis: DirectionHypothesis, tick: Optional[Tick] = None) -> ExecutionResult:
+    def execute(self, hypothesis: DirectionHypothesis, tick: Optional[Tick] = None, sl: Optional[float] = None, tp: Optional[float] = None) -> ExecutionResult:
         if tick is not None:
             fill_price = tick.ask if hypothesis.direction > 0 else tick.bid
         else:
@@ -30,14 +33,16 @@ class PaperExecutor:
         direction = "BUY" if hypothesis.direction > 0 else "SELL"
         spread = 0.0002
         slippage = spread * 0.1
+        dec = 3 if "JPY" in hypothesis.symbol else 5
         if direction == "BUY":
             fill_price = fill_price + slippage
-            stop = fill_price * (1.0 - 0.0030)
-            target = fill_price * (1.0 + 0.0060)
+            stop = round(sl if sl is not None else fill_price * (1.0 - 0.0030), dec)
+            target = round(tp if tp is not None else fill_price * (1.0 + 0.0060), dec)
         else:
             fill_price = fill_price - slippage
-            stop = fill_price * (1.0 + 0.0030)
-            target = fill_price * (1.0 - 0.0060)
+            stop = round(sl if sl is not None else fill_price * (1.0 + 0.0030), dec)
+            target = round(tp if tp is not None else fill_price * (1.0 - 0.0060), dec)
+        fill_price = round(fill_price, dec)
         
         position = PaperPosition(
             id=str(uuid.uuid4())[:8],
@@ -95,8 +100,22 @@ class PaperExecutor:
         ]
     
     def _calculate_pnl(self, position: PaperPosition, exit_price: float) -> float:
+        quote = position.symbol[3:6]
+        usd_quote_rate = 1.0
+        if quote != "USD":
+            pair1 = f"USD{quote}"
+            if pair1 in self._last_prices:
+                usd_quote_rate = self._last_prices[pair1]
+            else:
+                pair2 = f"{quote}USD"
+                if pair2 in self._last_prices:
+                    rate = self._last_prices[pair2]
+                    usd_quote_rate = 1.0 / rate if rate > 0 else 1.0
+                    
         if position.direction == "BUY":
-            return (exit_price - position.entry_price) * position.lots * 100000
+            diff = exit_price - position.entry_price
         else:
-            return (position.entry_price - exit_price) * position.lots * 100000
+            diff = position.entry_price - exit_price
+            
+        return (diff * position.lots * 100000) / usd_quote_rate
 

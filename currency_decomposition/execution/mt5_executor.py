@@ -144,7 +144,7 @@ class MT5Executor:
             return (exit_price - position.entry_price) * position.lots * 100000
         return (position.entry_price - exit_price) * position.lots * 100000
 
-    def execute(self, hypothesis: DirectionHypothesis, tick=None) -> ExecutionResult:
+    def execute(self, hypothesis: DirectionHypothesis, tick=None, sl: Optional[float] = None, tp: Optional[float] = None) -> ExecutionResult:
         symbol = self._resolve_symbol(hypothesis.symbol)
         if not self.mt5.call_mt5(mt5.symbol_select, symbol, True):
             import sys
@@ -174,11 +174,14 @@ class MT5Executor:
         sl_dist = STOP_LOSS_PIPS * 10 * point
         tp_dist = TAKE_PROFIT_PIPS * 10 * point
         if hypothesis.direction > 0:
-            sl = price - sl_dist
-            tp = price + tp_dist
+            default_sl = price - sl_dist
+            default_tp = price + tp_dist
         else:
-            sl = price + sl_dist
-            tp = price - tp_dist
+            default_sl = price + sl_dist
+            default_tp = price - tp_dist
+
+        sl_val = round(sl if sl is not None else default_sl, sym_info.digits)
+        tp_val = round(tp if tp is not None else default_tp, sym_info.digits)
         import sys
 
         filling_modes = [
@@ -212,8 +215,8 @@ class MT5Executor:
                 "volume": volume,
                 "type": int(direction_type),
                 "price": price,
-                "sl": sl,
-                "tp": tp,
+                "sl": sl_val,
+                "tp": tp_val,
                 "deviation": 10,
                 "magic": CD_MAGIC,
                 "comment": STRATEGY_NAME,

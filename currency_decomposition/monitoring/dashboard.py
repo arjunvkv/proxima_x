@@ -1,4 +1,5 @@
-import time
+
+import time
 import os
 import json
 import threading
@@ -83,7 +84,7 @@ class Dashboard:
                  available_symbols_count: int = 0,
                  configured_symbols_count: int = 0,
                  nme_output: str = None,
-                 nme_trade_snapshots: list = None) -> None:
+                 nme_trade_snapshots: list = None, swing_overlay: dict = None, stop_loss_amount: float = -60.0) -> None:
         now = time.time()
         if now - self._last_update < 1.0:
             return
@@ -402,6 +403,13 @@ class Dashboard:
             "pipeline": pipeline_metrics,
             "universe_available": available_symbols_count,
             "universe_configured": configured_symbols_count,
+            "swing_overlay": swing_overlay,
+            "lot_size": lot_size,
+            "profit_target": profit_target,
+            "stop_loss_amount": stop_loss_amount,
+            "max_total_lots": max_total_lots,
+            "open_lots": total_lots,
+            "active_symbols": [p.get("symbol") for p in positions if p.get("symbol")] if isinstance(positions, list) else [],
         }
 
         # Non-blocking push to the background writer queue

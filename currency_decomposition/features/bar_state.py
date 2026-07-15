@@ -14,13 +14,14 @@ class BarStateEngine:
         self.mt5 = mt5
         self.store = store
         self.solver = WLSSolver()
-        # Completed M5 bar closes (from MT5 preload)
-        self._bar_closes: dict[str, deque] = {
+        # Completed M5 bar OHLC (from MT5 preload) — (open, high, low, close)
+        self._bar_ohlc: dict[str, deque] = {
             s: deque(maxlen=30) for s in SYMBOLS
         }
         self._last_completed_ts: dict[str, float] = {}
         # Current forming M5 bar — updated via M1 stream
         self._forming_m5_start: dict[str, float] = {}
+        self._forming_open: dict[str, float] = {}
         self._forming_close: dict[str, float] = {}
         # WLS strength trajectory (one per completed M5 bar)
         self._strength_history: dict[str, deque] = {
@@ -37,15 +38,18 @@ class BarStateEngine:
                 rates = self.mt5.get_rates_from(symbol, _M5, 1, 30)
                 if rates is not None:
                     for r in rates:
-                        self._bar_closes[symbol].append(float(r[4]))
+                        self._bar_ohlc[symbol].append((
+                            float(r[1]), float(r[2]), float(r[3]), float(r[4])
+                        ))
                     latest_ts = float(rates[-1][0])
                     self._last_completed_ts[symbol] = latest_ts
                     self._forming_m5_start[symbol] = latest_ts + 300
+                    self._forming_open[symbol] = float(rates[-1][1])
                     self._forming_close[symbol] = float(rates[-1][4])
             except Exception:
                 pass
         self._preloaded = True
-        populated = [v for v in self._bar_closes.values() if len(v) > 0]
+        populated = [v for v in self._bar_ohlc.values() if len(v) > 0]
         if len(populated) >= 6 and min(len(v) for v in populated) >= 2:
             self._compute_from_cache()
 
@@ -64,24 +68,25 @@ class BarStateEngine:
             if new_m5_start > m5_start:
                 new_bar_closed = True
                 self._forming_m5_start[symbol] = new_m5_start
+                self._forming_open[symbol] = m1_mid
             self._forming_close[symbol] = m1_mid
         return new_bar_closed
 
     def _compute_from_cache(self) -> None:
-        populated = [v for v in self._bar_closes.values() if len(v) > 0]
+        populated = [v for v in self._bar_ohlc.values() if len(v) > 0]
         if len(populated) < 2:
             return
         min_bars = min(len(v) for v in populated)
         if min_bars < 2:
             return
-        symbols_with_data = [s for s in SYMBOLS if len(self._bar_closes[s]) > 0]
+        symbols_with_data = [s for s in SYMBOLS if len(self._bar_ohlc[s]) > 0]
         start = max(self._processed_bars, 0)
         for i in range(start, min_bars - 1):
             returns = {}
             for symbol in symbols_with_data:
-                closes = list(self._bar_closes[symbol])
-                prev = closes[i]
-                curr = closes[i + 1]
+                ohlcs = list(self._bar_ohlc[symbol])
+                prev = ohlcs[i][3]
+                curr = ohlcs[i + 1][3]
                 if prev > 0 and curr > 0:
                     returns[symbol] = float(np.log(curr / prev))
                 else:
@@ -107,18 +112,57 @@ class BarStateEngine:
         return self._ready
 
     def forming_return(self, symbol: str) -> float:
-        """Return of the current forming M5 bar vs last completed M5 bar close.
-        This updates every M1 tick for real-time comparison with tick WLS."""
+        """Return of the current forming M5 bar vs last completed M5 bar close."""
         if symbol not in SYMBOLS:
             return 0.0
-        closes = list(self._bar_closes.get(symbol, []))
-        if len(closes) < 1:
+        ohlcs = list(self._bar_ohlc.get(symbol, []))
+        if len(ohlcs) < 1:
             return 0.0
-        last_completed = closes[-1]
+        last_completed = ohlcs[-1][3]
         current = self._forming_close.get(symbol, last_completed)
         if last_completed > 0 and current > 0:
             return float(np.log(current / last_completed))
         return 0.0
+
+    def forming_return_from_open(self, symbol: str) -> float | None:
+        """Return of the current forming bar relative to its M5 open (None if not tracked)."""
+        if symbol not in SYMBOLS:
+            return None
+        if symbol not in self._forming_open:
+            ohlcs = list(self._bar_ohlc.get(symbol, []))
+            if len(ohlcs) < 1:
+                return None
+            self._forming_open[symbol] = ohlcs[-1][3]
+        open_ = self._forming_open.get(symbol)
+        current = self._forming_close.get(symbol, open_)
+        if open_ and open_ > 0 and current > 0:
+            return float(np.log(current / open_))
+        return None
+
+    def get_swing_stats(self, symbol: str, lookback: int = 10) -> dict | None:
+        """Return avg downside/upside/range from completed M5 bars in price units."""
+        if symbol not in SYMBOLS:
+            return None
+        ohlcs = list(self._bar_ohlc.get(symbol, []))
+        if len(ohlcs) < lookback:
+            return None
+        ohlcs = ohlcs[-lookback:]
+        downsides = []
+        upsides = []
+        for o, h, l, c in ohlcs:
+            if o > 0:
+                downsides.append(l - o)
+                upsides.append(h - o)
+        if not downsides:
+            return None
+        avg_dn = sum(downsides) / len(downsides)
+        avg_up = sum(upsides) / len(upsides)
+        return {
+            "avg_downside": avg_dn,
+            "avg_upside": avg_up,
+            "avg_range": avg_up - avg_dn,
+            "samples": len(downsides),
+        }
 
     def _compute_state(self) -> None:
         for ccy in CURRENCY_LIST:
@@ -194,10 +238,11 @@ class BarStateEngine:
     def reset(self) -> None:
         for h in self._strength_history.values():
             h.clear()
-        for b in self._bar_closes.values():
+        for b in self._bar_ohlc.values():
             b.clear()
         self._last_completed_ts.clear()
         self._forming_m5_start.clear()
+        self._forming_open.clear()
         self._forming_close.clear()
         self._preloaded = False
         self._ready = False
