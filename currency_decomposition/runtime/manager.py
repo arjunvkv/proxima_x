@@ -7,7 +7,7 @@ from queue import Queue, Empty
 from pathlib import Path
 from typing import Optional
 
-from config.settings import EXECUTION_MODE, MAX_POSITIONS, LOT_SIZE, MAX_TOTAL_LOTS, PROFIT_TARGET, STOP_LOSS_AMOUNT, BURST_TOP_N, MIN_CONFIDENCE
+from config.settings import EXECUTION_MODE, MAX_POSITIONS, LOT_SIZE, MAX_TOTAL_LOTS, PROFIT_TARGET, STOP_LOSS_AMOUNT, BURST_TOP_N, MIN_CONFIDENCE, CHOP_CLOSE_DELAY_SECONDS
 from config.settings import CURRENCY_LIST, BASE_CURRENCY_MAP, WLS_DIRECT_MODE
 from data.models import TickBatch
 from data.mt5_adapter import MT5Adapter
@@ -36,6 +36,8 @@ from dashboard.bar_dashboard import BarStateDashboard
 class RuntimeManager:
     def __init__(self):
         self.running = False
+        self._regime_data: dict = {"polarized_ssp_pct": 0.0, "regime": "N/A", "entries_blocked": False}
+        self._chop_since: float = 0.0
         self.shutdown_event = threading.Event()
         self._force_exit = False
 
@@ -310,6 +312,14 @@ class RuntimeManager:
                 self._close_all_positions("PROFIT_TARGET")
                 self._reset_after_profit_target()
                 self.dashboard.latest_event = {"event": "PROFIT_TARGET", "time": now}
+            # ── Close all on chop safety net ────────────────
+            if (self._regime_data.get("regime") == "CHOP"
+                    and self.executor.positions
+                    and self._chop_since > 0
+                    and (time.time() - self._chop_since) >= CHOP_CLOSE_DELAY_SECONDS):
+                print(f"[CHOP CLOSE] chop persisted {CHOP_CLOSE_DELAY_SECONDS}s — closing all", file=sys.stderr)
+                self._close_all_positions("CHOP_DETECTED")
+                self._chop_since = 0.0
 
         returns = self.store.calculate_returns()
         if self._available_symbols:
@@ -445,6 +455,50 @@ class RuntimeManager:
                     candidates = ranked
 
                 self._pipeline_metrics["selected"] = len(candidates)
+
+                # ── REGIME GATE: detect chop via polarized SSP distribution ────
+                polar_ssp = 0
+                total_ssp = 0
+                try:
+                    for rsym in self._available_symbols:
+                        rprice = getattr(self.executor, "_last_prices", {}).get(rsym, 0.0)
+                        if rprice == 0.0:
+                            rprice = getattr(self.mt5, "_last_bar_close", {}).get(rsym, 0.0)
+                        if rprice == 0.0:
+                            continue
+                        rssp = self.bar_state.get_structural_swing_position(rsym, rprice)
+                        if rssp is None:
+                            continue
+                        for v in (rssp.get("buy_ssp"), rssp.get("sell_ssp")):
+                            if isinstance(v, (int, float)):
+                                total_ssp += 1
+                                if v < 0.3 or v > 0.7:
+                                    polar_ssp += 1
+                except Exception:
+                    pass
+                pol_pct = (polar_ssp / total_ssp) if total_ssp > 4 else 0.0
+                is_chop = pol_pct > 0.70
+                if is_chop and self._chop_since == 0.0:
+                    self._chop_since = time.time()
+                    print(f"[REGIME BLOCK] chop — polar_ssp={pol_pct:.0%} blocking all entries", file=sys.stderr)
+                    candidates = []
+                elif is_chop:
+                    candidates = []
+                else:
+                    if self._chop_since > 0.0:
+                        print(f"[CHOP UNBLOCK] chop cleared — resetting system to cycle 1", file=sys.stderr)
+                        self._reset_after_profit_target()
+                    self._chop_since = 0.0
+                chop_minutes = round((time.time() - self._chop_since) / 60.0, 1) if is_chop and self._chop_since > 0 else 0.0
+                self._regime_data = {
+                    "polarized_ssp_pct": round(pol_pct * 100, 0),
+                    "regime": "CHOP" if is_chop else "TREND",
+                    "entries_blocked": is_chop,
+                    "chop_minutes": chop_minutes,
+                    "threshold_pct": 70.0,
+                    "gap_to_clear": max(0.0, round(pol_pct * 100 - 70.0, 1)) if is_chop else 0.0,
+                }
+
                 cycle_submitted = set()
                 self.last_exec_fail = None
                 for h in candidates:
@@ -481,6 +535,42 @@ class RuntimeManager:
                         current_price = self.mt5._last_bar_close.get(h.symbol, 0.0)
                     if current_price == 0.0 and open_price is not None:
                         current_price = open_price
+
+                    # ── SWING-STATE ENTRY GATE ─────────────────────
+                    if current_price > 0.0:
+                        ssp_data = self.bar_state.get_structural_swing_position(h.symbol, current_price)
+                        msp_data = None
+                        stats = self.bar_state.get_swing_stats(h.symbol)
+                        if stats is not None:
+                            avg_up = stats["avg_upside"]
+                            avg_dn = stats["avg_downside"]
+                            msp_data = self.bar_state.get_micro_swing_positions(h.symbol, avg_up, avg_dn)
+                        swing_result = self.bar_state.classify_swing_state(h.direction, ssp_data, msp_data)
+                        swing_state = swing_result.get("swing_state", "")
+                        position_state = swing_result.get("position_state", "")
+                        decision = swing_result.get("decision", "")
+                        # Block EXHAUSTED
+                        if decision == "BLOCK":
+                            print(f"[SWING BLOCK] {h.symbol} {dir_label} state={swing_state} pos={position_state}", file=sys.stderr)
+                            continue
+                        # Block LATE (override CAUTION → BLOCK)
+                        if swing_state == "LATE":
+                            print(f"[SWING BLOCK] {h.symbol} {dir_label} state=LATE (late entry)", file=sys.stderr)
+                            continue
+                        # Direction-checked BREAKOUT: block BUY if sell_ssp>1 (BREAKOUT_DOWN), SELL if buy_ssp>1 (BREAKOUT_UP)
+                        if ssp_data is not None:
+                            if h.direction > 0 and ssp_data.get("sell_ssp", 0) > 1.0:
+                                print(f"[SWING BLOCK] {h.symbol} BUY blocked — sell_ssp={ssp_data['sell_ssp']:.2f} (BREAKOUT_DOWN)", file=sys.stderr)
+                                continue
+                            if h.direction < 0 and ssp_data.get("buy_ssp", 0) > 1.0:
+                                print(f"[SWING BLOCK] {h.symbol} SELL blocked — buy_ssp={ssp_data['buy_ssp']:.2f} (BREAKOUT_UP)", file=sys.stderr)
+                                continue
+                        # Noise filter: avg swing < 1.0 pip
+                        if stats is not None:
+                            avg_swing_pips = (stats["avg_upside"] - stats["avg_downside"]) * 10000
+                            if abs(avg_swing_pips) < 1.0:
+                                print(f"[SWING BLOCK] {h.symbol} avg_swing={abs(avg_swing_pips):.1f}p < 1.0p (noise)", file=sys.stderr)
+                                continue
 
                     sl_price = None
                     tp_price = None
@@ -522,9 +612,17 @@ class RuntimeManager:
                             rem_up_price = max(0.0, (open_price + avg_up) - current_price)
                             
                             if h.direction > 0: # BUY
-                                tp_price = current_price + rem_up_price * 0.80
+                                tp_price = current_price + rem_up_price * 1.5
                             else: # SELL
-                                tp_price = current_price - rem_dn_price * 0.80
+                                tp_price = current_price - rem_dn_price * 1.5
+
+                        # 4. Minimum TP guard: skip if TP < 2.0 pips from entry
+                        if tp_price is not None and current_price > 0:
+                            min_tp_dist = 0.0002 if "JPY" not in h.symbol else 0.02
+                            tp_dist = abs(tp_price - current_price)
+                            if tp_dist < min_tp_dist:
+                                print(f"[TP BLOCK] {h.symbol} {dir_label} tp_dist={tp_dist:.5f} < {min_tp_dist} (<2p min)", file=sys.stderr)
+                                continue
 
                     result = self.executor.execute(h, sl=sl_price, tp=tp_price)
                     if result.success:
@@ -918,6 +1016,29 @@ class RuntimeManager:
                         "pnl": round(open_pos.pnl or 0.0, 2),
                     }
 
+                ssp_data = self.bar_state.get_structural_swing_position(sym, current_price)
+                msp_data = self.bar_state.get_micro_swing_positions(sym, avg_up, avg_dn)
+                swing_analysis_data = None
+                if ssp_data is not None and msp_data is not None:
+                    buy_cls = self.bar_state.classify_swing_state(1.0, ssp_data, msp_data)
+                    sell_cls = self.bar_state.classify_swing_state(-1.0, ssp_data, msp_data)
+                    swing_analysis_data = {
+                        "buy": {
+                            "state": buy_cls.get("swing_state", "--"),
+                            "ssp": ssp_data.get("buy_ssp"),
+                            "msp": msp_data.get("buy_msp"),
+                        },
+                        "sell": {
+                            "state": sell_cls.get("swing_state", "--"),
+                            "ssp": ssp_data.get("sell_ssp"),
+                            "msp": msp_data.get("sell_msp"),
+                        },
+                        "position_state": buy_cls.get("position_state", "--"),
+                        "range_price": round((avg_up - avg_dn) / pip_size, 1),
+                        "range_expansion": ssp_data.get("range_expansion", 1.0),
+                        "vol_expansion": ssp_data.get("vol_expansion", 1.0),
+                    }
+
                 swing_overlay[sym] = {
                     "avg_down": avg_dn_pips,
                     "avg_up": avg_up_pips,
@@ -934,6 +1055,7 @@ class RuntimeManager:
                     "quote_str": round(quote_s, 6),
                     "history": hist_data,
                     "swing_reach": swing_reach,
+                    "swing_analysis": swing_analysis_data,
                 }
             if bar_state_dict:
                 scores = []
@@ -1028,6 +1150,7 @@ class RuntimeManager:
             bar_output=bar_output,
             nme_trade_snapshots=self._nme_trade_snapshots,
             swing_overlay=swing_overlay,
+            regime_data=self._regime_data,
         )
 
     def _close_all_positions(self, reason: str) -> None:

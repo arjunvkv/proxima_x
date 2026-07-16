@@ -85,4 +85,4 @@ class HypothesisGenerator:
         recent = hist[-5:]
         flip_count = sum(1 for i in range(1, len(recent)) if recent[i] * recent[i-1] < 0)
         consistency = 1.0 - min(flip_count / 4.0, 1.0)
-        return float(max(0.3, consistency))
+        return float(max(0.6, consistency))

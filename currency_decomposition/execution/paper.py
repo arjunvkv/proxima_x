@@ -10,6 +10,7 @@ class PaperExecutor:
         self.positions: list[PaperPosition] = []
         self._closed_positions: list[PaperPosition] = []
         self._last_prices: dict[str, float] = {}
+        self.sync_failed = False
     
     def sync(self) -> None:
         pass
@@ -17,9 +18,23 @@ class PaperExecutor:
     def position_count(self) -> int:
         return len(self.positions)
 
+    def recent_failures(self) -> list:
+        return []
+
+    def total_pnl(self) -> float:
+        return sum(p.pnl or 0 for p in self.positions)
+
+    def total_lots(self) -> float:
+        return sum(p.lots or 0 for p in self.positions)
+
     def update_prices(self, ticks: list[Tick]) -> None:
         for tick in ticks:
             self._last_prices[tick.symbol] = tick.mid
+        for pos in self.positions:
+            tick = next((t for t in ticks if t.symbol == pos.symbol), None)
+            if tick:
+                pos.current_price = tick.bid if pos.direction == "BUY" else tick.ask
+                pos.pnl = self._calculate_pnl(pos, pos.current_price)
     
     def execute(self, hypothesis: DirectionHypothesis, tick: Optional[Tick] = None, sl: Optional[float] = None, tp: Optional[float] = None) -> ExecutionResult:
         if tick is not None:
@@ -77,7 +92,7 @@ class PaperExecutor:
     def close_all(self, prices: dict[str, float], reason: str = "MANUAL") -> list[ExecutionResult]:
         results = []
         for pos in list(self.positions):
-            price = prices.get(pos.symbol, pos.entry_price)
+            price = prices.get(pos.symbol, pos.current_price or pos.entry_price)
             r = self.close_position(pos.id, price, reason)
             results.append(r)
         return results

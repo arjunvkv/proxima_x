@@ -61,14 +61,14 @@ class RiskEngine:
             if price is None:
                 continue
             if pos.direction == "BUY":
-                if price <= pos.stop_loss:
+                if pos.stop_loss > 0 and price <= pos.stop_loss:
                     to_close.append(pos)
-                elif price >= pos.take_profit:
+                elif pos.take_profit > 0 and price >= pos.take_profit:
                     to_close.append(pos)
             elif pos.direction == "SELL":
-                if price >= pos.stop_loss:
+                if pos.stop_loss > 0 and price >= pos.stop_loss:
                     to_close.append(pos)
-                elif price <= pos.take_profit:
+                elif pos.take_profit > 0 and price <= pos.take_profit:
                     to_close.append(pos)
             
             age_hours = (time.time() - pos.entry_time) / 3600

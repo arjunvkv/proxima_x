@@ -88,6 +88,8 @@ class MT5Executor:
             for p in cd_positions:
                 direction = "BUY" if p.type == 0 else "SELL"
                 meta = self._position_meta.get(p.ticket, {})
+                sl = p.sl if p.sl else meta.get("sl_target", 0.0)
+                tp = p.tp if p.tp else meta.get("tp_target", 0.0)
                 pos = PaperPosition(
                     id=str(p.ticket),
                     symbol=p.symbol,
@@ -96,8 +98,8 @@ class MT5Executor:
                     current_price=p.price_current,
                     entry_time=p.time,
                     lots=p.volume,
-                    stop_loss=p.sl or 0.0,
-                    take_profit=p.tp or 0.0,
+                    stop_loss=sl,
+                    take_profit=tp,
                     drs_entry=meta.get("drs_entry", 0.0),
                     currency_strengths_entry=meta.get("currency_strengths", {}),
                     pnl=p.profit + (getattr(p, 'swap', 0) or 0) + (getattr(p, 'commission', 0) or 0),
@@ -292,7 +294,20 @@ class MT5Executor:
                 "quote": hypothesis.quote_strength
             },
             "confidence": hypothesis.confidence,
+            "sl_target": sl_val,
+            "tp_target": tp_val,
         }
+        # If broker ignored SL/TP in the order, set them via modification
+        if sl_val is not None or tp_val is not None:
+            mod_request = {
+                "action": mt5.TRADE_ACTION_SLTP,
+                "position": result.order,
+                "symbol": symbol,
+                "sl": sl_val if sl_val else 0.0,
+                "tp": tp_val if tp_val else 0.0,
+                "magic": CD_MAGIC,
+            }
+            self.mt5.call_mt5(mt5.order_send, mod_request, timeout=10.0)
         self.sync()
         sync_ok = any(str(result.order) == p.id for p in self.positions)
         self._log_ledger("sync_confirm" if sync_ok else "sync_missing",

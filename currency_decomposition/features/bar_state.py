@@ -1,4 +1,5 @@
 """5-min bar trend from real MT5 M5 bars + real-time forming bar via M1 stream."""
+import time
 import numpy as np
 from collections import deque
 from config.settings import CURRENCY_LIST, BASE_CURRENCY_MAP, SYMBOLS
@@ -139,6 +140,21 @@ class BarStateEngine:
             return float(np.log(current / open_))
         return None
 
+    def forming_price_displacement(self, symbol: str) -> float | None:
+        """Price displacement of the forming bar in price units (not log)."""
+        if symbol not in SYMBOLS:
+            return None
+        if symbol not in self._forming_open:
+            ohlcs = list(self._bar_ohlc.get(symbol, []))
+            if len(ohlcs) < 1:
+                return None
+            self._forming_open[symbol] = ohlcs[-1][3]
+        open_ = self._forming_open.get(symbol)
+        current = self._forming_close.get(symbol, open_)
+        if open_ and current:
+            return float(current - open_)
+        return None
+
     def get_swing_stats(self, symbol: str, lookback: int = 10) -> dict | None:
         """Return avg downside/upside/range from completed M5 bars in price units."""
         if symbol not in SYMBOLS:
@@ -163,6 +179,115 @@ class BarStateEngine:
             "avg_range": avg_up - avg_dn,
             "samples": len(downsides),
         }
+
+    def get_structural_swing_position(self, symbol: str, current_price: float, lookback: int = 20) -> dict | None:
+        """Multi-bar structural location (SSP) and volatility context."""
+        if symbol not in SYMBOLS:
+            return None
+        ohlcs = list(self._bar_ohlc.get(symbol, []))
+        if len(ohlcs) < lookback:
+            return None
+        bars = ohlcs[-lookback:]
+        lows = [b[2] for b in bars]
+        highs = [b[1] for b in bars]
+        swing_low = min(lows)
+        swing_high = max(highs)
+        width = swing_high - swing_low
+        if width <= 0:
+            return None
+        buy_ssp = (current_price - swing_low) / width
+        sell_ssp = (swing_high - current_price) / width
+        bar_ranges = [b[1] - b[2] for b in bars]
+        median_range = sorted(bar_ranges)[len(bar_ranges) // 2] if bar_ranges else width
+        range_expansion = width / median_range if median_range > 0 else 1.0
+        current_bar_range = None
+        if symbol in self._forming_open and symbol in self._forming_close:
+            current_bar_range = abs(self._forming_close[symbol] - self._forming_open[symbol])
+        median_vol = sorted(bar_ranges)[len(bar_ranges) // 2] if bar_ranges else None
+        vol_expansion = 1.0
+        if current_bar_range is not None and median_vol and median_vol > 0:
+            bar_start = self._forming_m5_start.get(symbol)
+            bar_age = max(0, time.time() - bar_start) if bar_start else 0
+            age_confidence = min(bar_age / 60.0, 1.0)
+            if age_confidence >= 0.5:
+                vol_expansion = current_bar_range / median_vol
+        return {
+            "buy_ssp": buy_ssp,
+            "sell_ssp": sell_ssp,
+            "swing_low": swing_low,
+            "swing_high": swing_high,
+            "range_price": width,
+            "range_expansion": range_expansion,
+            "vol_expansion": vol_expansion,
+        }
+
+    def get_micro_swing_positions(self, symbol: str, avg_up: float, avg_dn: float) -> dict | None:
+        """Micro swing position (MSP) for both directions. Uses price displacement (not log)."""
+        if symbol not in SYMBOLS:
+            return None
+        if symbol not in self._forming_open or symbol not in self._forming_close:
+            return None
+        open_ = self._forming_open[symbol]
+        current = self._forming_close[symbol]
+        displacement = current - open_
+        buy_msp = displacement / avg_up if avg_up > 0 else 0.0
+        sell_msp = abs(displacement) / abs(avg_dn) if abs(avg_dn) > 0 else 0.0
+        bar_start = self._forming_m5_start.get(symbol)
+        now = time.time()
+        bar_age = max(0, now - bar_start) if bar_start else 0
+        # Estimate age from forming displacement as fallback
+        min_conf = 0.0
+        if symbol in self._forming_open and symbol in self._forming_close:
+            disp = abs(self._forming_close[symbol] - self._forming_open[symbol])
+            if disp > 0:
+                min_conf = 0.55
+        confidence = max(min_conf, min(bar_age / 60.0, 1.0))
+        return {
+            "buy_msp": buy_msp,
+            "sell_msp": sell_msp,
+            "bar_age_seconds": round(bar_age),
+            "confidence": round(confidence, 3),
+        }
+
+    @staticmethod
+    def classify_swing_state(direction: float, ssp_data: dict | None, msp_data: dict | None) -> dict:
+        """Classify swing state for a given direction using SSP + MSP data."""
+        if ssp_data is None or msp_data is None:
+            return {"swing_state": "INSUFFICIENT_DATA", "position_state": "UNKNOWN", "decision": "NO_CLASSIFICATION"}
+        if msp_data.get("confidence", 0) < 0.45:
+            return {"swing_state": "UNCONFIRMED", "position_state": "EARLY_BAR", "decision": "ALLOW"}
+        buy_ssp = ssp_data["buy_ssp"]
+        sell_ssp = ssp_data["sell_ssp"]
+        vol_exp = ssp_data.get("vol_expansion", 1.0)
+        range_exp = ssp_data.get("range_expansion", 1.0)
+        if range_exp < 0.5:
+            position_state = "COMPRESSED_RANGE"
+        elif buy_ssp > 1.0:
+            position_state = "BREAKOUT_UP"
+        elif sell_ssp > 1.0:
+            position_state = "BREAKOUT_DOWN"
+        else:
+            position_state = "INSIDE_RANGE"
+        if vol_exp > 3.0 and direction > 0 and buy_ssp > 0.85:
+            return {"swing_state": "EXHAUSTION_SUPPRESSED_BY_VOLATILITY", "position_state": position_state, "decision": "CAUTION"}
+        if vol_exp > 3.0 and direction < 0 and sell_ssp > 0.85:
+            return {"swing_state": "EXHAUSTION_SUPPRESSED_BY_VOLATILITY", "position_state": position_state, "decision": "CAUTION"}
+        if direction > 0:
+            msp = msp_data.get("buy_msp", 0)
+            if buy_ssp > 0.85 and msp > 0.70:
+                return {"swing_state": "EXHAUSTED", "position_state": position_state, "decision": "BLOCK"}
+            elif buy_ssp > 0.65:
+                return {"swing_state": "LATE", "position_state": position_state, "decision": "CAUTION"}
+            else:
+                return {"swing_state": "HEALTHY", "position_state": position_state, "decision": "ALLOW"}
+        else:
+            msp = msp_data.get("sell_msp", 0)
+            if sell_ssp > 0.85 and msp > 0.70:
+                return {"swing_state": "EXHAUSTED", "position_state": position_state, "decision": "BLOCK"}
+            elif sell_ssp > 0.65:
+                return {"swing_state": "LATE", "position_state": position_state, "decision": "CAUTION"}
+            else:
+                return {"swing_state": "HEALTHY", "position_state": position_state, "decision": "ALLOW"}
 
     def _compute_state(self) -> None:
         for ccy in CURRENCY_LIST:
@@ -199,24 +324,17 @@ class BarStateEngine:
             return 1.0
         if symbol not in BASE_CURRENCY_MAP:
             return 1.0
-        base, quote = BASE_CURRENCY_MAP[symbol]
-        bs = self._state.get(base, {})
-        qs = self._state.get(quote, {})
-        expected = 1 if direction > 0 else -1
-        base_aligned = 1 if bs.get("direction", 0) == expected else 0
-        quote_aligned = 1 if qs.get("direction", 0) == -expected else 0
-        direction_score = 0.6 * base_aligned + 0.4 * quote_aligned
-        base_w = bs.get("consistency", 0.5)
-        quote_w = qs.get("consistency", 0.5)
-        avg_weight = (base_w + quote_w) / 2.0
-        base_ext = abs(bs.get("position", 0.5) - 0.5) * 2
-        quote_ext = abs(qs.get("position", 0.5) - 0.5) * 2
-        extreme_penalty = 1.0 - max(base_ext, quote_ext) * 0.3
-        result = direction_score * avg_weight * extreme_penalty
-        if result > 0.6:
-            boost = 1.0 + min(base_w, quote_w) * 0.3
-            result *= boost
-        return max(0.05, min(result, 1.3))
+        # Use forming bar return from open — direct price movement check
+        bar_ret = self.forming_return_from_open(symbol)
+        if bar_ret is None:
+            return 1.0
+        hyp_dir = 1 if direction > 0 else -1
+        bar_dir = 1 if bar_ret > 0 else -1
+        agree = 1.0 if hyp_dir == bar_dir else 0.0
+        if agree == 0.0:
+            return max(0.05, min(0.30, abs(bar_ret) * 500))
+        magnitude = min(abs(bar_ret) * 1000, 1.0)
+        return max(0.50, magnitude)
 
     def get_state(self) -> dict:
         return dict(self._state)

@@ -29,7 +29,7 @@ class NarrativeDetector:
     def should_birth(self, candidate: dict, persistence: int, graph_quality: float, participation: float) -> bool:
         if candidate is None:
             return False
-        return persistence >= self.persistence_required and graph_quality > 0.3 and abs(participation) > 0.05
+        return persistence >= self.persistence_required and graph_quality > 0.3 and abs(participation) > 0.02
 
     def should_die(self, narrative, strengths: Dict[str, float]) -> bool:
         leader = narrative.identity.leader

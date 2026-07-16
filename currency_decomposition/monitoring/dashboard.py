@@ -7,6 +7,15 @@ import queue
 from pathlib import Path
 from data.models import HealthStatus
 
+import builtins as _builtins
+_original_print = _builtins.print
+def _safe_print(*args, **kwargs):
+    try:
+        _original_print(*args, **kwargs)
+    except (OSError, ValueError):
+        pass
+_builtins.print = _safe_print
+
 _LOG_DIR = Path(__file__).parent.parent / "logs"
 _LOG_FILE = _LOG_DIR / "dashboard_log.jsonl"
 
@@ -84,7 +93,8 @@ class Dashboard:
                  available_symbols_count: int = 0,
                  configured_symbols_count: int = 0,
                  nme_output: str = None,
-                 nme_trade_snapshots: list = None, swing_overlay: dict = None, stop_loss_amount: float = -60.0) -> None:
+                  nme_trade_snapshots: list = None, swing_overlay: dict = None, stop_loss_amount: float = -60.0,
+                  regime_data: dict = None) -> None:
         now = time.time()
         if now - self._last_update < 1.0:
             return
@@ -93,12 +103,21 @@ class Dashboard:
         uptime_str = f"{int(uptime_s // 3600):02d}:{int((uptime_s % 3600) // 60):02d}:{int(uptime_s % 60):02d}"
         ts = time.strftime("%H:%M:%S")
 
-        os.system("cls" if os.name == "nt" else "clear")
+        try:
+            os.system("cls" if os.name == "nt" else "clear")
+        except Exception:
+            pass
 
         if nme_output:
-            print(nme_output)
+            try:
+                print(nme_output)
+            except OSError:
+                pass
         if bar_output:
-            print(bar_output)
+            try:
+                print(bar_output)
+            except OSError:
+                pass
 
         health_icon = "OK" if health.state == "OK" else ("DEG" if health.state == "DEGRADED" else "ERR")
         health_color = "\033[92m" if health.state == "OK" else ("\033[93m" if health.state == "DEGRADED" else "\033[91m")
@@ -239,6 +258,17 @@ class Dashboard:
             bal_sorted = sorted(edge_balance.items(), key=lambda x: x[1], reverse=True)
             bal_str = "  ".join(f"{c}={v*100:.0f}%" for c, v in bal_sorted)
             print(f"║  EDGE DISTRIBUTION:     {bal_str:<52}  ║")
+        # ── REGIME INDICATOR ─────────────────────────────────────
+        if regime_data:
+            rd = regime_data
+            pct = rd.get("polarized_ssp_pct", 0)
+            regime = rd.get("regime", "N/A")
+            blocked = rd.get("entries_blocked", False)
+            icon = "⛔" if blocked else "▶"
+            color = "\033[91m" if blocked else "\033[92m"
+            bar_len = int(pct / 100 * 20)
+            bar = "█" * bar_len if bar_len > 0 else ""
+            print(f"║  REGIME: {color}{regime:<5s}{reset}  SSP_POLARIZED: {pct:.0f}%  {bar:<20}  {icon}  ║")
         print("╠══════════════════════════════════════════════════════════════════════╣")
 
         # ── GRAPH HOLES (missing symbols) ────────────────────────
@@ -404,12 +434,13 @@ class Dashboard:
             "universe_available": available_symbols_count,
             "universe_configured": configured_symbols_count,
             "swing_overlay": swing_overlay,
+            "regime_data": regime_data or {},
             "lot_size": lot_size,
             "profit_target": profit_target,
             "stop_loss_amount": stop_loss_amount,
             "max_total_lots": max_total_lots,
             "open_lots": total_lots,
-            "active_symbols": [p.get("symbol") for p in positions if p.get("symbol")] if isinstance(positions, list) else [],
+            "active_symbols": [p.get("symbol","").replace('.m','') for p in positions if p.get("symbol")] if isinstance(positions, list) else [],
         }
 
         # Non-blocking push to the background writer queue
