@@ -511,7 +511,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
           </div>
           <div class="chop-labels">
             <span>0%</span>
-            <span style="color:var(--green)">▲ 70% clear</span>
+            <span style="color:var(--green)">▲ 65% clear</span>
             <span>100%</span>
           </div>
           <div class="chop-gap" id="chop-gap-text">--% above threshold — drop -- more to unblock</div>
@@ -842,7 +842,7 @@ function renderRegime(d){
       regimeLabel.textContent = 'CHOP — BLOCKED';
       regimeLabel.style.color = 'var(--red)';
       regimeBar.style.background = 'linear-gradient(90deg,var(--amber),var(--red))';
-      regimeStatus.innerHTML = `<span style="color:var(--red)">${pct.toFixed(0)}%</span> <span style="color:var(--text3)">polarized › 70% threshold</span>`;
+      regimeStatus.innerHTML = `<span style="color:var(--red)">${pct.toFixed(0)}%</span> <span style="color:var(--text3)">polarized ≥ 70% — blocking</span>`;
       panelRegime.style.borderLeftColor = 'var(--red)';
       if(chopWidget) chopWidget.classList.add('active');
 
@@ -858,7 +858,7 @@ function renderRegime(d){
       regimeLabel.textContent = 'TREND — ACTIVE';
       regimeLabel.style.color = 'var(--green)';
       regimeBar.style.background = 'var(--green)';
-      regimeStatus.innerHTML = `<span style="color:var(--green)">${pct.toFixed(0)}%</span> <span style="color:var(--text3)">polarized ≤ 70%</span>`;
+      regimeStatus.innerHTML = `<span style="color:var(--green)">${pct.toFixed(0)}%</span> <span style="color:var(--text3)">polarized ≤ 65% — clear</span>`;
       panelRegime.style.borderLeftColor = 'var(--green)';
       if(chopWidget) chopWidget.classList.remove('active');
     }

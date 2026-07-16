@@ -7,7 +7,7 @@ from queue import Queue, Empty
 from pathlib import Path
 from typing import Optional
 
-from config.settings import EXECUTION_MODE, MAX_POSITIONS, LOT_SIZE, MAX_TOTAL_LOTS, PROFIT_TARGET, STOP_LOSS_AMOUNT, BURST_TOP_N, MIN_CONFIDENCE, CHOP_CLOSE_DELAY_SECONDS
+from config.settings import EXECUTION_MODE, MAX_POSITIONS, LOT_SIZE, MAX_TOTAL_LOTS, PROFIT_TARGET, STOP_LOSS_AMOUNT, BURST_TOP_N, MIN_CONFIDENCE, CHOP_CLOSE_DELAY_SECONDS, MIN_TRADE_RUNTIME_SECONDS
 from config.settings import CURRENCY_LIST, BASE_CURRENCY_MAP, WLS_DIRECT_MODE
 from data.models import TickBatch
 from data.mt5_adapter import MT5Adapter
@@ -131,6 +131,8 @@ class RuntimeManager:
         self._narrative_decay_cycles: int = 0
         self._last_batch_pnl: float = 0.0
         self._batch_open_cycle: int = 0
+        self._deferred_closes: dict[str, dict] = {}
+        self._deferred_all_reason: str | None = None
         self.dashboard_process = None
 
     def start(self) -> None:
@@ -259,6 +261,7 @@ class RuntimeManager:
                 self._process_batches(batches)
             except Empty:
                 self.executor.sync()
+                self._process_deferred_closes()
                 to_close_indiv_sl = self.risk.check_individual_stop_loss(self.executor.positions)
                 if to_close_indiv_sl:
                     pnls = [f"{p.symbol}=${p.pnl:.2f}" for p in to_close_indiv_sl]
@@ -282,6 +285,7 @@ class RuntimeManager:
 
     def _process_batches(self, batches: list[TickBatch]) -> None:
         now = time.time()
+        self._process_deferred_closes(now)
 
         for batch in batches:
             self.store.add_ticks(batch.ticks)
@@ -477,7 +481,7 @@ class RuntimeManager:
                 except Exception:
                     pass
                 pol_pct = (polar_ssp / total_ssp) if total_ssp > 4 else 0.0
-                is_chop = pol_pct > 0.70
+                is_chop = pol_pct > 0.70 if self._chop_since == 0.0 else pol_pct > 0.65
                 if is_chop and self._chop_since == 0.0:
                     self._chop_since = time.time()
                     print(f"[REGIME BLOCK] chop — polar_ssp={pol_pct:.0%} blocking all entries", file=sys.stderr)
@@ -496,7 +500,8 @@ class RuntimeManager:
                     "entries_blocked": is_chop,
                     "chop_minutes": chop_minutes,
                     "threshold_pct": 70.0,
-                    "gap_to_clear": max(0.0, round(pol_pct * 100 - 70.0, 1)) if is_chop else 0.0,
+                    "unblock_threshold": 65.0,
+                    "gap_to_clear": max(0.0, round(pol_pct * 100 - 65.0, 1)) if is_chop else 0.0,
                 }
 
                 cycle_submitted = set()
@@ -684,9 +689,19 @@ class RuntimeManager:
         strengths_now = self.graph.strengths_raw()
         bursts_now = self.burst.get_currency_bursts(returns) if self._currency_bursts is None else (self._currency_bursts or {})
         for pos in to_close:
-            traj = self._position_trajectory.pop(pos.id, [])
             price_now = prices.get(pos.symbol, pos.entry_price)
-            
+            age = time.time() - pos.entry_time
+            if age < MIN_TRADE_RUNTIME_SECONDS:
+                close_reason = "STOP_LOSS"
+                if pos.direction == "BUY" and price_now >= pos.take_profit:
+                    close_reason = "TAKE_PROFIT"
+                elif pos.direction == "SELL" and price_now <= pos.take_profit:
+                    close_reason = "TAKE_PROFIT"
+                self._deferred_closes[pos.id] = {"reason": close_reason, "request_time": time.time()}
+                print(f"[DEFER STOP] {pos.symbol} {pos.direction} age={age:.0f}s ← {MIN_TRADE_RUNTIME_SECONDS}s — deferred ({close_reason})", file=sys.stderr)
+                continue
+            traj = self._position_trajectory.pop(pos.id, [])
+
             # Determine close reason
             close_reason = "STOP_LOSS"
             if pos.direction == "BUY" and price_now >= pos.take_profit:
@@ -1153,7 +1168,39 @@ class RuntimeManager:
             regime_data=self._regime_data,
         )
 
+    def _process_deferred_closes(self, now: float | None = None) -> None:
+        if now is None:
+            now = time.time()
+
+        # 1. Process deferred close-all
+        if self._deferred_all_reason and self.executor.positions:
+            if all(now - p.entry_time >= MIN_TRADE_RUNTIME_SECONDS for p in self.executor.positions):
+                reason = self._deferred_all_reason
+                self._deferred_all_reason = None
+                print(f"[DEFER EXECUTE] close-all now eligible ({reason})", file=sys.stderr)
+                self._close_all_positions(reason)
+                return
+
+        # 2. Process deferred individual closes
+        if self._deferred_closes and self.executor.positions:
+            pos_map = {p.id: p for p in self.executor.positions}
+            eligible_ids = [pid for pid in self._deferred_closes if pid in pos_map
+                            and now - pos_map[pid].entry_time >= MIN_TRADE_RUNTIME_SECONDS]
+            if eligible_ids:
+                to_close = [pos_map[pid] for pid in eligible_ids]
+                reason = self._deferred_closes[eligible_ids[0]]["reason"]
+                for pid in eligible_ids:
+                    del self._deferred_closes[pid]
+                self._close_individual_positions(to_close, reason)
+
     def _close_all_positions(self, reason: str) -> None:
+        now = time.time()
+        young = [p for p in self.executor.positions if now - p.entry_time < MIN_TRADE_RUNTIME_SECONDS]
+        if young:
+            self._deferred_all_reason = reason
+            ages = [f"{p.symbol}={now-p.entry_time:.0f}s" for p in young]
+            print(f"[DEFER CLOSE ALL] reason={reason} positions < {MIN_TRADE_RUNTIME_SECONDS}s: {', '.join(ages)}", file=sys.stderr)
+            return
         held = list(self.executor.positions)
         self._trade_lifecycle.close_batch(reason, held)
         sp = self.graph.get_strength_persistence()
@@ -1205,10 +1252,21 @@ class RuntimeManager:
         self.risk.set_positions(self.executor.positions)
 
     def _close_individual_positions(self, positions: list, reason: str) -> None:
+        now = time.time()
+        eligible = []
+        for pos in positions:
+            age = now - pos.entry_time
+            if age < MIN_TRADE_RUNTIME_SECONDS:
+                self._deferred_closes[pos.id] = {"reason": reason, "request_time": now}
+                print(f"[DEFER CLOSE] {pos.symbol} {pos.direction} age={age:.0f}s ← {MIN_TRADE_RUNTIME_SECONDS}s — deferred ({reason})", file=sys.stderr)
+            else:
+                eligible.append(pos)
+        if not eligible:
+            return
         sp = self.graph.get_strength_persistence()
         strengths_now = self.graph.strengths_raw()
         bursts_now = self.burst.get_currency_bursts({}) if self._currency_bursts is None else (self._currency_bursts or {})
-        for pos in positions:
+        for pos in eligible:
             traj = self._position_trajectory.pop(pos.id, [])
             if traj:
                 entry = traj[0]
