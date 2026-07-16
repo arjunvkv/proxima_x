@@ -1,12 +1,12 @@
 {
-    "evaluated_count": 21169,
-    "trigger_count": 5385,
-    "executed_count": 410,
-    "blocked_count": 4975,
+    "evaluated_count": 21177,
+    "trigger_count": 5391,
+    "executed_count": 413,
+    "blocked_count": 4978,
     "spread_blocks": 167,
-    "position_blocks": 3146,
+    "position_blocks": 3147,
     "risk_blocks": 557,
-    "threshold_misses": 15784,
+    "threshold_misses": 15786,
     "symbol_stats": {
         "EURJPY": {
             "evaluated": 2713,
@@ -20,10 +20,10 @@
             "threshold_misses": 1998
         },
         "GBPJPY": {
-            "evaluated": 2344,
-            "triggered": 564,
-            "executed": 10,
-            "blocked": 554,
+            "evaluated": 2346,
+            "triggered": 566,
+            "executed": 11,
+            "blocked": 555,
             "spread_blocks": 14,
             "position_blocks": 498,
             "risk_blocks": 31,
@@ -104,24 +104,24 @@
             "threshold_misses": 207
         },
         "GBPUSD": {
-            "evaluated": 391,
-            "triggered": 69,
-            "executed": 11,
-            "blocked": 58,
+            "evaluated": 393,
+            "triggered": 71,
+            "executed": 12,
+            "blocked": 59,
             "spread_blocks": 5,
-            "position_blocks": 23,
+            "position_blocks": 24,
             "risk_blocks": 12,
             "threshold_misses": 322
         },
         "AUDUSD": {
-            "evaluated": 416,
+            "evaluated": 418,
             "triggered": 133,
             "executed": 20,
             "blocked": 113,
             "spread_blocks": 3,
             "position_blocks": 40,
             "risk_blocks": 26,
-            "threshold_misses": 283
+            "threshold_misses": 285
         },
         "USDCAD": {
             "evaluated": 560,
@@ -144,10 +144,10 @@
             "threshold_misses": 297
         },
         "GBPCAD": {
-            "evaluated": 381,
-            "triggered": 72,
-            "executed": 8,
-            "blocked": 64,
+            "evaluated": 383,
+            "triggered": 74,
+            "executed": 9,
+            "blocked": 65,
             "spread_blocks": 16,
             "position_blocks": 22,
             "risk_blocks": 15,
