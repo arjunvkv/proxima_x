@@ -60,7 +60,7 @@ MAX_TOTAL_LOTS = 3.0
 PROFIT_TARGET = 50.0
 STOP_LOSS_AMOUNT = -60.0
 PROFIT_COOLDOWN = 300
-CHOP_CLOSE_DELAY_SECONDS = 10
+CHOP_CLOSE_DELAY_SECONDS = 0
 
 EXECUTION_MODE = "live"  # "paper" for simulated, "live" for real MT5 order placement
 WLS_DIRECT_MODE = True  # bypass legacy gate layers
