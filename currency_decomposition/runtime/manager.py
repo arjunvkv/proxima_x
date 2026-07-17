@@ -33,6 +33,8 @@ from dashboard.nme_dashboard import NMEDashboard
 from dashboard.bar_dashboard import BarStateDashboard
 
 
+import MetaTrader5 as _mt5
+
 class RuntimeManager:
     def __init__(self):
         self.running = False
@@ -40,6 +42,7 @@ class RuntimeManager:
         self._chop_since: float = 0.0
         self.shutdown_event = threading.Event()
         self._force_exit = False
+        self._server_time_offset: float | None = None
 
         self.mt5 = MT5Adapter()
         self.store = TickStore()
@@ -134,6 +137,18 @@ class RuntimeManager:
         self._deferred_closes: dict[str, dict] = {}
         self._deferred_all_reason: str | None = None
         self.dashboard_process = None
+
+    @property
+    def _server_now(self) -> float:
+        if self._server_time_offset is None:
+            self._server_time_offset = 0.0
+            try:
+                tick = _mt5.symbol_info_tick("EURUSD")
+                if tick:
+                    self._server_time_offset = time.time() - float(tick.time)
+            except Exception:
+                pass
+        return time.time() - self._server_time_offset
 
     def start(self) -> None:
         self._setup_signal_handlers()
@@ -285,7 +300,7 @@ class RuntimeManager:
 
     def _process_batches(self, batches: list[TickBatch]) -> None:
         now = time.time()
-        self._process_deferred_closes(now)
+        self._process_deferred_closes()
 
         for batch in batches:
             self.store.add_ticks(batch.ticks)
@@ -708,7 +723,7 @@ class RuntimeManager:
         bursts_now = self.burst.get_currency_bursts(returns) if self._currency_bursts is None else (self._currency_bursts or {})
         for pos in to_close:
             price_now = prices.get(pos.symbol, pos.entry_price)
-            age = time.time() - pos.entry_time
+            age = self._server_now - pos.entry_time
             close_reason = "STOP_LOSS"
             if pos.direction == "BUY" and price_now >= pos.take_profit:
                 close_reason = "TAKE_PROFIT"
@@ -1183,12 +1198,11 @@ class RuntimeManager:
         )
 
     def _process_deferred_closes(self, now: float | None = None) -> None:
-        if now is None:
-            now = time.time()
+        srv_now = self._server_now
 
         # 1. Process deferred close-all
         if self._deferred_all_reason and self.executor.positions:
-            if all(now - p.entry_time >= MIN_TRADE_RUNTIME_SECONDS for p in self.executor.positions):
+            if all(srv_now - p.entry_time >= MIN_TRADE_RUNTIME_SECONDS for p in self.executor.positions):
                 reason = self._deferred_all_reason
                 self._deferred_all_reason = None
                 print(f"[DEFER EXECUTE] close-all now eligible ({reason})", file=sys.stderr)
@@ -1199,7 +1213,7 @@ class RuntimeManager:
         if self._deferred_closes and self.executor.positions:
             pos_map = {p.id: p for p in self.executor.positions}
             eligible_ids = [pid for pid in self._deferred_closes if pid in pos_map
-                            and now - pos_map[pid].entry_time >= MIN_TRADE_RUNTIME_SECONDS]
+                            and srv_now - pos_map[pid].entry_time >= MIN_TRADE_RUNTIME_SECONDS]
             if eligible_ids:
                 to_close = [pos_map[pid] for pid in eligible_ids]
                 reason = self._deferred_closes[eligible_ids[0]]["reason"]
@@ -1208,11 +1222,11 @@ class RuntimeManager:
                 self._close_individual_positions(to_close, reason)
 
     def _close_all_positions(self, reason: str) -> None:
-        now = time.time()
-        young = [p for p in self.executor.positions if now - p.entry_time < MIN_TRADE_RUNTIME_SECONDS]
+        srv_now = self._server_now
+        young = [p for p in self.executor.positions if srv_now - p.entry_time < MIN_TRADE_RUNTIME_SECONDS]
         if young:
             self._deferred_all_reason = reason
-            ages = [f"{p.symbol}={now-p.entry_time:.0f}s" for p in young]
+            ages = [f"{p.symbol}={srv_now-p.entry_time:.0f}s" for p in young]
             print(f"[DEFER CLOSE ALL] reason={reason} positions < {MIN_TRADE_RUNTIME_SECONDS}s: {', '.join(ages)}", file=sys.stderr)
             return
         held = list(self.executor.positions)
@@ -1266,12 +1280,12 @@ class RuntimeManager:
         self.risk.set_positions(self.executor.positions)
 
     def _close_individual_positions(self, positions: list, reason: str) -> None:
-        now = time.time()
+        srv_now = self._server_now
         eligible = []
         for pos in positions:
-            age = now - pos.entry_time
+            age = srv_now - pos.entry_time
             if age < MIN_TRADE_RUNTIME_SECONDS:
-                self._deferred_closes[pos.id] = {"reason": reason, "request_time": now}
+                self._deferred_closes[pos.id] = {"reason": reason, "request_time": srv_now}
                 print(f"[DEFER CLOSE] {pos.symbol} {pos.direction} age={age:.0f}s ← {MIN_TRADE_RUNTIME_SECONDS}s — deferred ({reason})", file=sys.stderr)
             else:
                 eligible.append(pos)
