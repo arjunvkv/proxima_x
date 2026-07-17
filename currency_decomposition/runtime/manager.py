@@ -576,6 +576,16 @@ class RuntimeManager:
                             if abs(avg_swing_pips) < 1.0:
                                 print(f"[SWING BLOCK] {h.symbol} avg_swing={abs(avg_swing_pips):.1f}p < 1.0p (noise)", file=sys.stderr)
                                 continue
+                        # Block exhausted swing: rem_up_price == 0 (BUY) or rem_dn_price == 0 (SELL)
+                        if stats is not None and open_price is not None and open_price > 0:
+                            rem_dn_exhausted = max(0.0, current_price - (open_price + avg_dn))
+                            rem_up_exhausted = max(0.0, (open_price + avg_up) - current_price)
+                            if h.direction > 0 and rem_up_exhausted == 0:
+                                print(f"[SWING BLOCK] {h.symbol} BUY — rem_up=0 (swing exhausted)", file=sys.stderr)
+                                continue
+                            if h.direction < 0 and rem_dn_exhausted == 0:
+                                print(f"[SWING BLOCK] {h.symbol} SELL — rem_dn=0 (swing exhausted)", file=sys.stderr)
+                                continue
 
                     sl_price = None
                     tp_price = None
@@ -691,23 +701,19 @@ class RuntimeManager:
         for pos in to_close:
             price_now = prices.get(pos.symbol, pos.entry_price)
             age = time.time() - pos.entry_time
-            if age < MIN_TRADE_RUNTIME_SECONDS:
-                close_reason = "STOP_LOSS"
-                if pos.direction == "BUY" and price_now >= pos.take_profit:
-                    close_reason = "TAKE_PROFIT"
-                elif pos.direction == "SELL" and price_now <= pos.take_profit:
-                    close_reason = "TAKE_PROFIT"
-                self._deferred_closes[pos.id] = {"reason": close_reason, "request_time": time.time()}
-                print(f"[DEFER STOP] {pos.symbol} {pos.direction} age={age:.0f}s ← {MIN_TRADE_RUNTIME_SECONDS}s — deferred ({close_reason})", file=sys.stderr)
-                continue
-            traj = self._position_trajectory.pop(pos.id, [])
-
-            # Determine close reason
             close_reason = "STOP_LOSS"
             if pos.direction == "BUY" and price_now >= pos.take_profit:
                 close_reason = "TAKE_PROFIT"
             elif pos.direction == "SELL" and price_now <= pos.take_profit:
                 close_reason = "TAKE_PROFIT"
+            if age < MIN_TRADE_RUNTIME_SECONDS:
+                if close_reason == "TAKE_PROFIT":
+                    pass
+                else:
+                    self._deferred_closes[pos.id] = {"reason": close_reason, "request_time": time.time()}
+                    print(f"[DEFER STOP] {pos.symbol} {pos.direction} age={age:.0f}s ← {MIN_TRADE_RUNTIME_SECONDS}s — deferred ({close_reason})", file=sys.stderr)
+                    continue
+            traj = self._position_trajectory.pop(pos.id, [])
 
             if traj:
                 entry = traj[0]
