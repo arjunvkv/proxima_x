@@ -37,6 +37,7 @@ class CurrencyGraph:
         self.state.strengths = {c: 0.0 for c in CURRENCY_LIST}
         self.state.prior = {c: 0.0 for c in CURRENCY_LIST}
         self.state.covariance = np.eye(len(CURRENCY_LIST)).tolist()
+        self.state.observability = {c: 0.0 for c in CURRENCY_LIST}
         self.state.quality = 0.5
 
     def update(self, returns: dict[str, float], weights: Optional[dict[str, float]] = None,

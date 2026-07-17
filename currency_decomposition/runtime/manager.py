@@ -492,6 +492,7 @@ class RuntimeManager:
                     if self._chop_since > 0.0:
                         print(f"[CHOP UNBLOCK] chop cleared — resetting system to cycle 1", file=sys.stderr)
                         self._reset_after_profit_target()
+                        candidates = []
                     self._chop_since = 0.0
                 chop_minutes = round((time.time() - self._chop_since) / 60.0, 1) if is_chop and self._chop_since > 0 else 0.0
                 self._regime_data = {
