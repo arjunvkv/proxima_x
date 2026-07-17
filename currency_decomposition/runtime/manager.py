@@ -610,6 +610,13 @@ class RuntimeManager:
                                 if pair2 in last_prices:
                                     rate = last_prices[pair2]
                                     usd_quote_rate = 1.0 / rate if rate > 0 else 1.0
+                            # Fallback: derive from EUR cross when direct quote unavailable
+                            if usd_quote_rate == 1.0:
+                                eur_pair = f"EUR{quote_ccy}{suffix}"
+                                if eur_pair in last_prices and "EURUSD" in last_prices:
+                                    eurusd = last_prices["EURUSD"]
+                                    rate = last_prices[eur_pair] / eurusd if eurusd > 0 else 1.0
+                                    usd_quote_rate = rate if rate > 0 else 1.0
                         
                         # 2. Dollar-based stop loss (-60.0 USD)
                         sl_usd_abs = abs(STOP_LOSS_AMOUNT) if STOP_LOSS_AMOUNT else 60.0
