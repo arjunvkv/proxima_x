@@ -1,0 +1,17 @@
+strategy: template
+mt5_account: 0
+mt5_path: null
+pairs:
+  - EURUSD
+  - GBPAUD
+hold_bars: 3
+session:
+  start_utc: 7
+  end_utc: 21
+risk:
+  max_concurrent: 3
+  max_spread_mult: 1.5
+  max_daily_loss: 500
+lot_size: 1.0
+mag_thresh: 0.002
+description: "Copy this folder, rename, implement generate_signal()"

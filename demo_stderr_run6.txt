@@ -1,9 +1,0 @@
-Traceback (most recent call last):
-  File "C:\Trading\Agentic_Trading\proxima_x\run_proxima_demo.py", line 6145, in <module>
-    main()
-  File "C:\Trading\Agentic_Trading\proxima_x\run_proxima_demo.py", line 6132, in main
-    demo.run_demo()
-  File "C:\Trading\Agentic_Trading\proxima_x\run_proxima_demo.py", line 5156, in run_demo
-    regime=_regime, cycle_id=self._cycle_id,
-           ^^^^^^^
-NameError: name '_regime' is not defined

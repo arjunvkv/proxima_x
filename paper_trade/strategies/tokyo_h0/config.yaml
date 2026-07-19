@@ -1,0 +1,37 @@
+strategy: tokyo_h0
+mt5_account: 5053225887
+mt5_path: null
+pairs:
+  - EURUSD
+  - EURGBP
+  - EURJPY
+  - EURCHF
+  - EURAUD
+  - EURCAD
+  - EURNZD
+  - GBPUSD
+  - GBPJPY
+  - GBPCHF
+  - GBPAUD
+  - GBPCAD
+  - GBPNZD
+  - USDJPY
+  - USDCHF
+  - USDCAD
+  - AUDCAD
+  - AUDNZD
+hold_bars: 15
+session:
+  start_utc: 0
+  end_utc: 0
+risk:
+  max_concurrent: 3
+  max_spread_mult: 2.0
+  max_daily_loss: 1250
+lot_size: 0.25
+min_pairs: 8
+lookback_seconds: 900
+top_n: 3
+gap_threshold_pct: 0.5
+stop_loss_pips: 20
+description: "Tokyo Hour 0 — cross-pair mean reversion at 00:00 UTC. LONG 3 most-declined pairs from 18-pair universe, hold 15 min. Validated 77.8% OOS WR."

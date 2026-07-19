@@ -28,6 +28,9 @@ dashboard/node_modules/
 logs/
 demo_pid.txt
 
+# Paper trade runtime artifacts
+paper_trade/live/
+
 # Runtime state
 state/
 runtime_state/
@@ -73,12 +76,22 @@ replay_output.txt
 replay_raw.txt
 start_background.ps1
 start_demo.ps1
+null
+
+# Demo run output
+demo_output_*.txt
+demo_stderr_*.txt
 
 # Graph visualization output
 graphify-out/
 
 # Research data (non-source)
 research/*/data/
+research/*/dukascopy_data/
+research/*/tick_data/
+
+# Exness tick data
+data/exness_ticks/
 
 # Analysis and tools (not part of core)
 analysis/

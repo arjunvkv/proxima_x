@@ -15,6 +15,7 @@ from data.tick_store import TickStore
 from currency.graph import CurrencyGraph
 from direction.hypothesis import HypothesisGenerator
 from features.bar_state import BarStateEngine
+from features.price_action import PriceActionConfirmer
 from portfolio.drs import DRS
 from portfolio.concentration import CurrencyConcentration
 from risk.safety import RiskEngine
@@ -25,12 +26,14 @@ from monitoring.dashboard import Dashboard
 from monitoring.trade_journal import TradeJournal
 from .health import HealthMonitor
 from .trade_lifecycle import TradeLifecycleLogger
+from monitoring.trade_lab import TradeLabLogger
 from features.participation_burst import ParticipationBurstEngine
 from features.directional_efficiency import DirectionalEfficiency
 from narrative import NarrativeEngine, NarrativeInput, NarrativeState
 from narrative.overlay import narrative_quality, narrative_health_score
 from dashboard.nme_dashboard import NMEDashboard
 from dashboard.bar_dashboard import BarStateDashboard
+from state.market_state import MarketStateVector
 
 
 import MetaTrader5 as _mt5
@@ -49,9 +52,11 @@ class RuntimeManager:
         self.burst = ParticipationBurstEngine()
         self.efficiency = DirectionalEfficiency()
         self.graph = CurrencyGraph()
+        self.market_state = MarketStateVector()
         self.generator = HypothesisGenerator()
         self.drs = DRS()
         self.bar_state = BarStateEngine(self.mt5, self.store)
+        self.pa_confirmer = PriceActionConfirmer(self.store)
         self.risk = RiskEngine()
         if EXECUTION_MODE == "live":
             self.executor = MT5Executor(self.mt5)
@@ -102,6 +107,11 @@ class RuntimeManager:
         self.nme_dashboard = NMEDashboard()
         self.bar_dashboard = BarStateDashboard()
         self._trade_lifecycle = TradeLifecycleLogger()
+        self.trade_lab = TradeLabLogger()
+        self._paper_positions: dict = {}
+        self._live_trade_lab_ids: dict = {}
+        self._live_has_been_positive: dict[int, bool] = {}
+        self._last_tl_snapshot: float = 0.0
 
         self._tick_queue = Queue(maxsize=1000)
         self._tick_thread: Optional[threading.Thread] = None
@@ -244,6 +254,9 @@ class RuntimeManager:
         self.mt5.disconnect()
         print("Shutdown complete.")
 
+    EARLY_EXIT_PNL_THRESHOLD = -5.0
+    EARLY_EXIT_AGE_MIN = 32
+
     def _tick_worker(self) -> None:
         poll_interval = 5.0
         while not self.shutdown_event.is_set():
@@ -263,6 +276,11 @@ class RuntimeManager:
 
     def _decision_worker(self) -> None:
         while not self.shutdown_event.is_set():
+            # Process pending delete commands from web dashboard
+            self.trade_lab.process_pending_commands()
+            # Record high-frequency trade snapshots
+            if self.executor.positions or self._paper_positions:
+                self._record_trade_lab_snapshots()
             try:
                 batches = []
                 batch = self._tick_queue.get(timeout=1.0)
@@ -307,6 +325,56 @@ class RuntimeManager:
             for tick in batch.ticks:
                 self.burst.update(tick.symbol, tick.volume)
                 self.efficiency.update(tick.symbol, tick.mid)
+                
+                # ── TRADE LAB TICK PRECISION LOGGING & SL/TP CHECK ──
+                # 1. Live positions
+                for _lp in self.executor.positions:
+                    if _lp.symbol == tick.symbol:
+                        _tl_lt = self._live_trade_lab_ids.get(_lp.id)
+                        # Track whether live trade has ever been profitable
+                        if _lp.pnl is not None:
+                            if _lp.pnl > 0:
+                                self._live_has_been_positive[_lp.id] = True
+                            # Early distress exit REMOVED — user wants to let trades run
+                        if _tl_lt:
+                            _tl_nmi = round(self._nme_narrative.nmi, 3) if self._nme_narrative else 0.0
+                            _tl_health = round(narrative_health_score(self._nme_narrative), 3) if self._nme_narrative else 0.0
+                            _tl_pol = self._regime_data.get("polarized_ssp_pct", 0.0)
+                            _tl_regime = self._regime_data.get("regime", "N/A")
+                            self.trade_lab.record_tick(_tl_lt, {
+                                "t": round(tick.timestamp), "p": round(tick.mid, 6),
+                                "pnl": round(_lp.pnl or 0.0, 2), "nmi": _tl_nmi, "health": _tl_health,
+                                "pol": _tl_pol, "regime": _tl_regime,
+                            })
+                # 2. Paper positions
+                for _ptid, _pp in list(self._paper_positions.items()):
+                    if _pp["symbol"] == tick.symbol:
+                        _ppnl = self._calc_paper_pnl(_pp, tick.mid)
+                        _tl_nmi = round(self._nme_narrative.nmi, 3) if self._nme_narrative else 0.0
+                        _tl_health = round(narrative_health_score(self._nme_narrative), 3) if self._nme_narrative else 0.0
+                        _tl_pol = self._regime_data.get("polarized_ssp_pct", 0.0)
+                        _tl_regime = self._regime_data.get("regime", "N/A")
+                        self.trade_lab.record_tick(_ptid, {
+                            "t": round(tick.timestamp), "p": round(tick.mid, 6),
+                            "pnl": round(_ppnl, 2), "nmi": _tl_nmi, "health": _tl_health,
+                            "pol": _tl_pol, "regime": _tl_regime,
+                        })
+                        # Track whether trade has ever been profitable
+                        if _ppnl > 0:
+                            _pp["has_been_positive"] = True
+                        # Check SL/TP at tick precision for paper trades
+                        _dir = _pp["direction"]
+                        if _dir == "BUY":
+                            if _pp["sl"] > 0 and tick.mid <= _pp["sl"]:
+                                self._close_paper_trade(_ptid, tick.mid, "STOP_LOSS", _tl_pol, _tl_regime, _tl_nmi, _tl_health)
+                            elif _pp.get("tp") and _pp["tp"] > 0 and tick.mid >= _pp["tp"]:
+                                self._close_paper_trade(_ptid, tick.mid, "TAKE_PROFIT", _tl_pol, _tl_regime, _tl_nmi, _tl_health)
+                        else:
+                            if _pp["sl"] > 0 and tick.mid >= _pp["sl"]:
+                                self._close_paper_trade(_ptid, tick.mid, "STOP_LOSS", _tl_pol, _tl_regime, _tl_nmi, _tl_health)
+                            elif _pp.get("tp") and _pp["tp"] > 0 and tick.mid <= _pp["tp"]:
+                                self._close_paper_trade(_ptid, tick.mid, "TAKE_PROFIT", _tl_pol, _tl_regime, _tl_nmi, _tl_health)
+                        # Early distress exit REMOVED — user wants to let trades run
             self.executor.update_prices(batch.ticks)
             for pos in self.executor.positions:
                 if pos.id not in self._position_trajectory:
@@ -331,14 +399,14 @@ class RuntimeManager:
                 self._close_all_positions("PROFIT_TARGET")
                 self._reset_after_profit_target()
                 self.dashboard.latest_event = {"event": "PROFIT_TARGET", "time": now}
-            # ── Close all on chop safety net ────────────────
-            if (self._regime_data.get("regime") == "CHOP"
-                    and self.executor.positions
-                    and self._chop_since > 0
-                    and (time.time() - self._chop_since) >= CHOP_CLOSE_DELAY_SECONDS):
-                print(f"[CHOP CLOSE] chop persisted {CHOP_CLOSE_DELAY_SECONDS}s — closing all", file=sys.stderr)
-                self._close_all_positions("CHOP_DETECTED")
-                self._chop_since = 0.0
+            # ── Close all on chop safety net (TEMP DISABLED) ─
+            # if (self._regime_data.get("regime") == "CHOP"
+            #         and self.executor.positions
+            #         and self._chop_since > 0
+            #         and (time.time() - self._chop_since) >= CHOP_CLOSE_DELAY_SECONDS):
+            #     print(f"[CHOP CLOSE] chop persisted {CHOP_CLOSE_DELAY_SECONDS}s — closing all", file=sys.stderr)
+            #     self._close_all_positions("CHOP_DETECTED")
+            #     self._chop_since = 0.0
 
         returns = self.store.calculate_returns()
         if self._available_symbols:
@@ -352,6 +420,7 @@ class RuntimeManager:
             self.graph.update(returns, weights, now, available_count=len(self._available_symbols))
             solve_ms = (time.time() - solve_start) * 1000
             self.health.record_solve(solve_ms)
+            self.market_state.update(returns, weights, self.graph.state.prior, now)
 
         hypotheses = []
 
@@ -382,46 +451,42 @@ class RuntimeManager:
                       f"top.symbol={hypotheses[0].symbol} top.dir={'BUY' if hypotheses[0].direction>0 else 'SELL'} "
                       f"top.spread={hypotheses[0].base_strength-hypotheses[0].quote_strength:.6f}",
                       file=sys.stderr)
-            if self._top_burst_pairs:
+            # ── MARKET STATE REGIME GATE ────────────────────────
+            ms = self.market_state.latest()
+            if ms is not None:
+                entry_allowed, reason = self.market_state.entry_allowed(ms)
+                if not entry_allowed:
+                    print(f"[REGIME BLOCK] {reason}", file=sys.stderr)
+                    hypotheses = []
+            # ── BURST FILTER (binary gate only) ──────────────────
+            if hypotheses and self._top_burst_pairs:
                 self._currency_bursts = self.burst.get_currency_bursts(returns)
                 self._persistence = self.burst.get_persistence()
                 burst_lookup = {p: i for i, p in enumerate(self._top_burst_pairs)}
-                for h in hypotheses:
-                    rank = burst_lookup.get(h.symbol)
-                    if rank is None:
-                        h.confidence = h.confidence * 0.5
-                    elif rank >= 3:
-                        h.confidence = h.confidence * 0.8
-            # ── DIRECTIONAL EFFICIENCY FILTER ─────────────────────
+                burst_filtered = [h for h in hypotheses if h.symbol in burst_lookup]
+                if burst_filtered:
+                    print(f"[BURST] pass={len(burst_filtered)}/{len(hypotheses)}", file=sys.stderr)
+                    hypotheses = burst_filtered
+            # ── DIRECTIONAL EFFICIENCY FILTER (binary gate only) ─
             if hypotheses:
                 der_values = self.efficiency.get_all_der()
-                der_filtered = []
-                for h in hypotheses:
-                    der = der_values.get(h.symbol, 0.0)
-                    if der < 0.10:
-                        print(f"[TRACE] der_reject={h.symbol} der={der:.3f}", file=sys.stderr)
-                        continue
-                    prev_der = self.efficiency.get_previous_der(h.symbol)
-                    der_change = der - prev_der
-                    effective_der = der + 0.5 * der_change
-                    der_factor = 0.8 + 0.4 * effective_der
-                    der_factor = min(1.2, max(0.0, der_factor))
-                    h.confidence = min(1.0, h.confidence * der_factor)
-                    der_filtered.append(h)
-                print(f"[TRACE] der_pass={len(der_filtered)}/{len(hypotheses)}", file=sys.stderr)
+                der_filtered = [h for h in hypotheses if der_values.get(h.symbol, 0.0) >= 0.10]
+                print(f"[DER] pass={len(der_filtered)}/{len(hypotheses)}", file=sys.stderr)
                 hypotheses = der_filtered
                 self.efficiency.finalize_cycle()
             self._pipeline_metrics["burst_hyp"] = len(hypotheses)
 
-            # ── BAR STATE ALIGNMENT (replaces SWPS) ─────────────
+            # ── BAR STATE ALIGNMENT (binary gate only) ─────────
             if self.bar_state.update():
                 pre = len(hypotheses)
+                bar_filtered = []
                 for h in hypotheses:
                     align = self.bar_state.alignment(h.symbol, h.direction)
-                    h.confidence = min(1.0, h.confidence * align)
-                    if align < 0.40:
+                    if align >= 0.40:
+                        bar_filtered.append(h)
+                    else:
                         print(f"[BAR STATE] reject={h.symbol} align={align:.3f}", file=sys.stderr)
-                hypotheses = [h for h in hypotheses if h.confidence >= MIN_CONFIDENCE]
+                hypotheses = bar_filtered
                 print(f"[BAR STATE] aligned={len(hypotheses)}/{pre}  {self.bar_state.get_summary()}", file=sys.stderr)
             else:
                 print("[BAR STATE] not ready — no bar alignment", file=sys.stderr)
@@ -453,10 +518,11 @@ class RuntimeManager:
             _q = self.graph.state.quality
             nme_ready = self._nme_narrative is not None
             print(f"[GATE] allowed={_a} prod={self._production_ready} nme={nme_ready} hyp={len(hypotheses)} ap={_ap} q={_q:.3f} conn={_c:.3f} direct={WLS_DIRECT_MODE}", file=sys.stderr)
-            gate_pass = (WLS_DIRECT_MODE or (_a and self._production_ready)) and nme_ready
+            gate_pass = True  # NME demoted: direction is now suggestion, not gate
             if gate_pass:
                 ranked = self.drs.rank(hypotheses)
                 self._pipeline_metrics["ranked"] = len(ranked)
+                _pre_chop_ranked = list(ranked)  # save before pos/cooldown/chop filtering (paper fire uses this)
                 pos_count = self.executor.position_count()
                 open_count = pos_count
                 print(f"[POSITION STATE] executor={len(self.executor.positions)} count={pos_count}", file=sys.stderr)
@@ -496,14 +562,11 @@ class RuntimeManager:
                 except Exception:
                     pass
                 pol_pct = (polar_ssp / total_ssp) if total_ssp > 4 else 0.0
-                is_chop = pol_pct > 0.70 if self._chop_since == 0.0 else pol_pct > 0.65
+                is_chop = False  # TEMP: chop block removed for testing
                 if is_chop and self._chop_since == 0.0:
                     self._chop_since = time.time()
-                    print(f"[REGIME BLOCK] chop — polar_ssp={pol_pct:.0%} blocking all entries", file=sys.stderr)
-                    candidates = []
-                elif is_chop:
-                    candidates = []
-                else:
+                    print(f"[REGIME BLOCK] chop — polar_ssp={pol_pct:.0%} blocking live entries (paper allowed)", file=sys.stderr)
+                elif not is_chop:
                     if self._chop_since > 0.0:
                         print(f"[CHOP UNBLOCK] chop cleared — resetting system to cycle 1", file=sys.stderr)
                         self._reset_after_profit_target()
@@ -530,8 +593,23 @@ class RuntimeManager:
                     if symdir in cycle_submitted:
                         continue
                     # ── DUPLICATE POSITION CHECK ───────────────────
-                    if any(p.symbol == h.symbol and p.direction == dir_label for p in self.executor.positions):
-                        print(f"[DUPLICATE BLOCK] {h.symbol} {dir_label} already active — open positions: {[(p.symbol, p.direction) for p in self.executor.positions]}", file=sys.stderr)
+                    if not is_chop:
+                        if any(p.symbol == h.symbol and p.direction == dir_label for p in self.executor.positions):
+                            print(f"[DUPLICATE BLOCK] {h.symbol} {dir_label} already active in live", file=sys.stderr)
+                            continue
+                    else:
+                        if any(pp.get("symbol") == h.symbol and pp.get("direction") == dir_label for pp in self._paper_positions.values()):
+                            print(f"[DUPLICATE BLOCK] {h.symbol} {dir_label} already active in paper", file=sys.stderr)
+                            continue
+                    # ── NME SUGGESTION CHECK ─────────────────────
+                    nme_dir = self.nme.suggest_direction(h.symbol)
+                    if nme_dir != 0.0 and (nme_dir > 0) != (h.direction > 0):
+                        print(f"[NME BLOCK] {h.symbol} {dir_label} — NME suggests {'BUY' if nme_dir>0 else 'SELL'} (leader={self.nme.tracker.active.identity.leader if self.nme.tracker.active else '?'})", file=sys.stderr)
+                        continue
+                    # ── PRICE ACTION CONFIRMATION ────────────────
+                    pa_score = self.pa_confirmer.confirm(h.symbol, h.direction)
+                    if pa_score < 0.34:
+                        print(f"[PA BLOCK] {h.symbol} {dir_label} — pa_score={pa_score:.2f} < 0.34", file=sys.stderr)
                         continue
                     # ── BAR STATE ENTRY GATE (final check) ─────────
                     bar_align = self.bar_state.alignment(h.symbol, h.direction)
@@ -574,10 +652,10 @@ class RuntimeManager:
                         if decision == "BLOCK":
                             print(f"[SWING BLOCK] {h.symbol} {dir_label} state={swing_state} pos={position_state}", file=sys.stderr)
                             continue
-                        # Block LATE (override CAUTION → BLOCK)
-                        if swing_state == "LATE":
-                            print(f"[SWING BLOCK] {h.symbol} {dir_label} state=LATE (late entry)", file=sys.stderr)
-                            continue
+                        # Block LATE — disabled per user request, letting PA + early exit manage risk
+                        # if swing_state == "LATE":
+                        #     print(f"[SWING BLOCK] {h.symbol} {dir_label} state=LATE (late entry)", file=sys.stderr)
+                        #     continue
                         # Direction-checked BREAKOUT: block BUY if sell_ssp>1 (BREAKOUT_DOWN), SELL if buy_ssp>1 (BREAKOUT_UP)
                         if ssp_data is not None:
                             if h.direction > 0 and ssp_data.get("sell_ssp", 0) > 1.0:
@@ -662,56 +740,126 @@ class RuntimeManager:
                                 print(f"[TP BLOCK] {h.symbol} {dir_label} tp_dist={tp_dist:.5f} < {min_tp_dist} (<2p min)", file=sys.stderr)
                                 continue
 
-                    result = self.executor.execute(h, sl=sl_price, tp=tp_price)
-                    if result.success:
-                        cycle_submitted.add(symdir)
-                        self._pipeline_metrics["executed"] += 1
-                        if self._batch_open_cycle == 0:
-                            self._batch_open_cycle = self._cycle_count
-                        self.drs.record_position(
-                            next(p for p in self.executor.positions if p.id == result.position_id)
-                        )
-                        if self._nme_narrative is not None:
-                            self._nme_trade_snapshots.append({
-                                "time": time.time(),
-                                "symbol": h.symbol,
-                                "direction": "BUY" if h.direction > 0 else "SELL",
-                                "leader": self._nme_narrative.identity.leader,
-                                "nmi": round(self._nme_narrative.nmi, 2),
-                                "phase": self._nme_narrative.phase.value,
+                    if not is_chop:
+                        result = self.executor.execute(h, sl=sl_price, tp=tp_price)
+                        if result.success:
+                            # ── TRADE LAB: record live trade open ─────────────────────────
+                            _tl_bl = {p: i for i, p in enumerate(self._top_burst_pairs)} if self._top_burst_pairs else {}
+                            _tl_br = (_tl_bl.get(h.symbol, -1) + 1) or None
+                            _tl_der = self.efficiency.get_all_der().get(h.symbol, 0.0)
+                            _tl_tid = f"live_{h.symbol}_{result.position_id}"
+                            self.trade_lab.fire_trade(_tl_tid, h.symbol, dir_label, result.price, now, True, {
+                                "confidence": round(h.confidence, 3),
+                                "bar_align": round(bar_align, 3),
+                                "der": round(_tl_der, 3),
+                                "burst_rank": _tl_br,
+                                "nme_leader": self._nme_narrative.identity.leader if self._nme_narrative else None,
+                                "nme_dir": ("BUY" if self._nme_narrative.identity.direction > 0 else "SELL") if self._nme_narrative else None,
+                                "nme_nmi": round(self._nme_narrative.nmi, 3) if self._nme_narrative else None,
+                                "nme_phase": self._nme_narrative.phase.value if self._nme_narrative else None,
+                                "pol_pct": round(pol_pct * 100, 1),
+                                "regime": "TREND",
+                                "chop_fired": False,
+                                "sl_price": round(sl_price, 6) if sl_price else None,
+                                "tp_price": round(tp_price, 6) if tp_price else None,
                             })
-                        self.risk.set_positions(self.executor.positions)
-                        sp = self.graph.get_strength_persistence()
-                        pos = next((p for p in self.executor.positions if p.id == result.position_id), None)
-                        pos_sl = pos.stop_loss if pos else 0.0
-                        pos_tp = pos.take_profit if pos else 0.0
-                        self.journal.record_open(
-                            position_id=result.position_id,
-                            symbol=h.symbol,
-                            direction="BUY" if h.direction > 0 else "SELL",
-                            entry_price=result.price,
-                            volume=LOT_SIZE,
-                            confidence=h.confidence,
-                            drs_score=h.drs_score,
-                            strengths=self.graph.strengths_raw(),
-                            peaks={c: v["peak"] for c, v in sp.items()},
-                            troughs={c: v["trough"] for c, v in sp.items()},
-                            streaks={c: v["streak"] for c, v in sp.items()},
-                            bursts=self.burst.get_currency_bursts(returns) if self._currency_bursts is None else (self._currency_bursts or {}),
-                            sl=pos_sl,
-                            tp=pos_tp,
-                        )
-                        self._symbol_trade_history[h.symbol] = {
-                            "status": "RUNNING",
-                            "direction": "BUY" if h.direction > 0 else "SELL",
-                            "entry_price": result.price,
-                            "sl": pos_sl,
-                            "tp": pos_tp,
-                            "ts": time.time(),
-                        }
+                            self._live_trade_lab_ids[result.position_id] = _tl_tid
+                            # ── END TRADE LAB ──────────────────────────────────────────────
+                            cycle_submitted.add(symdir)
+                            self._pipeline_metrics["executed"] += 1
+                            if self._batch_open_cycle == 0:
+                                self._batch_open_cycle = self._cycle_count
+                            self.drs.record_position(
+                                next(p for p in self.executor.positions if p.id == result.position_id)
+                            )
+                            if self._nme_narrative is not None:
+                                self._nme_trade_snapshots.append({
+                                    "time": time.time(),
+                                    "symbol": h.symbol,
+                                    "direction": "BUY" if h.direction > 0 else "SELL",
+                                    "leader": self._nme_narrative.identity.leader,
+                                    "nmi": round(self._nme_narrative.nmi, 2),
+                                    "phase": self._nme_narrative.phase.value,
+                                })
+                            self.risk.set_positions(self.executor.positions)
+                            sp = self.graph.get_strength_persistence()
+                            pos = next((p for p in self.executor.positions if p.id == result.position_id), None)
+                            pos_sl = pos.stop_loss if pos else 0.0
+                            pos_tp = pos.take_profit if pos else 0.0
+                            self.journal.record_open(
+                                position_id=result.position_id,
+                                symbol=h.symbol,
+                                direction="BUY" if h.direction > 0 else "SELL",
+                                entry_price=result.price,
+                                volume=LOT_SIZE,
+                                confidence=h.confidence,
+                                drs_score=h.drs_score,
+                                strengths=self.graph.strengths_raw(),
+                                peaks={c: v["peak"] for c, v in sp.items()},
+                                troughs={c: v["trough"] for c, v in sp.items()},
+                                streaks={c: v["streak"] for c, v in sp.items()},
+                                bursts=self.burst.get_currency_bursts(returns) if self._currency_bursts is None else (self._currency_bursts or {}),
+                                sl=pos_sl,
+                                tp=pos_tp,
+                            )
+                            self._symbol_trade_history[h.symbol] = {
+                                "status": "RUNNING",
+                                "direction": "BUY" if h.direction > 0 else "SELL",
+                                "entry_price": result.price,
+                                "sl": pos_sl,
+                                "tp": pos_tp,
+                                "ts": time.time(),
+                            }
+                        else:
+                            self.last_exec_fail = f"{h.symbol} {result.reason}"
+                            print(f"[EXEC FAIL] {h.symbol} {result.reason}", file=sys.stderr)
                     else:
-                        self.last_exec_fail = f"{h.symbol} {result.reason}"
-                        print(f"[EXEC FAIL] {h.symbol} {result.reason}", file=sys.stderr)
+                        # Fire as PAPER (since chop blocked it)
+                        _tl_bl = {p: i for i, p in enumerate(self._top_burst_pairs)} if self._top_burst_pairs else {}
+                        _tl_br = (_tl_bl.get(h.symbol, -1) + 1) or None
+                        _tl_der = self.efficiency.get_all_der().get(h.symbol, 0.0)
+                        _p_tid = f"paper_{h.symbol}_{dir_label}_{round(now)}"
+                        
+                        self.trade_lab.fire_trade(_p_tid, h.symbol, dir_label, current_price, now, False, {
+                            "confidence": round(h.confidence, 3),
+                            "bar_align": round(bar_align, 3),
+                            "der": round(_tl_der, 3),
+                            "burst_rank": _tl_br,
+                            "nme_leader": self._nme_narrative.identity.leader if self._nme_narrative else None,
+                            "nme_dir": ("BUY" if self._nme_narrative.identity.direction > 0 else "SELL") if self._nme_narrative else None,
+                            "nme_nmi": round(self._nme_narrative.nmi, 3) if self._nme_narrative else None,
+                            "nme_phase": self._nme_narrative.phase.value if self._nme_narrative else None,
+                            "pol_pct": round(pol_pct * 100, 1),
+                            "regime": "CHOP",
+                            "chop_fired": True,
+                            "sl_price": round(sl_price, 6) if sl_price else None,
+                            "tp_price": round(tp_price, 6) if tp_price else None,
+                        })
+                        
+                        # Compute quote rate for paper pnl calculations
+                        quote_ccy = h.symbol[3:6]
+                        suffix = h.symbol[6:] if len(h.symbol) > 6 else ""
+                        lp = dict(self.mt5._last_bar_close)
+                        lp.update(getattr(self.executor, "_last_prices", {}))
+                        usd_rate = 1.0
+                        if quote_ccy != "USD":
+                            p1 = f"USD{quote_ccy}{suffix}"
+                            if p1 in lp:
+                                usd_rate = lp[p1]
+                            else:
+                                p2 = f"{quote_ccy}USD{suffix}"
+                                if p2 in lp and lp[p2] > 0:
+                                    usd_rate = 1.0 / lp[p2]
+                                    
+                        self._paper_positions[_p_tid] = {
+                            "symbol": h.symbol, "direction": dir_label,
+                            "entry_price": current_price, "entry_time": now,
+                            "sl": sl_price or 0.0, "tp": tp_price or 0.0,
+                            "lot_size": LOT_SIZE, "usd_rate": usd_rate,
+                            "has_been_positive": False,
+                        }
+                        cycle_submitted.add(symdir)
+                        print(f"[PAPER FIRE] {h.symbol} {dir_label} price={current_price:.5f} conf={h.confidence:.3f} chop=True", file=sys.stderr)
 
         if self.executor.positions and not self._trade_lifecycle.is_active:
             self._trade_lifecycle.open_batch(self.executor.positions, self._nme_narrative)
@@ -751,6 +899,16 @@ class RuntimeManager:
                       f"exit: h={final['health']} n={final['nmi']} p={final['phase']} pnl=${final.get('pnl',0):.2f} "
                       f"phases={'→'.join(phases)} cycles={len(traj)} ({close_reason})", file=sys.stderr)
             r = self.executor.close_position(pos.id, price_now, close_reason)
+            # Trade Lab: record live close
+            _tl_tid_c = self._live_trade_lab_ids.pop(pos.id, None)
+            if _tl_tid_c:
+                self.trade_lab.close_trade(_tl_tid_c, r.price if r else price_now, self._server_now, close_reason, {
+                    "pnl": round(pos.pnl or 0.0, 2), "age_s": round(age),
+                    "pol_pct": self._regime_data.get("polarized_ssp_pct", 0.0),
+                    "regime": self._regime_data.get("regime", "N/A"),
+                    "nme_nmi": round(self._nme_narrative.nmi, 3) if self._nme_narrative else 0.0,
+                    "nme_health": round(narrative_health_score(self._nme_narrative), 3) if self._nme_narrative else 0.0,
+                })
             self.drs.remove_position(pos.symbol)
             self.journal.record_close(
                 position_id=pos.id,
@@ -1255,6 +1413,18 @@ class RuntimeManager:
                       f"phases={'→'.join(phases)} cycles={len(traj)} ({reason})", file=sys.stderr)
             if not r.success:
                 print(f"[CLOSE ALL]   close fail: id={r.position_id} reason={r.reason}", file=sys.stderr)
+            # Trade Lab: record live close
+            _tl_a_tid = self._live_trade_lab_ids.pop(pos.id, None)
+            if _tl_a_tid:
+                _tl_a_nmi = round(self._nme_narrative.nmi, 3) if self._nme_narrative else 0.0
+                _tl_a_h = round(narrative_health_score(self._nme_narrative), 3) if self._nme_narrative else 0.0
+                self.trade_lab.close_trade(_tl_a_tid, r.price, self._server_now, reason, {
+                    "pnl": round(pos.pnl or 0.0, 2),
+                    "age_s": round(self._server_now - pos.entry_time),
+                    "pol_pct": self._regime_data.get("polarized_ssp_pct", 0.0),
+                    "regime": self._regime_data.get("regime", "N/A"),
+                    "nme_nmi": _tl_a_nmi, "nme_health": _tl_a_h,
+                })
             self.journal.record_close(
                 position_id=pos.id,
                 exit_price=r.price,
@@ -1310,6 +1480,18 @@ class RuntimeManager:
                       f"phases={'→'.join(phases)} cycles={len(traj)} ({reason})", file=sys.stderr)
             r = self.executor.close_position(pos.id, pos.current_price, reason)
             if r and r.success:
+                # Trade Lab: record live close
+                _tl_i_tid = self._live_trade_lab_ids.pop(pos.id, None)
+                if _tl_i_tid:
+                    _tl_i_nmi = round(self._nme_narrative.nmi, 3) if self._nme_narrative else 0.0
+                    _tl_i_h = round(narrative_health_score(self._nme_narrative), 3) if self._nme_narrative else 0.0
+                    self.trade_lab.close_trade(_tl_i_tid, r.price, self._server_now, reason, {
+                        "pnl": round(pos.pnl or 0.0, 2),
+                        "age_s": round(self._server_now - pos.entry_time),
+                        "pol_pct": self._regime_data.get("polarized_ssp_pct", 0.0),
+                        "regime": self._regime_data.get("regime", "N/A"),
+                        "nme_nmi": _tl_i_nmi, "nme_health": _tl_i_h,
+                    })
                 self.journal.record_close(
                     position_id=pos.id,
                     exit_price=r.price,
@@ -1335,6 +1517,24 @@ class RuntimeManager:
         self.risk.set_positions(self.executor.positions)
 
     def _reset_after_profit_target(self) -> None:
+        # Trade Lab: close all paper positions on system reset
+        _rs_now = self._server_now
+        _rs_pol = self._regime_data.get("polarized_ssp_pct", 0.0)
+        _rs_regime = self._regime_data.get("regime", "N/A")
+        _rs_nmi = round(self._nme_narrative.nmi, 3) if self._nme_narrative else 0.0
+        _rs_health = round(narrative_health_score(self._nme_narrative), 3) if self._nme_narrative else 0.0
+        _rs_lp = dict(getattr(self.mt5, "_last_bar_close", {}))
+        _rs_lp.update(getattr(self.executor, "_last_prices", {}))
+        for _rs_tid, _rs_pp in list(self._paper_positions.items()):
+            _rs_cp = _rs_lp.get(_rs_pp["symbol"], 0.0)
+            _rs_pnl = self._calc_paper_pnl(_rs_pp, _rs_cp) if _rs_cp > 0 else 0.0
+            self.trade_lab.close_trade(_rs_tid, _rs_cp or None, _rs_now, "SYSTEM_RESET", {
+                "pnl": round(_rs_pnl, 2), "age_s": round(_rs_now - _rs_pp.get("entry_time", _rs_now)),
+                "pol_pct": _rs_pol, "regime": _rs_regime,
+                "nme_nmi": _rs_nmi, "nme_health": _rs_health,
+            })
+        self._paper_positions.clear()
+        self._live_trade_lab_ids.clear()
         self.graph.reset()
         self.store.clear()
         self.burst.reset()
@@ -1406,3 +1606,131 @@ class RuntimeManager:
         stop_path = Path("STOP")
         if stop_path.exists():
             stop_path.unlink()
+
+    # ── Trade Lab High-Frequency Snapshots ─────────────────────────────────
+
+    def _record_trade_lab_snapshots(self) -> None:
+        """Record a trajectory point for all open live and paper positions at cycle/tick precision."""
+        now = time.time()
+        _tl_nmi = round(self._nme_narrative.nmi, 3) if self._nme_narrative else 0.0
+        _tl_health = round(narrative_health_score(self._nme_narrative), 3) if self._nme_narrative else 0.0
+        _tl_pol = self._regime_data.get("polarized_ssp_pct", 0.0)
+        _tl_regime = self._regime_data.get("regime", "N/A")
+
+        # 1. Live positions
+        for _lp in self.executor.positions:
+            _tl_lt = self._live_trade_lab_ids.get(_lp.id)
+            if _tl_lt:
+                # Use current price from the executor (which is synced from MT5)
+                self.trade_lab.record_tick(_tl_lt, {
+                    "t": round(now),
+                    "p": round(_lp.current_price or _lp.entry_price, 6),
+                    "pnl": round(_lp.pnl or 0.0, 2),
+                    "nmi": _tl_nmi,
+                    "health": _tl_health,
+                    "pol": _tl_pol,
+                    "regime": _tl_regime,
+                })
+
+        # 2. Paper positions
+        for _ptid, _pp in list(self._paper_positions.items()):
+            # Get latest price via symbol_info
+            _info = self.mt5.get_symbol_info(_pp["symbol"])
+            if _info:
+                _pcp = (_info.bid + _info.ask) / 2.0
+            else:
+                _pcp = _pp["entry_price"]  # fallback
+
+            _ppnl = self._calc_paper_pnl(_pp, _pcp)
+            # Track whether trade has ever been profitable
+            if _ppnl > 0:
+                _pp["has_been_positive"] = True
+            self.trade_lab.record_tick(_ptid, {
+                "t": round(now),
+                "p": round(_pcp, 6),
+                "pnl": round(_ppnl, 2),
+                "nmi": _tl_nmi,
+                "health": _tl_health,
+                "pol": _tl_pol,
+                "regime": _tl_regime,
+            })
+
+            # Check SL/TP at cycle precision
+            _dir = _pp["direction"]
+            if _dir == "BUY":
+                if _pp["sl"] > 0 and _pcp <= _pp["sl"]:
+                    self._close_paper_trade(_ptid, _pcp, "STOP_LOSS", _tl_pol, _tl_regime, _tl_nmi, _tl_health)
+                elif _pp.get("tp") and _pp["tp"] > 0 and _pcp >= _pp["tp"]:
+                    self._close_paper_trade(_ptid, _pcp, "TAKE_PROFIT", _tl_pol, _tl_regime, _tl_nmi, _tl_health)
+            else:
+                if _pp["sl"] > 0 and _pcp >= _pp["sl"]:
+                    self._close_paper_trade(_ptid, _pcp, "STOP_LOSS", _tl_pol, _tl_regime, _tl_nmi, _tl_health)
+                elif _pp.get("tp") and _pp["tp"] > 0 and _pcp <= _pp["tp"]:
+                    self._close_paper_trade(_ptid, _pcp, "TAKE_PROFIT", _tl_pol, _tl_regime, _tl_nmi, _tl_health)
+            # Early distress exit REMOVED — user wants to let trades run
+
+    # ── Trade Lab helper methods ───────────────────────────────────────────
+
+    def _compute_trade_levels(self, h, current_price: float) -> tuple:
+        """Compute SL price, TP price, and USD quote rate for a hypothesis."""
+        quote_ccy = h.symbol[3:6]
+        suffix = h.symbol[6:] if len(h.symbol) > 6 else ""
+        lp = dict(getattr(self.mt5, "_last_bar_close", {}))
+        lp.update(getattr(self.executor, "_last_prices", {}))
+
+        usd_rate = 1.0
+        if quote_ccy != "USD":
+            p1 = f"USD{quote_ccy}{suffix}"
+            if p1 in lp:
+                usd_rate = lp[p1]
+            else:
+                p2 = f"{quote_ccy}USD{suffix}"
+                if p2 in lp and lp[p2] > 0:
+                    usd_rate = 1.0 / lp[p2]
+
+        sl_usd = abs(STOP_LOSS_AMOUNT) if STOP_LOSS_AMOUNT else 60.0
+        sl_dist = sl_usd * usd_rate / (LOT_SIZE * 100000)
+        sl_price = (current_price - sl_dist) if h.direction > 0 else (current_price + sl_dist)
+
+        tp_price = None
+        open_p = getattr(self.bar_state, "_forming_open", {}).get(h.symbol)
+        try:
+            stats = self.bar_state.get_swing_stats(h.symbol)
+        except Exception:
+            stats = None
+        if stats is not None and open_p and open_p > 0:
+            avg_dn = stats.get("avg_downside", 0.0)
+            avg_up = stats.get("avg_upside", 0.0)
+            rem_dn = max(0.0, current_price - (open_p + avg_dn))
+            rem_up = max(0.0, (open_p + avg_up) - current_price)
+            tp_price = (current_price + rem_up * 1.5) if h.direction > 0 else (current_price - rem_dn * 1.5)
+
+        return sl_price, tp_price, usd_rate
+
+    def _calc_paper_pnl(self, pp: dict, current_price: float) -> float:
+        """Simulate PnL for a paper position given the current price."""
+        entry = pp["entry_price"]
+        lot = pp.get("lot_size", LOT_SIZE)
+        usd_rate = pp.get("usd_rate", 1.0)
+        diff = (current_price - entry) if pp["direction"] == "BUY" else (entry - current_price)
+        return round((diff * lot * 100000) / usd_rate, 2)
+
+    def _close_paper_trade(
+        self, tid: str, close_price: float, reason: str,
+        pol_pct: float = 0.0, regime: str = "N/A",
+        nme_nmi: float = 0.0, nme_health: float = 0.0,
+    ) -> None:
+        """Close a paper trade and remove it from the active paper positions dict."""
+        pp = self._paper_positions.pop(tid, None)
+        if pp is None:
+            return
+        pnl = self._calc_paper_pnl(pp, close_price) if close_price > 0 else 0.0
+        age_s = round(self._server_now - pp.get("entry_time", self._server_now))
+        self.trade_lab.close_trade(tid, close_price, self._server_now, reason, {
+            "pnl": round(pnl, 2), "age_s": age_s,
+            "pol_pct": pol_pct, "regime": regime,
+            "nme_nmi": nme_nmi, "nme_health": nme_health,
+        })
+        print(f"[PAPER CLOSE] {pp['symbol']} {pp['direction']} reason={reason} pnl=${pnl:.2f}", file=sys.stderr)
+
+    # ── End Trade Lab helpers ──────────────────────────────────────────────

@@ -4,6 +4,7 @@ from .tracker import NarrativeTracker
 from .maturity import MaturityCalculator
 from .serializer import serialize_narrative
 from .state import NarrativeState, NarrativeMetrics
+from config.settings import BASE_CURRENCY_MAP
 from typing import Optional
 
 
@@ -105,6 +106,31 @@ class NarrativeEngine:
                 pair = f"{leader}{ccy}" if leader < ccy else f"{ccy}{leader}"
                 expressions.append(pair)
         narrative.expressions = expressions if expressions else narrative.expressions
+
+    def suggest_direction(self, symbol: str) -> float:
+        narrative = self.tracker.active
+        if narrative is None:
+            return 0.0
+        if symbol not in BASE_CURRENCY_MAP:
+            return 0.0
+        base, quote = BASE_CURRENCY_MAP[symbol]
+        leader = narrative.identity.leader
+        leader_dir = narrative.identity.direction
+        if base == leader:
+            return float(leader_dir)
+        if quote == leader:
+            return float(-leader_dir)
+        return 0.0
+
+    def is_pair_relevant(self, symbol: str) -> bool:
+        narrative = self.tracker.active
+        if narrative is None:
+            return False
+        if symbol not in BASE_CURRENCY_MAP:
+            return False
+        base, quote = BASE_CURRENCY_MAP[symbol]
+        leader = narrative.identity.leader
+        return base == leader or quote == leader
 
     def get_state(self) -> Optional[dict]:
         return serialize_narrative(self.tracker.active)

@@ -25,6 +25,9 @@ from pathlib import Path
 PORT        = int(sys.argv[1]) if len(sys.argv) > 1 else 7700
 _HERE       = Path(__file__).parent
 LATEST_FILE = _HERE / "logs" / "dashboard_latest.json"
+TRADE_LAB_INDEX = _HERE / "logs" / "trade_lab_index.json"
+TRADE_LAB_DIR   = _HERE / "logs" / "trade_lab"
+TRADE_LAB_CMD   = _HERE / "logs" / "trade_lab_cmd.json"
 POLL_SEC    = 0.5   # 500ms poll interval — instant updates, zero CPU or IO footprint
 
 # ── Global state — written by poller thread, read by HTTP handler ─────────────
@@ -329,6 +332,55 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ── Trade Lab page ── */
+#tl-page{padding:10px 12px}
+.tl-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.tl-ctrl-btn{background:none;border:1px solid var(--border2);color:var(--text2);font-family:var(--mono);font-size:9px;font-weight:700;padding:4px 10px;border-radius:6px;cursor:pointer;letter-spacing:.5px;transition:color .2s,border-color .2s}
+.tl-ctrl-btn:hover{color:var(--red);border-color:var(--red2)}
+.tl-ctrl-btn.del10:hover{color:var(--amber);border-color:var(--amber2)}
+.tl-list{display:flex;flex-direction:column;gap:7px}
+.tl-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;transition:border-color .2s,box-shadow .2s;cursor:default}
+.tl-card.open-live{border-color:var(--green);box-shadow:0 0 12px rgba(0,255,136,.07)}
+.tl-card.open-paper{border-color:var(--cyan);box-shadow:0 0 12px rgba(0,229,255,.07)}
+.tl-card.open-chop{border-color:var(--amber);box-shadow:0 0 12px rgba(255,170,0,.07)}
+.tl-card.closed-card{border-color:var(--border);opacity:.85}
+.tl-card-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.tl-sym{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text)}
+.tl-dir{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px}
+.tl-dir.buy{background:rgba(0,255,136,.15);color:var(--green);border:1px solid rgba(0,255,136,.3)}
+.tl-dir.sell{background:rgba(255,59,107,.15);color:var(--red);border:1px solid rgba(255,59,107,.3)}
+.tl-badge{font-family:var(--mono);font-size:8px;font-weight:700;padding:2px 6px;border-radius:10px;letter-spacing:.4px}
+.badge-live{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.25)}
+.badge-paper{background:rgba(0,229,255,.1);color:var(--cyan);border:1px solid rgba(0,229,255,.25)}
+.badge-chop{background:rgba(255,170,0,.15);color:var(--amber);border:1px solid rgba(255,170,0,.35)}
+.badge-closed{background:rgba(74,101,128,.12);color:var(--text3);border:1px solid rgba(74,101,128,.25)}
+.tl-pnl{margin-left:auto;font-family:var(--mono);font-size:13px;font-weight:700}
+.tl-pnl.pos{color:var(--green)}
+.tl-pnl.neg{color:var(--red)}
+.tl-pnl.neu{color:var(--text3)}
+.tl-chart-btn{font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:6px;border:1px solid var(--border2);background:none;color:var(--text2);cursor:pointer;transition:color .15s,border-color .15s}
+.tl-chart-btn:hover{color:var(--cyan);border-color:var(--cyan3)}
+.tl-meta-row{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:5px}
+.tl-meta-row span b{color:var(--text)}
+.tl-triggers{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px}
+.tl-trigger{font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:8px;border:1px solid var(--border);background:var(--bg3)}
+.tl-trigger.chop-active{border-color:rgba(255,170,0,.5);color:var(--amber)}
+.tl-pk{display:flex;gap:8px;font-family:var(--mono);font-size:9px}
+.tl-pk span{padding:2px 5px;border-radius:5px}
+.tl-pk .pk-up{background:rgba(0,255,136,.08);color:var(--green)}
+.tl-pk .pk-dn{background:rgba(255,59,107,.08);color:var(--red)}
+.tl-close-triggers{margin-top:5px;font-family:var(--mono);font-size:8px;color:var(--text3);background:var(--bg3);border-radius:6px;padding:4px 6px;border:1px solid var(--border)}
+
+/* ── Trade Lab modal/chart ── */
+#tl-modal{display:none;position:fixed;inset:0;background:rgba(5,8,15,.85);z-index:500;align-items:center;justify-content:center}
+#tl-modal.open{display:flex}
+#tl-modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;width:640px;max-width:96vw;max-height:90vh;overflow-y:auto}
+#tl-modal-title{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--cyan);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+#tl-modal-close{margin-left:auto;background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:0 2px}
+#tl-chart-canvas{width:100%;height:220px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg3);display:block}
+#tl-chart-info{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:6px;min-height:16px}
+.no-tl{color:var(--text3);font-family:var(--mono);font-size:12px;text-align:center;padding:32px;border:1px dashed var(--border);border-radius:var(--r)}
 </style>
 </head>
 <body>
@@ -362,6 +414,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     <button id="nav-overview" class="nav-link active">OVERVIEW</button>
     <button id="nav-swing" class="nav-link">SWING</button>
     <button id="nav-analysis" class="nav-link">ANALYSIS</button>
+    <button id="nav-tradelab" class="nav-link">TRADE LAB</button>
   </div>
 
   <div class="hdr-right">
@@ -632,6 +685,33 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
         <tbody id="swing-analysis-tbody"></tbody>
       </table>
     </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TRADE LAB PAGE                                         -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="tl-page" style="display:none">
+  <div class="tl-header">
+    <span class="panel-title" style="margin:0"><span class="title-dot" style="background:var(--purple)"></span>TRADE LAB</span>
+    <span id="tl-count-badge" style="font-family:var(--mono);font-size:9px;color:var(--text3)">-- trades</span>
+    <span id="tl-open-badge" style="font-family:var(--mono);font-size:9px;color:var(--cyan)"></span>
+    <button class="tl-ctrl-btn del10" id="tl-del10">CLEAR LAST 10</button>
+    <button class="tl-ctrl-btn" id="tl-delall">CLEAR ALL</button>
+  </div>
+  <div class="tl-list" id="tl-list"></div>
+</div>
+
+<!-- Trade chart modal -->
+<div id="tl-modal">
+  <div id="tl-modal-box">
+    <div id="tl-modal-title">
+      <span id="tl-modal-label">PRICE TRAJECTORY</span>
+      <button id="tl-modal-close">✕</button>
+    </div>
+    <div id="tl-traj-container" style="max-height: 400px; overflow-y: auto; margin-top: 10px; border: 1px solid var(--border); border-radius: var(--r); background: var(--bg3)"></div>
+    <div id="tl-chart-info" style="margin-top: 8px; font-family: var(--mono); font-size: 10px; color: var(--text2)"></div>
   </div>
 </div>
 
@@ -1157,12 +1237,266 @@ function showPage(name){
   document.getElementById('overview-page').style.display = name==='overview' ? '' : 'none';
   document.getElementById('swing-page').style.display = name==='swing' ? '' : 'none';
   document.getElementById('analysis-page').style.display = name==='analysis' ? '' : 'none';
+  document.getElementById('tl-page').style.display = name==='tradelab' ? '' : 'none';
   document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-'+name).classList.add('active');
+  if(name==='tradelab') tlLoad();
 }
 document.getElementById('nav-overview').addEventListener('click', () => showPage('overview'));
 document.getElementById('nav-swing').addEventListener('click', () => showPage('swing'));
 document.getElementById('nav-analysis').addEventListener('click', () => showPage('analysis'));
+document.getElementById('nav-tradelab').addEventListener('click', () => showPage('tradelab'));
+
+// ── Trade Lab ──────────────────────────────────────────────────────────
+let _tlData = {}; // trade_id → record
+let _tlCurrentTid = null;
+
+async function tlLoad(){
+  try{
+    const r = await fetch('/trade_lab/index');
+    if(!r.ok) return;
+    const idx = await r.json();
+    _tlData = idx.trades || {};
+    tlRender();
+  } catch(e){ console.warn('tlLoad err',e); }
+}
+
+function tlRender(){
+  const el = document.getElementById('tl-list');
+  const trades = Object.values(_tlData);
+  // Sort: open trades first (by entry_time desc), then closed (by close_time desc)
+  const open = trades.filter(t => t.status==='OPEN').sort((a,b)=>b.entry_time-a.entry_time);
+  const closed = trades.filter(t => t.status==='CLOSED').sort((a,b)=>(b.close_time||0)-(a.close_time||0));
+  const all = [...open, ...closed];
+
+  const cntEl = document.getElementById('tl-count-badge');
+  const openEl = document.getElementById('tl-open-badge');
+  if(cntEl) cntEl.textContent = `${all.length} trade${all.length!==1?'s':''}${closed.length?' ('+closed.length+' closed)':''}`;
+  if(openEl) openEl.textContent = open.length > 0 ? `${open.length} OPEN` : '';
+
+  if(all.length===0){ el.innerHTML='<div class="no-tl">No trades recorded yet. They will appear here as the engine fires entries.</div>'; return; }
+
+  el.innerHTML = all.map(t => tlCardHtml(t)).join('');
+  // attach chart button listeners
+  el.querySelectorAll('.tl-chart-btn').forEach(btn => {
+    btn.addEventListener('click', () => tlShowChart(btn.dataset.tid));
+  });
+  if(typeof startTlRefresh === 'function') startTlRefresh();
+}
+
+function tlTriggerPills(trig, isEntry){
+  if(!trig) return '';
+  const pills = [];
+  if(trig.chop_fired) pills.push(`<span class="tl-trigger chop-active">⚡ CHOP GATE SKIPPED</span>`);
+  if(trig.regime) pills.push(`<span class="tl-trigger">${trig.regime}</span>`);
+  if(trig.pol_pct!==undefined) pills.push(`<span class="tl-trigger">POL ${trig.pol_pct.toFixed?trig.pol_pct.toFixed(1):trig.pol_pct}%</span>`);
+  if(trig.confidence!==undefined) pills.push(`<span class="tl-trigger">CONF ${(trig.confidence*100).toFixed?((trig.confidence*100).toFixed(1)):trig.confidence}%</span>`);
+  if(trig.bar_align!==undefined) pills.push(`<span class="tl-trigger">BAR ${(trig.bar_align*100).toFixed?((trig.bar_align*100).toFixed(0)):trig.bar_align}%</span>`);
+  if(trig.der!==undefined) pills.push(`<span class="tl-trigger">DER ${trig.der.toFixed?trig.der.toFixed(3):trig.der}</span>`);
+  if(trig.burst_rank) pills.push(`<span class="tl-trigger">BURST#${trig.burst_rank}</span>`);
+  if(trig.nme_leader) pills.push(`<span class="tl-trigger">NME ${trig.nme_leader}${trig.nme_dir?' '+trig.nme_dir:''}</span>`);
+  if(trig.nme_nmi!==undefined) pills.push(`<span class="tl-trigger">NMI ${trig.nme_nmi.toFixed?trig.nme_nmi.toFixed(2):trig.nme_nmi}</span>`);
+  if(trig.sl_price!==undefined && trig.sl_price) pills.push(`<span class="tl-trigger">SL ${trig.sl_price}</span>`);
+  if(trig.tp_price!==undefined && trig.tp_price) pills.push(`<span class="tl-trigger">TP ${trig.tp_price}</span>`);
+  // exit-only fields
+  if(!isEntry){
+    if(trig.pnl!==undefined) pills.push(`<span class="tl-trigger" style="color:${trig.pnl>=0?'var(--green)':'var(--red)'}">PnL ${trig.pnl>=0?'+':''}$${Math.abs(trig.pnl||0).toFixed(2)}</span>`);
+    if(trig.age_s!==undefined) pills.push(`<span class="tl-trigger">AGE ${trig.age_s}s</span>`);
+    if(trig.nme_health!==undefined) pills.push(`<span class="tl-trigger">HEALTH ${(trig.nme_health*100).toFixed?((trig.nme_health*100).toFixed(0)):trig.nme_health}%</span>`);
+  }
+  return `<div class="tl-triggers">${pills.join('')}</div>`;
+}
+
+function tlCardHtml(t){
+  const isOpen = t.status === 'OPEN';
+  const isLive = t.mode === 'LIVE';
+  const isChop = t.entry_triggers && t.entry_triggers.chop_fired;
+  let cardCls = isOpen ? (isLive ? 'open-live' : (isChop ? 'open-chop' : 'open-paper')) : 'closed-card';
+  const dirCls = (t.direction||'').toLowerCase();
+  const badgeTxt = isLive ? 'LIVE' : (isChop ? '⚡ PAPER (CHOP)' : 'PAPER');
+  const badgeCls = isLive ? 'badge-live' : (isChop ? 'badge-chop' : 'badge-paper');
+
+  const ep = t.entry_price;
+  const cp = t.close_price;
+  const entryTs = t.entry_time ? new Date(t.entry_time*1000).toLocaleTimeString() : '--';
+  const closeTs = t.close_time ? new Date(t.close_time*1000).toLocaleTimeString() : null;
+  const isJpy = (t.symbol||'').includes('JPY');
+  const dec = isJpy ? 3 : 5;
+
+  // PnL display
+  let pnlHtml = '';
+  if(!isOpen && t.close_triggers && t.close_triggers.pnl !== undefined){
+    const pv = t.close_triggers.pnl;
+    pnlHtml = `<span class="tl-pnl ${pv>=0?'pos':'neg'}">${pv>=0?'+':''}$${Math.abs(pv).toFixed(2)}</span>`;
+  } else if(isOpen && t.current_pnl !== undefined){
+    const pv = t.current_pnl;
+    pnlHtml = `<span class="tl-pnl ${pv>=0?'pos':'neg'}">${pv>=0?'+':''}$${Math.abs(pv).toFixed(2)}</span>`;
+  } else if(isOpen){
+    pnlHtml = '<span class="tl-pnl neu">LIVE</span>';
+  } else {
+    pnlHtml = '<span class="tl-pnl neu">--</span>';
+  }
+
+  const pkUp = (t.peak_pnl||0) > 0 ? `<span class="pk-up">▲ +$${t.peak_pnl.toFixed(2)}</span>` : '';
+  const pkDn = (t.valley_pnl||0) < 0 ? `<span class="pk-dn">▼ -$${Math.abs(t.valley_pnl).toFixed(2)}</span>` : '';
+
+  // Price movement display on right side of card
+  let priceMovementHtml = '';
+  if (ep !== undefined) {
+    const curP = isOpen ? (t.current_price || ep) : (cp || ep);
+    const diff = curP - ep;
+    const isBuy = t.direction === 'BUY';
+    const delta = isBuy ? diff : -diff;
+    const pips = delta * (isJpy ? 100 : 10000);
+    const arrow = pips > 0 ? '▲' : pips < 0 ? '▼' : '■';
+    const movCls = pips > 0 ? 'var(--green)' : pips < 0 ? 'var(--red)' : 'var(--text3)';
+    const pipsStr = (pips >= 0 ? '+' : '') + pips.toFixed(1) + ' pips';
+    priceMovementHtml = `<span style="margin-left:auto; font-family:var(--mono); color:${movCls}; font-weight:700" title="Price movement from entry">${arrow} ${pipsStr}</span>`;
+  }
+
+  return `<div class="tl-card ${cardCls}">
+    <div class="tl-card-top">
+      <span class="tl-sym">${t.symbol||'?'}</span>
+      <span class="tl-dir ${dirCls}">${t.direction||'?'}</span>
+      <span class="tl-badge ${badgeCls}">${badgeTxt}</span>
+      ${pnlHtml}
+      <button class="tl-chart-btn" data-tid="${t.id}" title="Price trajectory">📈 CHART</button>
+    </div>
+    <div class="tl-meta-row">
+      <span>ENTRY: <b>${ep !== undefined ? ep.toFixed(dec) : '--'}</b></span>
+      ${isOpen && t.current_price !== undefined ? `<span>LIVE: <b style="color:var(--text);font-weight:700">${t.current_price.toFixed(dec)}</b></span>` : ''}
+      ${cp !== null && cp !== undefined ? `<span>EXIT: <b>${cp.toFixed(dec)}</b></span>` : ''}
+      <span>@${entryTs}</span>
+      ${closeTs ? `<span>→ @${closeTs}</span>` : ''}
+      ${t.close_reason ? `<span style="color:var(--text2);font-weight:700">${t.close_reason}</span>` : '<span style="color:var(--green)">● OPEN</span>'}
+      <span>TICKS: <b>${t.tick_count||0}</b></span>
+      ${priceMovementHtml}
+    </div>
+    <div style="font-family:var(--mono);font-size:8px;color:var(--text3);margin-bottom:3px">ENTRY TRIGGERS</div>
+    ${tlTriggerPills(t.entry_triggers, true)}
+    ${(pkUp||pkDn) ? `<div class="tl-pk">${pkUp}${pkDn}</div>` : ''}
+    ${!isOpen && t.close_triggers ? `
+      <div class="tl-close-triggers">
+        <div style="margin-bottom:3px;color:var(--text3)">EXIT VALUES</div>
+        ${tlTriggerPills(t.close_triggers, false)}
+      </div>` : ''}
+  </div>`;
+}
+
+async function tlShowChart(tid){
+  _tlCurrentTid = tid;
+  const t = _tlData[tid];
+  if(!t) return;
+  const modal = document.getElementById('tl-modal');
+  const label = document.getElementById('tl-modal-label');
+  modal.classList.add('open');
+  label.textContent = `${t.symbol} ${t.direction} — ${t.mode}${t.entry_triggers&&t.entry_triggers.chop_fired?' (CHOP)':''}`;
+  // Fetch trajectory
+  try{
+    const r = await fetch(`/trade_lab/traj/${tid}`);
+    const traj = await r.json();
+    tlDrawChart(traj, t);
+  } catch(e){ document.getElementById('tl-chart-info').textContent='Error loading chart: '+e; }
+}
+
+function tlDrawChart(traj, t){
+  const container = document.getElementById('tl-traj-container');
+  const info = document.getElementById('tl-chart-info');
+  if(!container) return;
+
+  if(!traj || traj.length === 0){
+    container.innerHTML = '<div style="color:var(--text3);font-family:var(--mono);font-size:11px;padding:24px;text-align:center">No trajectory ticks recorded yet.</div>';
+    info.textContent = 'Trajectory data is recorded in tick-precision from the engine.';
+    return;
+  }
+
+  const isJpy = (t.symbol||'').includes('JPY');
+  const dec = isJpy ? 3 : 5;
+  const pnls = traj.map(p => p.pnl || 0);
+  const maxPnl = Math.max(...pnls), minPnl = Math.min(...pnls);
+  const lastTraj = traj[traj.length-1];
+  info.textContent = `Ticks: ${traj.length} | Last Price: ${lastTraj.p.toFixed(dec)} | Peak P&L: +$${maxPnl.toFixed(2)} | Valley: -$${Math.abs(minPnl).toFixed(2)}`;
+
+  // Sort traj by timestamp descending so latest ticks are on top
+  const sortedTraj = [...traj].sort((a, b) => b.t - a.t);
+
+  let html = `<table class="swing-tbl" style="width:100%; border-collapse:collapse; font-family:var(--mono); font-size:10px">
+    <thead>
+      <tr style="background:var(--bg2); border-bottom:1px solid var(--border)">
+        <th style="padding:6px; text-align:left; color:var(--text3)">TIME</th>
+        <th style="padding:6px; text-align:right; color:var(--text3)">PRICE</th>
+        <th style="padding:6px; text-align:right; color:var(--text3)">P&L</th>
+        <th style="padding:6px; text-align:right; color:var(--text3)">NMI</th>
+        <th style="padding:6px; text-align:right; color:var(--text3)">HEALTH</th>
+        <th style="padding:6px; text-align:right; color:var(--text3)">POL</th>
+        <th style="padding:6px; text-align:center; color:var(--text3)">REGIME</th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  sortedTraj.forEach(pt => {
+    const ts = new Date((pt.t||0)*1000).toLocaleTimeString();
+    const pnlVal = pt.pnl || 0.0;
+    const pnlCls = pnlVal > 0 ? 'var(--green)' : pnlVal < 0 ? 'var(--red)' : 'var(--text3)';
+    const pnlStr = (pnlVal >= 0 ? '+' : '') + '$' + pnlVal.toFixed(2);
+    const healthVal = (pt.health || 0.0) * 100;
+    const polVal = pt.pol || 0.0;
+    const regimeVal = pt.regime || '--';
+    const nmiVal = pt.nmi !== undefined ? pt.nmi.toFixed(2) : '--';
+    
+    html += `<tr style="border-bottom:1px solid var(--border); transition:background .15s">
+      <td style="padding:5px 6px; text-align:left; color:var(--text2)">${ts}</td>
+      <td style="padding:5px 6px; text-align:right; font-weight:700; color:var(--text)">${pt.p.toFixed(dec)}</td>
+      <td style="padding:5px 6px; text-align:right; font-weight:700; color:${pnlCls}">${pnlStr}</td>
+      <td style="padding:5px 6px; text-align:right; color:var(--cyan)">${nmiVal}</td>
+      <td style="padding:5px 6px; text-align:right; color:var(--green)">${healthVal.toFixed(0)}%</td>
+      <td style="padding:5px 6px; text-align:right; color:var(--amber)">${polVal.toFixed(0)}%</td>
+      <td style="padding:5px 6px; text-align:center; font-weight:600; color:${regimeVal==='CHOP'?'var(--red)':'var(--green)'}">${regimeVal}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  container.innerHTML = html;
+}
+
+document.getElementById('tl-modal-close').addEventListener('click', () => {
+  document.getElementById('tl-modal').classList.remove('open');
+});
+document.getElementById('tl-modal').addEventListener('click', e => {
+  if(e.target === document.getElementById('tl-modal'))
+    document.getElementById('tl-modal').classList.remove('open');
+});
+
+document.getElementById('tl-del10').addEventListener('click', async () => {
+  if(!confirm('Clear the 10 oldest closed trades?')) return;
+  // Optimistic UI update: sort closed trades by entry time and remove the first 10
+  const closed = Object.values(_tlData).filter(t => t.status==='CLOSED').sort((a,b)=>a.entry_time-b.entry_time);
+  const toDelete = closed.slice(0, 10).map(t => t.id);
+  toDelete.forEach(id => { delete _tlData[id]; });
+  tlRender();
+
+  await fetch('/trade_lab/delete', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'delete_oldest',n:10})});
+  setTimeout(tlLoad, 1000);
+});
+document.getElementById('tl-delall').addEventListener('click', async () => {
+  if(!confirm('Clear ALL trade history? This cannot be undone.')) return;
+  // Optimistic UI update: clear all local data
+  _tlData = {};
+  tlRender();
+
+  await fetch('/trade_lab/delete', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'delete_all'})});
+  setTimeout(tlLoad, 1000);
+});
+// Auto-refresh trade lab (every 3s if any trade is open, else every 15s)
+let tlInterval = null;
+function startTlRefresh(){
+  if(tlInterval) clearInterval(tlInterval);
+  const isOpen = Object.values(_tlData).some(t => t.status === 'OPEN');
+  tlInterval = setInterval(() => {
+    if(document.getElementById('nav-tradelab').classList.contains('active')) tlLoad();
+  }, isOpen ? 3000 : 15000);
+}
+startTlRefresh();
 
 // SSP table toggle
 document.getElementById('toggle-ssp-table').addEventListener('click', function(){
@@ -1201,6 +1535,30 @@ class _Handler(BaseHTTPRequestHandler):
             self._serve_sse()
         elif self.path == "/data":
             self._serve_json()
+        elif self.path == "/trade_lab/index":
+            self._serve_trade_lab_index()
+        elif self.path.startswith("/trade_lab/traj/"):
+            tid = self.path[len("/trade_lab/traj/"):].strip("/")
+            self._serve_trade_traj(tid)
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+    def do_POST(self):
+        if self.path == "/trade_lab/delete":
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length)
+            try:
+                cmd = json.loads(body)
+                TRADE_LAB_CMD.parent.mkdir(parents=True, exist_ok=True)
+                tmp = TRADE_LAB_CMD.with_suffix(".tmp")
+                with open(tmp, "w", encoding="utf-8") as f:
+                    json.dump(cmd, f)
+                tmp.replace(TRADE_LAB_CMD)
+            except Exception:
+                pass
+            self.send_response(204)
+            self.end_headers()
         else:
             self.send_response(404)
             self.end_headers()
@@ -1209,6 +1567,45 @@ class _Handler(BaseHTTPRequestHandler):
         body = _HTML.encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", len(body))
+        self.send_header("Cache-Control", "no-cache")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _serve_trade_lab_index(self):
+        try:
+            if TRADE_LAB_INDEX.exists():
+                with open(TRADE_LAB_INDEX, "r", encoding="utf-8") as f:
+                    body = f.read().encode("utf-8")
+            else:
+                body = b'{"trades":{}}'
+        except Exception:
+            body = b'{"trades":{}}'
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", len(body))
+        self.send_header("Cache-Control", "no-cache")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _serve_trade_traj(self, trade_id: str):
+        path = TRADE_LAB_DIR / f"{trade_id}.jsonl"
+        traj = []
+        if path.exists():
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            try:
+                                traj.append(json.loads(line))
+                            except Exception:
+                                pass
+            except Exception:
+                pass
+        body = json.dumps(traj).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", len(body))
         self.send_header("Cache-Control", "no-cache")
         self.end_headers()
