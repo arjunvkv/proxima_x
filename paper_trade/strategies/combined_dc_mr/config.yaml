@@ -1,0 +1,26 @@
+strategy: combined_dc_mr
+mt5_account: null
+mt5_path: null
+pairs:
+  - EURUSD
+  - EURJPY
+  - GBPJPY
+hold_bars: 10
+session:
+  start_utc: 0
+  end_utc: 23
+risk:
+  max_concurrent: 5
+  max_spread_mult: 1.5
+  max_daily_loss: 750
+lot_size: 0.5
+dc_z_thresholds:
+  EURUSD: 1.5
+  EURJPY: 1.75
+  GBPJPY: 1.75
+dc_spread_ratio: 2.0
+dc_recovery_mult: 1.3
+dc_hold_seconds: 600
+mr_z_threshold: 3.5
+mr_hold_seconds: 180
+description: "Combined DC + 10sMR — ~41 trades/day at ~57% WR. DC fires on all 3 pairs (spread-widen recovery), 10sMR fires on EURUSD only (extreme z mean reversion). Hold: DC=10min, MR=3min."

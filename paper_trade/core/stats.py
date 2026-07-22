@@ -44,10 +44,11 @@ class SessionStats:
         pair = trade.get("pair", "?")
         self._pair_pnl[pair] = self._pair_pnl.get(pair, 0) + gross
 
-        # Remove from open fills (match on entry_time + pair)
+        # Remove from open fills (match on entry_time or timestamp + pair)
+        close_time = trade.get("entry_time") or trade.get("timestamp") or 0
         self._fills = [
             f for f in self._fills
-            if not (f.get("pair") == pair and f.get("entry_time") == trade.get("entry_time"))
+            if not (f.get("pair") == pair and f.get("entry_time", 0) == close_time)
         ]
 
     def record_reject(self, pair, reason):

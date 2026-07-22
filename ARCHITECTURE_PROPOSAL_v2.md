@@ -5548,3 +5548,5 @@ paper.py  risk.py  main.py
 ```
 
 Not 20,000 lines. The first milestone is not profitability. It is: **"Given current FX market data, can this system extract a stable latent currency state that contains forward information?"** If no, every additional layer is wasted. If yes, the rest of the architecture becomes worth building.
+
+Not 20,000 lines. The first milestone is not profitability. It is: **"Given current FX market data, can this system extract a stable latent currency state that contains forward information?"** If no, every additional layer is wasted. If yes, the rest of the architecture becomes worth building.

@@ -12,24 +12,34 @@ def _calc_pnl(pair, entry, exit, lot_size, direction):
     pv = pip_value_usd(pair, exit)
     return round(pips * pv * lot_size * direction, 2)
 
+def _get_filling_type(symbol, mt5):
+    filling = getattr(symbol, "filling_mode", 0)
+    if filling & 2:
+        return mt5.ORDER_FILLING_IOC
+    elif filling & 1:
+        return mt5.ORDER_FILLING_FOK
+    else:
+        return mt5.ORDER_FILLING_RETURN
+
 class Executor:
     """Handles order placement and position management."""
 
-    def __init__(self, feed, logger, max_spread_mult=1.5):
+    def __init__(self, feed, logger, max_spread_mult=1.5, magic=202407):
         self.feed = feed
         self.logger = logger
         self.max_spread_mult = max_spread_mult
+        self.magic = magic
         self.positions = []
         self._use_mt5 = feed.mode == "live"
 
-    def submit_market(self, pair, direction, lot_size=1.0, timestamp=None):
+    def submit_market(self, pair, direction, lot_size=1.0, timestamp=None, signal_meta=None):
         """Submit market order. Returns fill dict or None."""
         if self._use_mt5:
-            return self._live_submit(pair, direction, lot_size, timestamp)
+            return self._live_submit(pair, direction, lot_size, timestamp, signal_meta)
         else:
-            return self._paper_submit(pair, direction, lot_size, timestamp)
+            return self._paper_submit(pair, direction, lot_size, timestamp, signal_meta)
 
-    def _live_submit(self, pair, direction, lot_size, ts):
+    def _live_submit(self, pair, direction, lot_size, ts, signal_meta=None):
         mt5 = self.feed.mt5
         symbol = mt5.symbol_info(pair)
         if symbol is None:
@@ -56,10 +66,10 @@ class Executor:
             "type": order_type,
             "price": price,
             "deviation": 10,
-            "magic": 202407,
+            "magic": self.magic,
             "comment": "paper_trade",
             "type_time": mt5.ORDER_TIME_GTC,
-            "type_filling": mt5.ORDER_FILLING_IOC,
+            "type_filling": _get_filling_type(symbol, mt5),
         }
         result = mt5.order_send(request)
         if result.retcode != mt5.TRADE_RETCODE_DONE:
@@ -68,14 +78,17 @@ class Executor:
 
         fill = {
             "pair": pair, "direction": direction, "lot_size": lot_size,
-            "entry_price": result.price, "entry_time": int(time.time()),
+            "entry_price": price, "entry_time": int(time.time()),
             "spread": spread, "slip": abs(result.price - price),
         }
+        if signal_meta:
+            fill["z_score"] = signal_meta.get("z_score")
+            fill["trigger_currency"] = signal_meta.get("currency")
         self.logger.log("FILL", pair, fill)
         self.positions.append(fill)
         return fill
 
-    def _paper_submit(self, pair, direction, lot_size, ts):
+    def _paper_submit(self, pair, direction, lot_size, ts, signal_meta=None):
         """Simulated fill using current feed price."""
         bar = self.feed.current_bar()
         if bar is None or pair not in bar:
@@ -89,6 +102,9 @@ class Executor:
             "entry_price": entry_price, "entry_time": ts or int(time.time()),
             "spread": p.get("spread", 0), "slip": 0.0,
         }
+        if signal_meta:
+            fill["z_score"] = signal_meta.get("z_score")
+            fill["trigger_currency"] = signal_meta.get("currency")
         self.logger.log("FILL", pair, fill)
         self.positions.append(fill)
         return fill
@@ -102,31 +118,51 @@ class Executor:
 
     def _live_close(self, fill):
         mt5 = self.feed.mt5
-        symbol = fill["pair"]
+        symbol_name = fill["pair"]
+        symbol = mt5.symbol_info(symbol_name)
+        if symbol is None:
+            return None
+
+        # Find the open MT5 position by symbol + magic + direction
+        pos_type = 0 if fill["direction"] > 0 else 1
+        positions = mt5.positions_get(symbol=symbol_name)
+        pos = None
+        if positions:
+            for p in positions:
+                if p.magic == self.magic and p.type == pos_type:
+                    pos = p
+                    break
+        if pos is None:
+            self.logger.log("REJECT_CLOSE", symbol_name, "position_not_found")
+            return None
+
         order_type = mt5.ORDER_TYPE_SELL if fill["direction"] > 0 else mt5.ORDER_TYPE_BUY
-        tick = mt5.symbol_info_tick(symbol)
+        tick = mt5.symbol_info_tick(symbol_name)
         if tick is None:
             return None
         price = tick.bid if fill["direction"] > 0 else tick.ask
         request = {
             "action": mt5.TRADE_ACTION_DEAL,
-            "symbol": symbol,
+            "symbol": symbol_name,
             "volume": fill["lot_size"],
             "type": order_type,
+            "position": pos.ticket,
             "price": price,
             "deviation": 10,
-            "magic": 202407,
+            "magic": self.magic,
             "comment": "paper_trade_close",
             "type_time": mt5.ORDER_TIME_GTC,
-            "type_filling": mt5.ORDER_FILLING_IOC,
+            "type_filling": _get_filling_type(symbol, mt5),
         }
         result = mt5.order_send(request)
         if result.retcode != mt5.TRADE_RETCODE_DONE:
-            self.logger.log("REJECT_CLOSE", symbol, f"retcode:{result.retcode}")
+            self.logger.log("REJECT_CLOSE", symbol_name, f"retcode:{result.retcode}")
             return None
-        gross = _calc_pnl(fill["pair"], fill["entry_price"], result.price, fill["lot_size"], fill["direction"])
-        self.logger.log("CLOSE", symbol, {"entry": fill["entry_price"], "exit": result.price, "gross_pnl": gross})
-        return {"exit_price": result.price, "gross_pnl": gross}
+        tick2 = mt5.symbol_info_tick(symbol_name)
+        exit_price = tick2.bid if fill["direction"] > 0 else tick2.ask
+        gross = _calc_pnl(fill["pair"], fill["entry_price"], exit_price, fill["lot_size"], fill["direction"])
+        self.logger.log("CLOSE", symbol_name, {"entry": fill["entry_price"], "exit": exit_price, "gross_pnl": gross})
+        return {"exit_price": exit_price, "gross_pnl": gross}
 
     def _paper_close(self, fill, exit_price, exit_time):
         bar = self.feed.current_bar()
@@ -148,6 +184,8 @@ class Executor:
                 result = self.close_position(pos, exit_time=current_time)
                 if result:
                     closed.append({**pos, **result})
+                else:
+                    remaining.append(pos)
             else:
                 remaining.append(pos)
         self.positions = remaining

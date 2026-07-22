@@ -18,6 +18,9 @@ class Feed:
             if not mt5.initialize(**init_kw):
                 raise RuntimeError(f"MT5 init failed: {mt5.last_error()}")
             self.mt5 = mt5
+            # Activate all symbols in Market Watch so we can receive tick data
+            for pair in self.pairs:
+                mt5.symbol_select(pair, True)
         return self
 
     def current_bar(self):
@@ -52,6 +55,28 @@ class Feed:
         """data_dict: {pair: [bar_dict, ...]} with aligned timestamps."""
         self._archive_data = data_dict
         self._cursor = 0
+
+    def copy_m1_history(self, pair, count=100):
+        """Fetch count historical M1 bid bars for pair. Returns list of dicts or None.
+
+        Each dict: {time, open, high, low, close} with raw bid prices.
+        Rates from MT5 are bid OHLC (open=r[1], high=r[2], low=r[3], close=r[4]).
+        """
+        if self.mode != "live" or not hasattr(self, "mt5"):
+            return None
+        rates = self.mt5.copy_rates_from_pos(pair, self.mt5.TIMEFRAME_M1, 0, count)
+        if rates is None or len(rates) == 0:
+            return None
+        result = []
+        for r in rates:
+            result.append({
+                "time": int(r[0]),
+                "open": float(r[1]),
+                "high": float(r[2]),
+                "low": float(r[3]),
+                "close": float(r[4]),
+            })
+        return result
 
     def close(self):
         if self.mode == "live":

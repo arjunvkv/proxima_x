@@ -1448,6 +1448,174 @@ Engine 2 (Cross-Pair Microstructure) is primarily Bucket 2 — statistical, cond
 
 ---
 
+---
+
+# Currency Pressure (CP) Postmortem — What Broke, What We Fixed, What We Learned
+
+## CP Strategy Summary
+
+The Currency Pressure strategy built an **8-currency network** from **28 FX pairs** (USD, EUR, JPY, GBP, AUD, NZD, CAD, CHF). Each currency's return was computed as the inverse-vol weighted sum of all pairs involving that currency. Rolling Z-scores over a 2000-bar window identified extreme currency moves (`|Z| > 2.0`). The best pair per currency (validated per-currency: USD→AUDUSD, JPY→NZDJPY, etc.) was traded for 5 minutes.
+
+**Backtest result (3 months M1 Dukascopy):** 56.6% WR, +$3.18 mid avg, positive every month. On standard spreads: **-$6.63/trade net**. On ECN ($1.75/trade): **+$1.07/trade net**.
+
+**Classification**: Bucket 2 (Statistical — currency network Z-scores). It describes what happened at the currency level, not why. The edge is real but thin — spread cost (3.3x edge) kills it on standard accounts.
+
+## Problems Faced
+
+### P1: Z-Score Algorithm Mismatch (Live vs Backtest)
+**Symptom**: Live strategy never fired signals despite correct seeding. Z-scores computed in live code differed from the reference backtest implementation due to subtle differences in vol weighting, currency aggregation, and history seeding.
+
+**Fix**: Created `validate_zscores.py` — asserts fixed vol (first 199 returns), currency history length, and Z-scores match reference to 1e-6 precision across all 8 currencies × 28 pairs.
+
+### P2: MT5 Disconnect Gaps
+**Symptom**: MT5 reconnections create gaps in the M1 data stream. Missing bars corrupt the 2000-bar rolling window.
+
+**Fix**: Built `currency_pressure_gap_test.py` — tested "dirty" vs "gap_detect". Walk-forward validation across 3 months. Conclusion: gap detection doesn't hurt and prevents corrupted Z-scores. **Always detect and skip gap-corrupted returns.**
+
+### P3: Spread Cost Exceeds Edge
+**Symptom**: The edge (+$3.18 mid avg per trade) was 3.3x thinner than standard spread cost ($8.23/trade). Live on standard MT5 demo = guaranteed loss.
+
+**Fixes attempted** (all failed to beat baseline 5-min hold):
+- Limit order entry, dynamic PT/SL, Z-based exit, vol-based exit
+- M5 bars, asymmetric exits (cut losers at minute 1)
+- MFE/MAE analysis with optimized SL/TP
+- Trailing stops, extend-winners
+
+**Lesson**: No exit trick recovers spread cost. **ECN execution ($1.75/trade) is the only viable path.**
+
+### P4: Account Configuration Loading
+**Symptom**: Live run loaded `mt5_account=None` despite `config.yaml` specifying `5053236851`. Zero trades fired.
+
+**Fix**: Debug script `_chk.py` diagnosed config loading order. The `register()` call runs at import time but `config.yaml` was loaded afterward. **Config loading order must be validated at startup with assertions.**
+
+### P5: Spread Baseline Not Initialized
+**Symptom**: Live CSV logs show 32 `BLOCK,PAIR,spread_widen:0.0x0.0`. Spread widening check compared against a baseline that was never set (0.0).
+
+**Fix**: `Risk.update_spread_baseline()` requires tick data first. **Risk checks must handle cold-start explicitly — disable spread-dependent blocks during warmup.**
+
+### P6: Order Rejection (retcode 10031)
+**Symptom**: MT5 rejected orders with `retcode:10031` (INVALID_REQUEST). Symbol not enabled for trading or lot size exceeded.
+
+**Fix**: Validate all symbols are enabled for trading and check `symbol_info().volume_min/volume_max` before sending.
+
+### P7: MT5 Timezone vs UTC
+**Symptom**: MT5 timestamps use broker time (MetaQuotes-Demo = UTC+3). Comparing against `time.time()` (UTC) produced apparent 3-hour gaps.
+
+**Lesson**: Always convert MT5 timestamps to UTC: `bar_time_utc = bar_time - server_utc_offset`.
+
+## Structural Findings
+
+### F1: Recovery Asymmetry
+33.6% of trades negative at minute 1 recover by minute 5. Recovered avg +$8.07; stayed-negative avg -$5.26.
+
+| Factor | Recovery Rate |
+|--------|-------------|
+| Loss <$2 at 1min | 51% recover |
+| Loss >$5 at 1min | 24% recover |
+| Shorts | 37.5% recover |
+| Longs | 29.0% recover |
+| CHF strongest | 61% (18 trades only) |
+| NZDCAD | 50% recover |
+
+**No robust filter found** — depth signal is intuitive, not predictive.
+
+### F2: Fixed 5-Min Hold Is Optimal
+Tested 1-60 min. Minute 1 captures 89% of edge ($2.52 of $2.82). Cutting early hurts because 33.6% recover. Extending to 10+ min degrades WR.
+
+### F3: Z-Score Monotonicity
+Higher Z → higher WR. Z>3.0 outperforms Z>2.0 but at lower TPD. Z>2.0 is the practical sweet spot.
+
+### F4: Per-Currency Performance
+| Currency | Best Pair | WR | Contribution |
+|----------|-----------|----|-------------|
+| AUD | AUDUSD | 61.7% | +$1,064 (51% of total) |
+| NZD | NZDUSD | 60.0% | +$584 |
+| JPY | NZDJPY | 49.0% | +$310 |
+| CHF | USDCHF | 48.0% | +$198 |
+| EUR | EURUSD | 52.0% | +$186 |
+| GBP | GBPUSD | 55.6% | -$271 (negative!) |
+
+AUDUSD carries the portfolio. GBPUSD loses money despite 55.6% WR (losses larger than wins).
+
+### F5: Portfolio Is Fragile
+AUDUSD alone accounts for 51% of total PnL. True edge may be pair-specific (AUD microstructure) rather than currency-network general.
+
+## What We Did to Align CP for Live Paper Trading
+
+### History Seeding
+1. Seed 2201 M1 bars (Z_window 2000 + vol_window 200 + 1) from MT5 history
+2. Fixed pair volatility from first 199 returns (not rolling)
+3. Build currency return history from seeded bars
+4. 120-second warmup before signal generation
+5. Validate: all 28 pairs have 199 returns, all 8 currencies have 2000 history entries
+
+### Z-Score Computation
+1. Each M1 bar: log returns for all 28 pairs
+2. Weight by inverse pair vol (fixed)
+3. Aggregate to 8 currency returns via 28-pair currency matrix
+4. Rolling 2000-bar currency return deque
+5. Z = (current - mean) / std of 2000-bar window
+6. Validate: Z-scores match reference to 1e-6
+
+### Signal Generation
+1. Find strongest/weakest currencies by Z-score
+2. Both must exceed |Z|>2.0 in opposite directions
+3. Cross-confirm: both currencies agree on pair direction
+4. Trade best pair for the higher-magnitude currency
+5. Hold exactly 5 M1 bars
+6. No SL, TP, or trailing
+
+### Market Trap Defenses
+| Trap | Defense |
+|------|---------|
+| Spread wall | Can't fix on standard. ECN required. |
+| Lookahead | Current bar only. No future peek. |
+| Timeframe | Fixed 5-min hold. Tested 1-60 min. |
+| Narrative proxy | Z-score, not price narrative. |
+| Persistence | 2000-bar rolling window adapts. |
+| Flip | Both currencies must agree. |
+| Z-exit | Not used — fixed hold is optimal. |
+| Limit fill | Market orders only. |
+| Single-pair | 28-pair network. |
+| Threshold sweep | Z>2.0 tested across values. |
+| Hold decay | Tested 1-60 min. 5 min optimal. |
+
+## The Meta-Lessons
+
+### Lesson 1: Edge Must Exceed Spread by 3x+
+56.6% WR with +$3.18 is real but academic when spread costs $8.23. Next strategy must target either **70%+ WR** or **50+ TPD**.
+
+### Lesson 2: No Exit Trick Recovers Spread Cost
+Ten exit approaches tested. None beat baseline 5-min hold. Exit optimization was a **distraction** — the problem was always the spread.
+
+### Lesson 3: Validation Must Be Exhaustive
+Every algorithm change needs a validation script asserting exact output matches reference. "Minor" changes to vol weighting or aggregation produce different signals.
+
+### Lesson 4: Cold-Start Must Be Explicit
+Spread baselines, history seeding, Z-score warmup — all need explicit initialization. Assumptions cause silent failures.
+
+### Lesson 5: One Pair Can Carry the Portfolio
+AUDUSD generated 51% of total PnL. This is both an opportunity and a risk (single point of failure).
+
+### Lesson 6: Infrastructure Costs Dominate
+For a strategy generating $22/day on ECN:
+- Standard spread = -$6.63/trade = -$139/day
+- ECN = +$1.07/trade = +$22/day
+- Spread accounts for 3.3x the edge magnitude
+
+### Lesson 7: Backtest Realism Is Non-Negotiable
+Must include full spread model, per-pair costs, MT5 disconnect simulation, realistic fills, walk-forward validation. CP was positive in every month and walk-forward fold — but only on mid.
+
+## What We Would Do Differently
+
+1. **Test with full spreads first**, not mid. If the strategy doesn't work with realistic costs, don't bother with exit optimization.
+2. **Fix cold-start before running live**. Validate account config, spread baselines, and history seeding before entering the main loop.
+3. **Focus on TPD first**. CP's 21 TPD is too thin for the spread burden. A 70%+ WR at 5 TPD or 55% WR at 100 TPD would both work.
+4. **Do not search for the perfect exit**. Once the edge is confirmed, execute it as-is. Exit optimization is a waste of time when the real problem is spread.
+5. **Test per-pair contribution before network validation**. AUDUSD's dominance should have been identified earlier.
+
+---
+
 # AUTHENTICATION FRAMEWORK — Complete Research Record (Tests 1-17)
 
 ## Core Discovery

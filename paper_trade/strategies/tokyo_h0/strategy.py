@@ -18,7 +18,9 @@ STRATEGY_NAME = "tokyo_h0"
 
 CONFIG = {
     "name": STRATEGY_NAME,
-    "mt5_account": 5053225887,
+    "mt5_account": None,
+    "magic": 202401,
+    "max_spread_pips": 2.5,
     "mt5_path": None,
     "pairs": [
         "EURUSD", "EURGBP", "EURJPY", "EURCHF", "EURAUD", "EURCAD", "EURNZD",
@@ -28,7 +30,7 @@ CONFIG = {
     ],
     "hold_bars": 15,
     "session_start": 0,
-    "session_end": 0,
+    "session_end": 23,
     "max_concurrent": 3,
     "max_spread_mult": 2.0,
     "max_daily_loss": 1250,
@@ -45,6 +47,14 @@ register(STRATEGY_NAME, CONFIG)
 _price_history = {}
 _last_entry_date = None
 _CACHE_SIZE = 500
+
+
+def seed_history(feed):
+    """Seed initial 15-minute price history from MT5 M1 bars."""
+    for pair in CONFIG["pairs"]:
+        rates = feed.copy_m1_history(pair, count=30)
+        if rates:
+            _price_history[pair] = deque(rates, maxlen=_CACHE_SIZE)
 
 
 def _return_15m(pair, now):
@@ -88,7 +98,7 @@ def generate_signal(data):
             _price_history[pair].append((now, mid))
 
     hm = time.gmtime(now)
-    if hm.tm_hour != 0 or hm.tm_min != 0 or hm.tm_sec > 10:
+    if hm.tm_hour != 0 or hm.tm_min != 0 or hm.tm_sec > 50:
         return None
 
     if _last_entry_date == today:

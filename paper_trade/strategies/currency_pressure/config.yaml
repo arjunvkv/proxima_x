@@ -1,0 +1,44 @@
+strategy: currency_pressure
+mt5_account: 5053236851
+mt5_path: null
+pairs:
+  - EURUSD
+  - GBPUSD
+  - USDJPY
+  - AUDUSD
+  - NZDUSD
+  - USDCAD
+  - USDCHF
+  - EURJPY
+  - GBPJPY
+  - EURGBP
+  - EURAUD
+  - EURCHF
+  - EURCAD
+  - EURNZD
+  - GBPAUD
+  - GBPCAD
+  - GBPCHF
+  - GBPNZD
+  - AUDJPY
+  - AUDCAD
+  - AUDCHF
+  - AUDNZD
+  - NZDJPY
+  - NZDCAD
+  - NZDCHF
+  - CADJPY
+  - CADCHF
+  - CHFJPY
+hold_minutes: 5
+z_threshold: 2.0
+z_window: 2000
+session:
+  start_utc: 0
+  end_utc: 23
+risk:
+  max_concurrent: 10
+  max_spread_mult: 2.0
+  max_daily_loss: 1000
+lot_size: 0.5
+description: "Currency Inventory Pressure — 28-pair network → 8 currency indices → Z>2.0 flow snapback across all FX hours"

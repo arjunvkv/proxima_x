@@ -11,7 +11,9 @@ STRATEGY_NAME = "dark_consensus"
 
 CONFIG = {
     "name": STRATEGY_NAME,
-    "mt5_account": 109849586,
+    "mt5_account": None,
+    "magic": 202402,
+    "max_spread_pips": 2.0,
     "mt5_path": None,
     "pairs": ["EURJPY", "EURUSD", "GBPJPY"],
     "hold_bars": 3,
@@ -25,13 +27,20 @@ CONFIG = {
 
 register(STRATEGY_NAME, CONFIG)
 
-# Rolling price history per pair
+# Rolling price history per pair (stores M1 close prices)
 _price_history = {}
 _history_size = 60
+_last_minute = None
 
 # Fixed P95 threshold from Exness training data, cross-validated OOS on all 3 data sources
-# Rolling P95 underperforms (lets in noise during low vol)
 _P95_MAG_THRESHOLD = 0.00018741
+
+def seed_history(feed):
+    """Seed initial 60 M1 close prices from MT5."""
+    for pair in CONFIG["pairs"]:
+        rates = feed.copy_m1_history(pair, count=_history_size)
+        if rates:
+            _price_history[pair] = deque([r[1] for r in rates], maxlen=_history_size)
 
 def _log_returns(arr):
     if len(arr) < 2:
@@ -39,42 +48,52 @@ def _log_returns(arr):
     logr = np.diff(np.log(arr))
     return logr[-1], np.mean(np.abs(logr))
 
-def generate_signal(data):
+def generate_signal(data, current_time=None):
     """P95 Consensus signal: 3-pair agreement + P95 magnitude + best_pair execution.
 
-    For each bar:
-    1. Compute log returns for EURJPY, EURUSD, GBPJPY
-    2. Check if all 3 have same sign (consensus)
-    3. Compute avg absolute return
-    4. If avg_abs < P95 threshold, skip
-    5. Pick pair with largest return (best_pair)
-    6. Direction = sign of returns
-
-    Returns: dict | None with pair, direction, confidence, metadata
+    Evaluated on 1-minute bar closes matching backtest methodology.
     """
+    global _last_minute
+    import time as _time
+    now = current_time or int(_time.time())
+    current_minute = now // 60
+
     for pair in CONFIG["pairs"]:
         if pair not in _price_history:
             _price_history[pair] = deque(maxlen=_history_size)
 
-    # Update rolling prices
+    # Collect latest tick mid
     updated = {}
     for pair, values in data.items():
-        if pair in _price_history:
+        if pair in CONFIG["pairs"]:
             mid = (values.get("bid", 0) + values.get("ask", 0)) / 2
             if mid > 0:
-                _price_history[pair].append(mid)
                 updated[pair] = mid
 
-    pairs = [p for p in CONFIG["pairs"] if p in updated]
+    if len(updated) < 3:
+        return None
+
+    # On startup/first tick of minute, seed if empty
+    if _last_minute is None:
+        _last_minute = current_minute
+        for p, mid in updated.items():
+            if len(_price_history[p]) == 0:
+                _price_history[p].append(mid)
+        return None
+
+    # Signal evaluation occurs on 1-minute bar boundaries
+    if current_minute <= _last_minute:
+        return None
+
+    _last_minute = current_minute
+    for p, mid in updated.items():
+        _price_history[p].append(mid)
+
+    pairs = [p for p in CONFIG["pairs"] if len(_price_history.get(p, [])) >= 2]
     if len(pairs) < 3:
         return None
 
-    # Check each pair has enough history
-    for p in pairs:
-        if len(_price_history[p]) < 2:
-            return None
-
-    # Compute latest log returns
+    # Compute latest 1-minute log returns
     returns = {}
     for p in pairs:
         arr = np.array(_price_history[p])

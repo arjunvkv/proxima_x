@@ -53,9 +53,11 @@ def pip_value_usd(pair, rate=None):
         return 10.0
     elif pair in ("USDJPY",):
         return 1000.0 / (rate or 100)
-    elif pair in ("EURJPY", "GBPJPY", "AUDJPY"):
+    elif pair.endswith("JPY"):
         return 1000.0 / (rate or 140)
     elif pair in ("USDCHF", "USDCAD"):
+        return 10.0 / (rate or 1.0)
+    elif pair.endswith("CHF") or pair.endswith("CAD"):
         return 10.0 / (rate or 1.0)
     else:
         return 10.0

@@ -1,0 +1,40 @@
+strategy: m1_z_reversal
+mt5_account: 5053225887
+mt5_path: null
+pairs:
+  - EURUSD
+  - EURJPY
+  - GBPJPY
+hold_bars: 0
+session:
+  start_utc: 0
+  end_utc: 24
+risk:
+  max_concurrent: 6
+  max_spread_mult: 2.0
+  max_daily_loss: 1000
+lot_size: 0.10
+
+# Signal parameters
+z_thresh: 2.0
+atr_pctl: 0.25
+z_window: 50
+atr_window: 20
+atr_gate_window: 100
+
+# Trailing stop parameters (multipliers of ATR)
+stop_a: 0.15        # Initial stop distance
+trig_a: 0.20        # Trail trigger distance
+gap_a: 0.10         # Trail gap from best
+max_hold_min: 54    # Maximum position hold time
+
+# Execution obfuscation
+entry_offset_s: 3       # Base delay before entry
+entry_offset_jitter: 2  # Random jitter added to delay
+
+description: >
+  M1 Z-Reversal: mean reversion on extreme z-score bars (|z|>2.0) with
+  ATR volatility gate (>25th pctl). Trailing stop at 0.15/0.20/0.10 ATR.
+  Randomized entry delay 3-5s after signal. Validated across 3 data sources
+  (Exness ticks Oct-Dec 2025, Dukascopy CSV Oct24-Jun26, Dukascopy Parquet Apr-Jun26).
+  ~150 trades/day at ~76% WR across all sources.

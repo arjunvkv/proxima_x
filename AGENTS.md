@@ -167,6 +167,13 @@ python strategies/dark_consensus/run.py
 ```
 7-pair magnitude gap strategy. Account 109849586.
 
+### Combined DC + 10sMR (Paper Trade Strategy)
+```
+cd paper_trade
+python strategies/combined_dc_mr/run.py
+```
+~41 trades/day at ~57% WR. DC fires on all 3 pairs (EURUSD z>1.5, EURJPY/GBPJPY z>1.75) on spread-widen recovery, hold 10min. 10sMR fires on EURUSD only (z>3.5), hold 3min. Account TBD.
+
 ### Proxima Ops — MT5 Demo Deployment
 ```
 python run_proxima_demo.py demo       # Full demo deployment

@@ -1,0 +1,44 @@
+strategy: blind_spot_alpha
+mt5_account: 5053236851
+mt5_path: "C:/Program Files/MetaTrader 5/terminal64.exe"
+pairs:
+  - EURUSD
+  - GBPUSD
+  - USDJPY
+  - AUDUSD
+  - NZDUSD
+  - USDCAD
+  - USDCHF
+  - EURJPY
+  - GBPJPY
+  - EURGBP
+  - EURAUD
+  - EURCHF
+  - EURCAD
+  - EURNZD
+  - GBPAUD
+  - GBPCAD
+  - GBPCHF
+  - GBPNZD
+  - AUDJPY
+  - AUDCAD
+  - AUDCHF
+  - AUDNZD
+  - NZDJPY
+  - NZDCAD
+  - NZDCHF
+  - CADJPY
+  - CADCHF
+  - CHFJPY
+hold_minutes: 5
+z_threshold: 2.0
+z_window: 2000
+session:
+  start_utc: 0
+  end_utc: 23
+risk:
+  max_concurrent: 10
+  max_spread_mult: 2.0
+  max_daily_loss: 1000
+lot_size: 0.05
+description: "Blind Spot Alpha — Currency Divergence Momentum. Trade pair between strongest & weakest currency when both exceed |Z|>2 in opposite directions. 56.7% WR backtest."

@@ -10,7 +10,7 @@ from paper_trade.core.dashboard import Dashboard
 from paper_trade.core.stats import SessionStats
 from paper_trade.core.config import STRATEGIES
 from paper_trade.core import registry as acct_registry
-from strategy import STRATEGY_NAME, CONFIG, generate_signal
+from strategy import STRATEGY_NAME, CONFIG, generate_signal, seed_history
 
 MIN_CONFIDENCE = 0.40
 HEARTBEAT_INTERVAL = 30
@@ -49,8 +49,9 @@ def main():
     stats = SessionStats()
     logger = Logger(STRATEGY_NAME)
     feed = Feed(mode="live", pairs=cfg["pairs"], mt5_path=mt5_path).connect()
+    seed_history(feed)
     risk = Risk(cfg)
-    exec_ = Executor(feed, logger)
+    exec_ = Executor(feed, logger, magic=cfg.get("magic", 202402))
     dash = Dashboard()
     dash.set_status("starting")
     dash.start()
@@ -84,7 +85,8 @@ def main():
                 if "spread" in p:
                     risk.update_spread_baseline(pair, p["spread"])
 
-            signal = generate_signal(data)
+            current_ts = int(time.time())
+            signal = generate_signal(data, current_time=current_ts)
             if signal is not None and signal.get("confidence", 0) >= MIN_CONFIDENCE:
                 pair = signal["pair"]
                 direction = signal["direction"]
@@ -92,7 +94,7 @@ def main():
                 cur_spread = p.get("spread", 0)
                 norm_spread = risk.normal_spread(pair)
 
-                ok, reason = risk.check_all(now, cur_spread, norm_spread, len(exec_.positions))
+                ok, reason = risk.check_all(now, cur_spread, norm_spread, len(exec_.positions), pair=pair)
                 if not ok:
                     logger.log("BLOCK", pair, reason)
                     stats.record_reject(pair, reason)

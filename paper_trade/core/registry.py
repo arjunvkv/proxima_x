@@ -39,25 +39,22 @@ def stale_entries(data):
 
 def claim(login, strategy_name):
     """Claim an MT5 account for a strategy. Returns (ok: bool, reason: str)."""
-    login_s = str(login)
+    key = f"{login}_{strategy_name}"
     data = _read()
 
     # Remove stale first
-    for s_login in stale_entries(data):
-        del data[s_login]
+    for s_key in stale_entries(data):
+        del data[s_key]
 
-    if login_s in data:
-        existing = data[login_s]
-        # Same strategy re-claiming is allowed (e.g. restart)
-        if existing["strategy"] == strategy_name:
-            data[login_s]["claimed_at"] = time.time()
-            data[login_s]["heartbeat"] = time.time()
-            data[login_s]["pid"] = os.getpid()
-            _write(data)
-            return True, "re-claimed"
-        return False, f"account {login} already claimed by '{existing['strategy']}' (pid {existing.get('pid','?')}, last heartbeat {int(time.time()-existing.get('heartbeat',0))}s ago)"
+    if key in data:
+        data[key]["claimed_at"] = time.time()
+        data[key]["heartbeat"] = time.time()
+        data[key]["pid"] = os.getpid()
+        _write(data)
+        return True, "re-claimed"
 
-    data[login_s] = {
+    data[key] = {
+        "account": str(login),
         "strategy": strategy_name,
         "claimed_at": time.time(),
         "heartbeat": time.time(),
@@ -68,11 +65,11 @@ def claim(login, strategy_name):
 
 
 def release(login, strategy_name):
-    """Release a claimed account. Only the claiming strategy can release it."""
-    login_s = str(login)
+    """Release a claimed account."""
+    key = f"{login}_{strategy_name}"
     data = _read()
-    if login_s in data and data[login_s]["strategy"] == strategy_name:
-        del data[login_s]
+    if key in data:
+        del data[key]
         _write(data)
         return True
     return False
@@ -80,10 +77,10 @@ def release(login, strategy_name):
 
 def heartbeat(login, strategy_name):
     """Update heartbeat timestamp for a claimed account."""
-    login_s = str(login)
+    key = f"{login}_{strategy_name}"
     data = _read()
-    if login_s in data and data[login_s]["strategy"] == strategy_name:
-        data[login_s]["heartbeat"] = time.time()
+    if key in data:
+        data[key]["heartbeat"] = time.time()
         _write(data)
         return True
     return False
