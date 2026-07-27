@@ -1,14 +1,7 @@
-"""Live terminal dashboard — refreshes every second. Displays a full stats snapshot."""
-import time, threading, sys, os
+"""Live terminal dashboard — refreshes every 2s without clearing screen. Prevents terminal hangs."""
+import time, threading, sys
 
-_CLEAR = "cls" if os.name == "nt" else "clear"
-
-
-def _clear_screen():
-    try:
-        os.system(_CLEAR)
-    except Exception:
-        sys.stderr.write("\033[2J\033[H")
+_REFRESH_INTERVAL = 2.0
 
 
 class Dashboard:
@@ -37,7 +30,6 @@ class Dashboard:
             self._stats["last_signal"] = s
 
     def push_snapshot(self, snapshot):
-        """Replace all stats with a fresh snapshot from SessionStats."""
         with self._lock:
             self._stats.update(snapshot)
 
@@ -48,20 +40,18 @@ class Dashboard:
 
         lines = []
         lines.append("=" * 70)
-        lines.append(f"  PAPER TRADE — {s['status'].upper()}")
-        lines.append("=" * 70)
-        lines.append(f"  Elapsed:   {s['elapsed']}")
-        lines.append(f"  Last Sig:  {s['last_signal']}")
+        lines.append(f"  PAPER TRADE — {s['status'].upper()}  [{s['elapsed']}]")
+        lines.append(f"  RUN_ID:     {s.get('run_id', '?')}")
+        lines.append(f"  Last Sig:   {s['last_signal']}")
         lines.append("─" * 70)
-        lines.append(f"  Trades:    {s['today_trades']} today  |  {s['total_trades']} total  |  {s['open_positions']} open")
-        lines.append(f"  PnL:       ${s['today_pnl']:>8.2f} today  |  ${s['total_pnl']:>8.2f} total")
-        lines.append(f"  Avg Trade: ${s['avg_pnl']:>8.2f}")
-        lines.append(f"  Win Rate:  {s['win_rate']:>5.1f}%")
-        lines.append(f"  Sharpe:    {s['sharpe']:>5.2f}")
-        lines.append(f"  Profit F:  {s['profit_factor']:>5.2f}")
-        lines.append(f"  Max DD:    ${s['max_dd']:>8.2f}")
-        lines.append(f"  Best/Worst:${s['best_trade']:>8.2f} / ${s['worst_trade']:>8.2f}")
-        lines.append(f"  Rejects:   {s['rejects']}")
+        lines.append(f"  Trades:     {s['today_trades']} today  |  {s['total_trades']} total  |  {s['open_positions']} open")
+        lines.append(f"  PnL:        ${s['today_pnl']:>8.2f} today  |  ${s['total_pnl']:>8.2f} total")
+        lines.append(f"  Avg Trade:  ${s['avg_pnl']:>8.2f}")
+        lines.append(f"  Win Rate:   {s['win_rate']:>5.1f}%")
+        lines.append(f"  Profit F:   {s['profit_factor']:>5.2f}")
+        lines.append(f"  Max DD:     ${s['max_dd']:>8.2f}")
+        lines.append(f"  Best/Worst: ${s['best_trade']:>8.2f} / ${s['worst_trade']:>8.2f}")
+        lines.append(f"  Rejects:    {s['rejects']}")
         lines.append("─" * 70)
         if s["per_pair"]:
             lines.append("  Per Pair:")
@@ -69,13 +59,12 @@ class Dashboard:
                 lines.append(f"    {pair:>7s}  ${ps['pnl']:>8.2f}  ({ps['trades']} trades)")
         lines.append("=" * 70)
 
-        _clear_screen()
         sys.stderr.write("\n".join(lines) + "\n")
 
     def _loop(self):
         while self._running:
             self._render()
-            time.sleep(1)
+            time.sleep(_REFRESH_INTERVAL)
 
     def start(self):
         self._running = True

@@ -264,6 +264,57 @@ class TrailingStopManager:
         self.config = config
         self._ticket = 1000
 
+    def hydrate_from_mt5(self, mt5, magic, feed):
+        """Load open MT5 positions with given magic into internal tracker.
+
+        Uses current M1 bars to estimate ATR for stop distances.
+        Returns count of hydrated positions.
+        """
+        import MetaTrader5 as mt5_module
+        positions = mt5.positions_get()
+        if not positions:
+            return 0
+
+        hydrated = 0
+        for pos in positions:
+            if pos.magic != magic:
+                continue
+            pair = pos.symbol
+            direction = 1 if pos.type == mt5_module.ORDER_TYPE_BUY else -1
+
+            bars = feed.copy_m1_history(pair, count=self.config.get("atr_window", 20))
+            atr_v = 0.001
+            if bars and len(bars) > 1:
+                ranges = [b["high"] - b["low"] for b in bars]
+                atr_v = sum(ranges) / len(ranges)
+
+            ticket = self._ticket
+            self._ticket += 1
+            pip_size = 0.01 if "JPY" in pair else 0.0001
+            min_s = max(0, self.config.get("min_stop_pips", 0) * pip_size)
+            s = max(self.config.get("stop_a", 0.15) * atr_v * random.uniform(0.9, 1.1), min_s)
+            tg = self.config.get("trig_a", 0.20) * atr_v * random.uniform(0.9, 1.1)
+            gp = self.config.get("gap_a", 0.10) * atr_v * random.uniform(0.9, 1.1)
+            stop = pos.price_open - s if direction == 1 else pos.price_open + s
+
+            self.positions[ticket] = {
+                "ticket": ticket,
+                "pair": pair,
+                "direction": direction,
+                "entry": pos.price_open,
+                "best": pos.price_open,
+                "stop": stop,
+                "s": s, "tg": tg, "gp": gp,
+                "lot_size": pos.volume,
+                "entry_time": int(pos.time),
+                "timestamp": int(pos.time),
+                "skip_until": int(time.time()) + 5,
+                "hydrated": True,
+                "mt5_ticket": pos.ticket,
+            }
+            hydrated += 1
+        return hydrated
+
     def add(self, pair, direction, entry_price, atr_v, lot_size=0.1, spread=0, timestamp=0):
         ticket = self._ticket; self._ticket += 1
         pip_size = 0.01 if "JPY" in pair else 0.0001

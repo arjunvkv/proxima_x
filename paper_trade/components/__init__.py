@@ -47,17 +47,22 @@ def consecutive_streak(pnls, win=True):
         streaks.append(current)
     return max(streaks) if streaks else 0
 
+_QUOTE_TO_USD_FALLBACK = {
+    "AUD": 6.7, "NZD": 5.8, "GBP": 12.5, "EUR": 10.5, "CHF": 10.0, "CAD": 7.8,
+}
+
 def pip_value_usd(pair, rate=None):
-    """Return USD per pip for 1 standard lot."""
+    """Return USD per pip for 1 standard lot.
+    rate param: quote/USD rate for cross pairs (e.g. AUDUSD for XXXAUD)."""
+    base, quote = pair[:3], pair[-3:]
     if pair in ("EURUSD", "GBPUSD", "AUDUSD", "NZDUSD"):
         return 10.0
-    elif pair in ("USDJPY",):
+    if quote == "JPY":
         return 1000.0 / (rate or 100)
-    elif pair.endswith("JPY"):
-        return 1000.0 / (rate or 140)
-    elif pair in ("USDCHF", "USDCAD"):
-        return 10.0 / (rate or 1.0)
-    elif pair.endswith("CHF") or pair.endswith("CAD"):
-        return 10.0 / (rate or 1.0)
-    else:
+    if quote == "USD":
         return 10.0
+    if base == "USD":
+        return 10.0 / (rate or 1.0)
+    if rate:
+        return 10.0 * rate if quote in ("EUR", "GBP", "AUD", "NZD") else 10.0 / rate
+    return _QUOTE_TO_USD_FALLBACK.get(quote, 10.0)

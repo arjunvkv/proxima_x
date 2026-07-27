@@ -59,14 +59,18 @@ class Feed:
     def copy_m1_history(self, pair, count=100):
         """Fetch count historical M1 bid bars for pair. Returns list of dicts or None.
 
+        Uses copy_rates_range (history server archive) to match live signal data source.
         Each dict: {time, open, high, low, close} with raw bid prices.
-        Rates from MT5 are bid OHLC (open=r[1], high=r[2], low=r[3], close=r[4]).
         """
+        import time as _time
         if self.mode != "live" or not hasattr(self, "mt5"):
             return None
-        rates = self.mt5.copy_rates_from_pos(pair, self.mt5.TIMEFRAME_M1, 0, count)
-        if rates is None or len(rates) == 0:
+        now = int(_time.time())
+        from_time = now - count * 60 - 120
+        rates = self.mt5.copy_rates_range(pair, self.mt5.TIMEFRAME_M1, from_time, now)
+        if rates is None or len(rates) < count:
             return None
+        rates = rates[-count:]
         result = []
         for r in rates:
             result.append({

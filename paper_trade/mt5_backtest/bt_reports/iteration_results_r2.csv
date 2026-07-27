@@ -1,0 +1,8 @@
+"Iteration","Desc","Final","PnL"
+"01_tightstop","Tight stop 1.0/0.3/0.02 + tick-trail","25000","0"
+"02_widestop","Wide stop 4.0/1.5/0.08 + time 0-7 + tick","25000","0"
+"03_z30","Z-thresh 3.0 + time 0-7 + tick","25000","0"
+"04_z30tight","Z30 + tight stop 1.0/0.3/0.02 + time 0-7 + tick","25000","0"
+"05_tp","Take profit 1.0??ATR + tick","25000","0"
+"06_tp_time","TP 1.0??ATR + time 0-7 + tick","25000","0"
+"07_all","ALL: Z30+tight+tp+time+limit+tick","25000","0"

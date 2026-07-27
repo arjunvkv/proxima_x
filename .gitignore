@@ -240,3 +240,13 @@ ab_validation_report.txt
 live_outcome_audit_results.json
 phase5_report.md
 
+# Compiled MQL binaries
+*.ex5
+*.ex4
+
+# MT5 compile artifacts
+.mt5tmp/
+
+# Old MT5 tester HTML reports (replaced by RECON text evidence)
+*.htm
+

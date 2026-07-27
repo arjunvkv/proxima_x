@@ -222,3 +222,150 @@ paper_trade/strategies/m1_z_reversal/
 - ✅ Prefer fewer robust features over large optimization grids
 - ❌ No more z-threshold tuning (already disproven)
 - ❌ No more trailing stop tuning (already disproven)
+
+---
+
+## v3 Deployment: Impulse Fade — Live Results
+
+### Core Discovery
+
+**The market gives edge immediately after impulse, within 30 seconds.** The key insight from v2's RQ1-RQ3: instead of waiting for M1 bar formation and z-score computation, detect the raw price impulse directly on tick data. The "exhaustion" classification from v2's reaction classifier is unnecessary — simply fading ALL impulses ≥ threshold produces positive expectancy at short hold times.
+
+### Winning Configs
+
+| Pair | Detection | Hold | Directions | Trades/d | WR (3mo) | Gross (3mo) | Avg/trade |
+|------|-----------|------|-----------|----------|---------|-------------|----------|
+| **EURUSD** | 5-pip impulse in 20s | 30s | Both (buy + sell) | **48.4** | **66.6%** | +5,305p | +1.68p |
+| **EURJPY** | 10-pip impulse in 20s | 30s | **Short-only** | 17.6 | **76.1%** | +5,394p | +4.72p |
+| **Combined** | — | 30s | EURUSD both + EURJPY short | **~62** | **~69%** | — | — |
+
+### Adversity Coverage (28 problems from RESEARCH_PLAN_v2.md)
+
+- **Problem #20 (fast fade volume gap) solved**: Lowering threshold to 5p and widening window to 20s produces 48.4 trades/day vs old 0.25/day, maintaining 66.6% WR.
+- **Problem #14 (monthly inconsistency) verified**: EURUSD 64.6%→70.7%→67.8% across Oct/Nov/Dec. EURJPY 68.4%→63.4%→66.4%. All months positive.
+- **Walk-forward validated**: EURUSD Oct+Nov train 66.1% → Dec test 67.8% (+1.6pp). EURJPY train 67.0% → test 66.4% (-0.5pp).
+- **Direction breakdown**: EURUSD both directions work (long 67.4%, short 65.7%). EURJPY long is breakeven (55.1%) — only short fades deployed.
+- **Entry delay sensitivity**: 1-tick delay EURUSD 66.6→63.6% WR. EURJPY short 76.1→76.2% (unchanged).
+- **Spread sensitivity**: EURJPY passes at 2× average spread (64.4% WR). Fails at 5× (50.7%). Spread gate deployed.
+- **Hourly analysis**: EURJPY short fails during London open (07:00Z, -469p) and low-liq (20-23Z, -107p). Hour blocking deployed.
+- **Multi-pair overlap**: 14% same-second overlap. Combined non-overlapping events = 4,748/65 days.
+- **Blocked (no fix)**: Problems #17-18 (MT5 tick API unavailable, Exness vs MT5 data discrepancy).
+
+### Deployment
+
+**Script**: `paper_trade/strategies/m1_z_reversal/run_v2.py`
+
+Key design:
+- **LiveDetector**: Stateful deque-based sliding window (identical to backtest logic). Processes incoming tick stream, detects raw price impulses.
+- **No trailing stop**: Fixed 30s hold, market exit via timer.
+- **No z-score / ATR / bar model**: Pure tick-level raw impulse.
+- **EURJPY hour blocks**: 07:00Z (London open) and 20:00-23:00Z (low liquidity).
+- **Spread gate**: Block EURJPY if spread > 2× normal (0.012).
+- **Single-process lock**: Prevents duplicate Python process bug (Problem #19).
+- **Max concurrent**: 3 positions (limited by 14% overlap rate).
+
+### Files
+
+```
+paper_trade/strategies/m1_z_reversal/
+├── run_v2.py                     # V3 deployment script
+├── _fast_density.py              # Single-pass density backtest (all configs)
+├── _validate_adversities.py      # Monthly/walkforward/direction/overall checks
+├── _delay_and_evidence.py        # Entry delay + per-trade evidence
+├── _hourly_check.py              # Hourly + session breakdown
+├── _backtest_stop.py             # Hard stop backtest (0-20p stops)
+├── RESEARCH_PLAN_v2.md           # This document (v2→v3 evolution)
+├── strategy.py                   # v1 strategy (archived)
+└── tick_backtest.py              # v1 tick backtester (archived)
+```
+
+---
+
+## v3b Live Deployment & Quiet Day Analysis
+
+### Live Config (run_v2.py)
+
+Current live deployment against MT5 demo account 5053225887:
+
+- **Instrument**: EURUSD only (EURJPY dropped — 55.1% WR, too thin)
+- **Lot size**: 1.0 (stop-loss limits max DD to $2,136 < $2,500 FundedNext threshold)
+- **Detection**: 5p impulse in 20s window, fade direction (same as backtest)
+- **Hold**: 30s fixed, market exit
+- **Hard stop**: 5p (deducted from entry price, checked every 100ms loop)
+- **Session hours**: 00-23 UTC (no hour blocking — strategy naturally produces 0 trades during dead hours)
+- **Max concurrent**: 1
+
+### Bugs Fixed During Live Deployment
+
+| Bug | Symptom | Fix |
+|-----|---------|-----|
+| **Stale tick detector death** | After 20s of no price change, the detector's internal window advanced past all tick data → hp/lp=0 permanently | Feed `add_tick()` only on actual bid/ask changes (line 295) |
+| **Session hours blocked** | `Risk.__init__` defaults to 7-21 UTC. At 01:47 UTC, `check_market_hours` returned False → 60s sleep loop, no ticks processed | Added `session_start: 0, session_end: 23` to CONFIG |
+| **CSV never flushed** | Python CSV buffer never flushed to disk during long runs | Force flush every 500 rows |
+| **Legacy process lingering** | Old Python process (from unclean kills) held file locks → new process could not recreate log dir | Kill all Python processes before restarting MT5 terminal |
+
+### Live Session (Jul 23, 2026 01:15-08:30 UTC)
+
+**Zero events fired.** Max hp across ~41,500 ticks: **2.1 points** (0.00021). Threshold: **5.0 points** (0.0005).
+
+This is normal — verified against 3-month backtest hourly distribution.
+
+### Backtest Hourly Distribution (EURUSD, Oct-Dec 2025, 5p/20s)
+
+| Hour UTC | Events (3mo) | Per Day | Notes |
+|----------|-------------|---------|-------|
+| 00-06 | 27 total | 0.1 | **Dead zone** — ~1 event/month |
+| 07 | 216 | 8.0 | London open starts |
+| 08-11 | 102 | 3.8 | Morning drift |
+| 12-15 | 766 | 28.4 | **NY peak** — major events |
+| 16-17 | 39 | 1.4 | Afternoon lull |
+| 18 | 428 | 15.9 | **News/close spike** — biggest hour |
+| 19-23 | 166 | 6.1 | Evening decay |
+
+**Key insight**: 37% of trading days (29/78) have zero 5p events. This is structural — the strategy naturally produces 0 trades on low-volatility days, which is correct behavior.
+
+### Can We Trade Quiet Hours? — Tested and Rejected
+
+Tested every combination on the 29 quiet days (zero 5p events):
+
+| Threshold | WR | Avg | Verdict |
+|-----------|-----|-----|---------|
+| **5p** (current) | — | Breakeven (no trades) | ✅ |
+| 3p | 26.2% | -0.85p | ❌ |
+| 2p | 26.5% | -0.64p | ❌ |
+| 1.5p | 25.7% | -0.56p | ❌ |
+| 1p | 23.9% | -0.51p | ❌ |
+| 2p + 15-120s hold | 19-33% | all negative | ❌ |
+| 2p + 0-3p stop | 19-33% | all negative | ❌ |
+| 5-7p + 60-120s window + FOLLOW | 3-18% | all negative | ❌ |
+
+**Conclusion**: No strategy variation produces positive expectancy on quiet days. The 5p threshold is optimal — it prevents trading when there is no edge.
+
+### FundedNext Policy Constraint
+
+FundedNext's CFD rules:
+- **Tick scalping banned**: "ultra-aggressive trading on extremely small price changes (a few ticks), very high trade frequency in milliseconds to seconds"
+- **Our strategy**: 30s holds (3× above the <10s threshold), 48 trades/day (under 200/day limit), ~96 server messages (under 2,000/day limit)
+- **Verdict**: Likely passes automated detection, but risk of manual review flag. Lower lot size (0.3-0.5) reduces review risk. FTMO or personal capital are cleaner alternatives.
+
+### Quiet Hours Alternative — EURJPY Impulse Fade (Rejected)
+
+Fully tested EURJPY and GBPJPY on quiet hours (00-07 UTC) using the same impulse fade logic:
+
+| Config | WR | t/d | Walkforward | Stop-compatible | Max DD | Verdict |
+|--------|-----|-----|------------|----------------|--------|---------|
+| EURJPY 10p/60s h=30s | **67.8%** | 54 | ✅ (67.4→69.1%) | **❌** — any stop drops WR to 28% | -$10,339 | ❌ Stop kills edge |
+| EURJPY 7p/60s h=30s | **61.7%** | 177 | ✅ (62.1→60.3%) | **❌** — any stop drops WR to 22% | -$30,947 | ❌ Same issue |
+| GBPJPY 10p/60s h=60s | **64.1%** | 127 | ✅ (64.4→62.7%) | **❌** | -$12,886 | ❌ |
+| GBPJPY 7p/120s h=60s | **64.4%** | 1161 | ✅ (65.2→61.6%) | **❌** | -$89,647 | ❌ |
+
+**Why stops kill the edge**: EURJPY 10p+ impulses take longer to revert than EURUSD 5p impulses. A 5p stop (which works on EURUSD) gets hit on >70% of EURJPY trades before the 30s reversion occurs. Even a 30p stop only recovers WR to 35%.
+
+**Conclusion**: EURJPY/GBPJPY impulse fade is fundamentally incompatible with hard stops. The only way to profit from quiet hours would be running EURJPY as a separate account with no stop (or 50p+ safety stop), capped at tiny size. This is not worth the complexity for ~4 tradeable days per month.
+
+### Remaining Work
+
+- [ ] Stop-loss integration revert: hard stop 5p (done in run_v2.py, needs live testing on volatile day)
+- [ ] Daily circuit breaker: -$800 daily loss limit (not yet implemented)
+- [ ] Live verification on a high-volatility day (need 5p+ impulse to test full chain)
+- [ ] FundedNext decision: switch to FTMO / personal capital / or run anyway

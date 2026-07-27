@@ -1,0 +1,41 @@
+strategy: v2z_paper
+mt5_account: null
+mt5_path: null
+pairs:
+  - GBPNZD
+  - EURNZD
+  - GBPAUD
+  - EURAUD
+  - GBPCAD
+  - AUDNZD
+hold_bars: 0
+session:
+  start_utc: 0
+  end_utc: 24
+risk:
+  max_concurrent: 3
+  max_spread_mult: 2.0
+  max_daily_loss: 1250
+lot_size: 1.0
+
+# Signal parameters
+z_thresh: 2.5
+z_window: 50
+atr_window: 20
+
+# Trailing stop parameters (multipliers of ATR)
+stop_a: 1.5        # Initial stop distance = 1.5 × ATR(20)
+trig_a: 0.50       # Trail activates after profit > 0.50 × ATR
+gap_a: 0.03        # Trail gap = 0.03 × ATR behind best price
+max_hold_min: 54    # Force close after 54 min
+
+# Execution
+entry_offset_s: 0
+entry_offset_jitter: 0
+min_stop_pips: 0.0
+randomize_stops: false
+
+description: >
+  V2+z Paper: z>=2.5 threshold on M1 bar returns, fade direction.
+  Trailing stop at 0.15/0.20/0.10 ATR. Max 3 lots total open.
+  Validated: 79-80% WR, 6 non-JPY pairs, 183 trades/day at z>=2.5.

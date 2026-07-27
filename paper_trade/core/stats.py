@@ -1,13 +1,16 @@
 """Live session stats tracker — computes all validation metrics from trade events."""
-import time
+import json, os, time
 import numpy as np
 from paper_trade.components import sharpe, win_rate, profit_factor, max_drawdown
+
+_TRADE_LOG_DIR = os.path.join(os.path.dirname(__file__), "..", "trade_logs")
 
 
 class SessionStats:
     """Tracks fills, closes, rejects per session. Produces a validation-ready snapshot."""
 
-    def __init__(self):
+    def __init__(self, run_id=None):
+        self._run_id = run_id or int(time.time())
         self._fills = []         # open positions
         self._trades = []        # completed trades: {pair, entry_t, exit_t, entry_p, exit_p, gross_pnl, direction, lot}
         self._rejects = []       # {time, pair, reason}
@@ -19,9 +22,30 @@ class SessionStats:
         self._pair_pnl = {}      # pair -> total PnL
         self._prev_day = None
         self._start_time = time.time()
+        self._log_file = self._open_log()
+
+    def _open_log(self):
+        os.makedirs(_TRADE_LOG_DIR, exist_ok=True)
+        path = os.path.join(_TRADE_LOG_DIR, f"run_{self._run_id}.jsonl")
+        return open(path, "a")
+
+    def _log_trade(self, event_type, data):
+        record = {"run_id": self._run_id, "ts": int(time.time()), "event": event_type, **data}
+        try:
+            self._log_file.write(json.dumps(record) + "\n")
+            self._log_file.flush()
+        except Exception:
+            pass
 
     def record_fill(self, fill):
         self._fills.append(fill)
+        self._log_trade("fill", {
+            "ticket": fill.get("ticket"),
+            "pair": fill["pair"], "direction": fill["direction"],
+            "lot_size": fill["lot_size"], "entry_price": fill["entry_price"],
+            "entry_time": fill["entry_time"], "spread": fill.get("spread"),
+            "z_score": fill.get("z_score"),
+        })
 
     def record_close(self, trade):
         """trade: dict from executor.close_position() merged with original fill."""
@@ -44,12 +68,20 @@ class SessionStats:
         pair = trade.get("pair", "?")
         self._pair_pnl[pair] = self._pair_pnl.get(pair, 0) + gross
 
-        # Remove from open fills (match on entry_time or timestamp + pair)
-        close_time = trade.get("entry_time") or trade.get("timestamp") or 0
-        self._fills = [
-            f for f in self._fills
-            if not (f.get("pair") == pair and f.get("entry_time", 0) == close_time)
-        ]
+        self._log_trade("close", {
+            "ticket": trade.get("ticket"),
+            "pair": pair, "direction": trade.get("direction"),
+            "lot_size": trade.get("lot_size"), "entry_price": trade.get("entry"),
+            "exit_price": trade.get("exit_price"), "gross_pnl": gross,
+            "entry_time": trade.get("entry_time"), "exit_time": trade.get("exit_time"),
+        })
+
+        # Remove from open fills (match on ticket)
+        ticket = trade.get("ticket")
+        if ticket is not None:
+            self._fills = [f for f in self._fills if f.get("ticket") != ticket]
+        else:
+            self._fills = [f for f in self._fills if not (f.get("pair") == pair and f.get("entry_price") == trade.get("entry"))]
 
     def record_reject(self, pair, reason):
         self._rejects.append({"time": int(time.time()), "pair": pair, "reason": reason})
@@ -80,3 +112,14 @@ class SessionStats:
             "rejects": len(self._rejects),
             "per_pair": pair_summary,
         }
+
+    def close(self):
+        try:
+            self._log_file.flush()
+            self._log_file.close()
+        except Exception:
+            pass
+
+    @property
+    def run_id(self):
+        return self._run_id

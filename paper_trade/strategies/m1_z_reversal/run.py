@@ -53,9 +53,14 @@ def main():
     stats = SessionStats()
     logger = Logger(STRATEGY_NAME)
     seed_history(feed)
+
+    trail_mgr = TrailingStopManager(cfg)
+    hydrated = trail_mgr.hydrate_from_mt5(feed.mt5, cfg.get("magic", 202407), feed)
+    if hydrated:
+        print(f"Hydrated {hydrated} existing MT5 positions into trailing stop manager", file=sys.stderr)
+
     risk = Risk(cfg)
     exec_ = Executor(feed, logger, magic=cfg.get("magic", 202407))
-    trail_mgr = TrailingStopManager(cfg)
     dash = Dashboard()
     dash.set_status("starting")
     dash.start()

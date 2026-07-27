@@ -1,0 +1,195 @@
+{"ts": 1784924998, "event": "signal", "pair": "EURAUD", "direction": -1, "z_score": 12.5976, "z_mean": 1.62e-05, "z_std": 0.00017489, "return": 0.0, "atr": 0.000123, "confidence": 1.0, "bar_time": 1784935740, "bar_open": 1.6286, "bar_high": 1.6286, "bar_low": 1.6286, "bar_close": 1.6286, "stop_a": 3.0, "trig_a": 1.0, "gap_a": 0.05, "tp_mult": 0.5, "min_tp_pips": 5.0, "z_window": 50, "z_buf_size": 50}
+{"ts": 1784924998, "event": "signal", "pair": "GBPAUD", "direction": -1, "z_score": 9.5921, "z_mean": 9e-06, "z_std": 0.00016115, "return": 0.0, "atr": 0.000158, "confidence": 1.0, "bar_time": 1784935740, "bar_open": 1.90816, "bar_high": 1.90816, "bar_low": 1.9081, "bar_close": 1.9081, "stop_a": 3.0, "trig_a": 1.0, "gap_a": 0.05, "tp_mult": 0.5, "min_tp_pips": 5.0, "z_window": 50, "z_buf_size": 50}
+{"ts": 1784924998, "event": "signal", "pair": "EURNZD", "direction": -1, "z_score": 8.0062, "z_mean": 3.12e-05, "z_std": 0.00019001, "return": 0.0, "atr": 0.0001725, "confidence": 1.0, "bar_time": 1784935740, "bar_open": 1.96432, "bar_high": 1.96432, "bar_low": 1.96432, "bar_close": 1.96432, "stop_a": 3.0, "trig_a": 1.0, "gap_a": 0.05, "tp_mult": 0.5, "min_tp_pips": 5.0, "z_window": 50, "z_buf_size": 50}
+{"ts": 1784924998, "event": "signal", "pair": "GBPNZD", "direction": -1, "z_score": 5.4315, "z_mean": 2.34e-05, "z_std": 0.0001603, "return": 0.0, "atr": 0.00022, "confidence": 1.0, "bar_time": 1784935740, "bar_open": 2.3014, "bar_high": 2.30148, "bar_low": 2.3014, "bar_close": 2.3014, "stop_a": 3.0, "trig_a": 1.0, "gap_a": 0.05, "tp_mult": 0.5, "min_tp_pips": 5.0, "z_window": 50, "z_buf_size": 50}
+{"ts": 1784924998, "event": "signal", "pair": "AUDNZD", "direction": 1, "z_score": -2.6985, "z_mean": 7.8e-06, "z_std": 5.877e-05, "return": 0.0, "atr": 8.75e-05, "confidence": 0.5397, "bar_time": 1784935740, "bar_open": 1.20611, "bar_high": 1.20617, "bar_low": 1.20611, "bar_close": 1.20617, "stop_a": 3.0, "trig_a": 1.0, "gap_a": 0.05, "tp_mult": 0.5, "min_tp_pips": 5.0, "z_window": 50, "z_buf_size": 50}
+{"ts": 1784924998, "event": "bar", "pair": "GBPNZD", "time": 1784935740, "open": 2.3014, "high": 2.30148, "low": 2.3014, "close": 2.3014, "trail": null}
+{"ts": 1784924998, "event": "bar", "pair": "EURNZD", "time": 1784935740, "open": 1.96432, "high": 1.96432, "low": 1.96432, "close": 1.96432, "trail": null}
+{"ts": 1784924998, "event": "bar", "pair": "GBPAUD", "time": 1784935740, "open": 1.90816, "high": 1.90816, "low": 1.9081, "close": 1.9081, "trail": null}
+{"ts": 1784924998, "event": "bar", "pair": "EURAUD", "time": 1784935740, "open": 1.6286, "high": 1.6286, "low": 1.6286, "close": 1.6286, "trail": null}
+{"ts": 1784924998, "event": "bar", "pair": "GBPCAD", "time": 1784935740, "open": 1.87823, "high": 1.87827, "low": 1.87815, "close": 1.87823, "trail": null}
+{"ts": 1784924998, "event": "bar", "pair": "AUDNZD", "time": 1784935740, "open": 1.20611, "high": 1.20617, "low": 1.20611, "close": 1.20617, "trail": null}
+{"ts": 1784924998, "event": "fill", "pair": "EURAUD", "ticket": 152386591306, "direction": -1, "entry_price": 1.62862, "spread": 9e-05, "slip": 3e-05, "z_score": 12.5976, "atr": 0.000123, "tp_price": 1.62806}
+{"ts": 1784924999, "event": "fill", "pair": "GBPAUD", "ticket": 152386591312, "direction": -1, "entry_price": 1.90809, "spread": 8e-05, "slip": 0.0, "z_score": 9.5921, "atr": 0.000158, "tp_price": 1.9076}
+{"ts": 1784924999, "event": "fill", "pair": "AUDNZD", "ticket": 152386591315, "direction": 1, "entry_price": 1.20621, "spread": 6e-05, "slip": 0.0, "z_score": -2.6985, "atr": 8.75e-05, "tp_price": 1.20667}
+{"ts": 1784925058, "event": "bar", "pair": "GBPNZD", "time": 1784935800, "open": 2.3014, "high": 2.30172, "low": 2.3014, "close": 2.3016, "trail": null}
+{"ts": 1784925058, "event": "bar", "pair": "EURNZD", "time": 1784935800, "open": 1.96432, "high": 1.96457, "low": 1.96426, "close": 1.96448, "trail": null}
+{"ts": 1784925058, "event": "bar", "pair": "AUDNZD", "time": 1784935800, "open": 1.20615, "high": 1.20621, "low": 1.20614, "close": 1.20614, "trail": {"best": 1.20621, "stop": 1.20595, "best_diff_pips": 0.0, "stop_diff_pips": 2.62, "trailing_active": false}}
+{"ts": 1784925059, "event": "bar", "pair": "GBPCAD", "time": 1784935800, "open": 1.87823, "high": 1.87833, "low": 1.87819, "close": 1.87832, "trail": null}
+{"ts": 1784925060, "event": "bar", "pair": "GBPAUD", "time": 1784935800, "open": 1.9081, "high": 1.90824, "low": 1.90806, "close": 1.90821, "trail": {"best": 1.90809, "stop": 1.90856, "best_diff_pips": 0.0, "stop_diff_pips": 4.74, "trailing_active": false}}
+{"ts": 1784925061, "event": "bar", "pair": "EURAUD", "time": 1784935800, "open": 1.6286, "high": 1.62878, "low": 1.62859, "close": 1.62871, "trail": {"best": 1.62862, "stop": 1.62899, "best_diff_pips": 0.0, "stop_diff_pips": 3.69, "trailing_active": false}}
+{"ts": 1784925118, "event": "bar", "pair": "GBPNZD", "time": 1784935860, "open": 2.3016, "high": 2.30174, "low": 2.30144, "close": 2.3017, "trail": null}
+{"ts": 1784925118, "event": "bar", "pair": "GBPAUD", "time": 1784935860, "open": 1.90821, "high": 1.90824, "low": 1.90814, "close": 1.9082, "trail": {"best": 1.90806, "stop": 1.90856, "best_diff_pips": 0.3, "stop_diff_pips": 4.74, "trailing_active": true}}
+{"ts": 1784925118, "event": "bar", "pair": "GBPCAD", "time": 1784935860, "open": 1.87832, "high": 1.87833, "low": 1.87824, "close": 1.87827, "trail": null}
+{"ts": 1784925119, "event": "bar", "pair": "EURNZD", "time": 1784935860, "open": 1.96448, "high": 1.96461, "low": 1.96436, "close": 1.96461, "trail": null}
+{"ts": 1784925121, "event": "bar", "pair": "EURAUD", "time": 1784935860, "open": 1.62871, "high": 1.62878, "low": 1.62871, "close": 1.62872, "trail": {"best": 1.62859, "stop": 1.62899, "best_diff_pips": 0.3, "stop_diff_pips": 3.69, "trailing_active": true}}
+{"ts": 1784925121, "event": "bar", "pair": "AUDNZD", "time": 1784935860, "open": 1.20614, "high": 1.20624, "low": 1.2061, "close": 1.20621, "trail": {"best": 1.20621, "stop": 1.20595, "best_diff_pips": 0.0, "stop_diff_pips": 2.62, "trailing_active": false}}
+{"ts": 1784925178, "event": "bar", "pair": "EURNZD", "time": 1784935920, "open": 1.96461, "high": 1.96466, "low": 1.96455, "close": 1.96466, "trail": null}
+{"ts": 1784925178, "event": "bar", "pair": "GBPCAD", "time": 1784935920, "open": 1.87827, "high": 1.87828, "low": 1.87822, "close": 1.87824, "trail": null}
+{"ts": 1784925178, "event": "bar", "pair": "GBPNZD", "time": 1784935920, "open": 2.3017, "high": 2.3018, "low": 2.30168, "close": 2.3018, "trail": null}
+{"ts": 1784925178, "event": "bar", "pair": "GBPAUD", "time": 1784935920, "open": 1.9082, "high": 1.9082, "low": 1.90814, "close": 1.90814, "trail": {"best": 1.90806, "stop": 1.90856, "best_diff_pips": 0.3, "stop_diff_pips": 4.74, "trailing_active": true}}
+{"ts": 1784925179, "event": "bar", "pair": "EURAUD", "time": 1784935920, "open": 1.62872, "high": 1.62872, "low": 1.62868, "close": 1.62869, "trail": {"best": 1.62859, "stop": 1.62899, "best_diff_pips": 0.3, "stop_diff_pips": 3.69, "trailing_active": true}}
+{"ts": 1784925179, "event": "bar", "pair": "AUDNZD", "time": 1784935920, "open": 1.20621, "high": 1.2063, "low": 1.20621, "close": 1.2063, "trail": {"best": 1.20624, "stop": 1.20595, "best_diff_pips": 0.3, "stop_diff_pips": 2.62, "trailing_active": true}}
+{"ts": 1784925180, "event": "close", "pair": "AUDNZD", "direction": 1, "entry_price": 1.20621, "exit_price": 1.2063, "gross_pnl": 9.0, "pips": 0.86, "hold_seconds": 181, "reason": "stop", "z_score": -2.6985389004433027, "trail_exit": 1.2063}
+{"ts": 1784925238, "event": "bar", "pair": "GBPNZD", "time": 1784935980, "open": 2.3018, "high": 2.302, "low": 2.3018, "close": 2.302, "trail": null}
+{"ts": 1784925238, "event": "bar", "pair": "EURNZD", "time": 1784935980, "open": 1.96466, "high": 1.96474, "low": 1.96456, "close": 1.96474, "trail": null}
+{"ts": 1784925238, "event": "bar", "pair": "GBPAUD", "time": 1784935980, "open": 1.90814, "high": 1.9082, "low": 1.90812, "close": 1.90817, "trail": {"best": 1.90806, "stop": 1.90856, "best_diff_pips": 0.3, "stop_diff_pips": 4.74, "trailing_active": true}}
+{"ts": 1784925238, "event": "bar", "pair": "EURAUD", "time": 1784935980, "open": 1.62869, "high": 1.6287, "low": 1.62859, "close": 1.62869, "trail": {"best": 1.62859, "stop": 1.62899, "best_diff_pips": 0.3, "stop_diff_pips": 3.69, "trailing_active": true}}
+{"ts": 1784925238, "event": "bar", "pair": "AUDNZD", "time": 1784935980, "open": 1.20628, "high": 1.20639, "low": 1.20626, "close": 1.20639, "trail": null}
+{"ts": 1784925238, "event": "bar", "pair": "GBPCAD", "time": 1784935980, "open": 1.87824, "high": 1.87826, "low": 1.87819, "close": 1.87824, "trail": null}
+{"ts": 1784925298, "event": "bar", "pair": "EURAUD", "time": 1784936040, "open": 1.62869, "high": 1.62869, "low": 1.6286, "close": 1.62866, "trail": {"best": 1.62859, "stop": 1.62899, "best_diff_pips": 0.3, "stop_diff_pips": 3.69, "trailing_active": true}}
+{"ts": 1784925298, "event": "bar", "pair": "AUDNZD", "time": 1784936040, "open": 1.20639, "high": 1.20639, "low": 1.20628, "close": 1.20628, "trail": null}
+{"ts": 1784925298, "event": "bar", "pair": "GBPNZD", "time": 1784936040, "open": 2.302, "high": 2.302, "low": 2.302, "close": 2.302, "trail": null}
+{"ts": 1784925298, "event": "bar", "pair": "EURNZD", "time": 1784936040, "open": 1.96474, "high": 1.96475, "low": 1.96466, "close": 1.96468, "trail": null}
+{"ts": 1784925299, "event": "bar", "pair": "GBPCAD", "time": 1784936040, "open": 1.87825, "high": 1.87825, "low": 1.87819, "close": 1.87821, "trail": null}
+{"ts": 1784925299, "event": "bar", "pair": "GBPAUD", "time": 1784936040, "open": 1.90821, "high": 1.90829, "low": 1.90819, "close": 1.90826, "trail": {"best": 1.90806, "stop": 1.90856, "best_diff_pips": 0.3, "stop_diff_pips": 4.74, "trailing_active": true}}
+{"ts": 1784925358, "event": "bar", "pair": "GBPCAD", "time": 1784936100, "open": 1.87821, "high": 1.87823, "low": 1.87819, "close": 1.87823, "trail": null}
+{"ts": 1784925358, "event": "bar", "pair": "GBPNZD", "time": 1784936100, "open": 2.302, "high": 2.302, "low": 2.3018, "close": 2.302, "trail": null}
+{"ts": 1784925358, "event": "bar", "pair": "GBPAUD", "time": 1784936100, "open": 1.90826, "high": 1.90826, "low": 1.90814, "close": 1.90816, "trail": {"best": 1.90806, "stop": 1.90856, "best_diff_pips": 0.3, "stop_diff_pips": 4.74, "trailing_active": true}}
+{"ts": 1784925358, "event": "bar", "pair": "EURNZD", "time": 1784936100, "open": 1.96468, "high": 1.96478, "low": 1.9645, "close": 1.96474, "trail": null}
+{"ts": 1784925359, "event": "bar", "pair": "AUDNZD", "time": 1784936100, "open": 1.20628, "high": 1.20645, "low": 1.20628, "close": 1.2064, "trail": null}
+{"ts": 1784925359, "event": "bar", "pair": "EURAUD", "time": 1784936100, "open": 1.62866, "high": 1.62866, "low": 1.62856, "close": 1.62857, "trail": {"best": 1.62859, "stop": 1.62899, "best_diff_pips": 0.3, "stop_diff_pips": 3.69, "trailing_active": true}}
+{"ts": 1784925418, "event": "bar", "pair": "EURNZD", "time": 1784936160, "open": 1.96474, "high": 1.96478, "low": 1.96451, "close": 1.9646, "trail": null}
+{"ts": 1784925418, "event": "bar", "pair": "EURAUD", "time": 1784936160, "open": 1.62857, "high": 1.62857, "low": 1.62851, "close": 1.62855, "trail": {"best": 1.62856, "stop": 1.62899, "best_diff_pips": 0.6, "stop_diff_pips": 3.69, "trailing_active": true}}
+{"ts": 1784925419, "event": "bar", "pair": "GBPCAD", "time": 1784936160, "open": 1.87823, "high": 1.87823, "low": 1.87816, "close": 1.87816, "trail": null}
+{"ts": 1784925419, "event": "bar", "pair": "GBPNZD", "time": 1784936160, "open": 2.302, "high": 2.302, "low": 2.3018, "close": 2.3018, "trail": null}
+{"ts": 1784925419, "event": "bar", "pair": "GBPAUD", "time": 1784936160, "open": 1.90816, "high": 1.90816, "low": 1.90806, "close": 1.90807, "trail": {"best": 1.90806, "stop": 1.90856, "best_diff_pips": 0.3, "stop_diff_pips": 4.74, "trailing_active": true}}
+{"ts": 1784925419, "event": "bar", "pair": "AUDNZD", "time": 1784936160, "open": 1.2064, "high": 1.2064, "low": 1.20632, "close": 1.20633, "trail": null}
+{"ts": 1784925478, "event": "bar", "pair": "GBPCAD", "time": 1784936220, "open": 1.87816, "high": 1.87819, "low": 1.87782, "close": 1.87792, "trail": null}
+{"ts": 1784925478, "event": "bar", "pair": "GBPNZD", "time": 1784936220, "open": 2.3018, "high": 2.30182, "low": 2.30143, "close": 2.3018, "trail": null}
+{"ts": 1784925478, "event": "bar", "pair": "GBPAUD", "time": 1784936220, "open": 1.90807, "high": 1.90809, "low": 1.90781, "close": 1.9079, "trail": {"best": 1.90806, "stop": 1.90856, "best_diff_pips": 0.3, "stop_diff_pips": 4.74, "trailing_active": true}}
+{"ts": 1784925479, "event": "close", "pair": "GBPAUD", "direction": -1, "entry_price": 1.90809, "exit_price": 1.90782, "gross_pnl": 14.0, "pips": 2.72, "hold_seconds": 480, "reason": "stop", "z_score": 9.592113237638685, "trail_exit": 1.90782}
+{"ts": 1784925479, "event": "bar", "pair": "EURNZD", "time": 1784936220, "open": 1.9646, "high": 1.96486, "low": 1.96456, "close": 1.96486, "trail": null}
+{"ts": 1784925479, "event": "bar", "pair": "AUDNZD", "time": 1784936220, "open": 1.20633, "high": 1.20649, "low": 1.20631, "close": 1.20649, "trail": null}
+{"ts": 1784925479, "event": "bar", "pair": "EURAUD", "time": 1784936220, "open": 1.62855, "high": 1.6286, "low": 1.62851, "close": 1.62859, "trail": {"best": 1.62851, "stop": 1.62899, "best_diff_pips": 1.1, "stop_diff_pips": 3.69, "trailing_active": true}}
+{"ts": 1784925566, "event": "signal", "pair": "GBPCAD", "direction": 1, "z_score": -4.5281, "z_mean": -1.76e-05, "z_std": 0.00013385, "return": 0.0, "atr": 0.000134, "confidence": 0.9056, "bar_time": 1784936280, "bar_open": 1.87792, "bar_high": 1.87792, "bar_low": 1.87738, "bar_close": 1.8774, "stop_a": 3.0, "trig_a": 1.0, "gap_a": 0.05, "tp_mult": 0.5, "min_tp_pips": 5.0, "z_window": 50, "z_buf_size": 50}
+{"ts": 1784925566, "event": "bar", "pair": "GBPNZD", "time": 1784936280, "open": 2.3018, "high": 2.3018, "low": 2.30156, "close": 2.30156, "trail": null}
+{"ts": 1784925566, "event": "bar", "pair": "EURNZD", "time": 1784936280, "open": 1.96486, "high": 1.96486, "low": 1.96468, "close": 1.9647, "trail": null}
+{"ts": 1784925566, "event": "bar", "pair": "GBPAUD", "time": 1784936280, "open": 1.9079, "high": 1.9079, "low": 1.90761, "close": 1.90765, "trail": null}
+{"ts": 1784925566, "event": "bar", "pair": "EURAUD", "time": 1784936280, "open": 1.62859, "high": 1.62859, "low": 1.62839, "close": 1.62841, "trail": {"best": 1.62851, "stop": 1.62899, "best_diff_pips": 1.1, "stop_diff_pips": 3.69, "trailing_active": true}}
+{"ts": 1784925569, "event": "close", "pair": "EURAUD", "direction": -1, "entry_price": 1.62862, "exit_price": 1.6284, "gross_pnl": 14.0, "pips": 2.24, "hold_seconds": 571, "reason": "stop", "z_score": 12.597582264678989, "trail_exit": 1.6284}
+{"ts": 1784925569, "event": "bar", "pair": "GBPCAD", "time": 1784936280, "open": 1.87792, "high": 1.87792, "low": 1.87738, "close": 1.8774, "trail": null}
+{"ts": 1784925569, "event": "bar", "pair": "AUDNZD", "time": 1784936280, "open": 1.20649, "high": 1.20656, "low": 1.20648, "close": 1.20649, "trail": null}
+{"ts": 1784925569, "event": "fill", "pair": "GBPCAD", "ticket": 152386594896, "direction": 1, "entry_price": 1.8776, "spread": 8e-05, "slip": 2e-05, "z_score": -4.5281, "atr": 0.000134, "tp_price": 1.8779}
+{"ts": 1784925598, "event": "bar", "pair": "GBPNZD", "time": 1784936340, "open": 2.30156, "high": 2.30156, "low": 2.30144, "close": 2.30144, "trail": null}
+{"ts": 1784925598, "event": "bar", "pair": "EURNZD", "time": 1784936340, "open": 1.9647, "high": 1.9647, "low": 1.96453, "close": 1.96453, "trail": null}
+{"ts": 1784925598, "event": "bar", "pair": "GBPAUD", "time": 1784936340, "open": 1.90765, "high": 1.90765, "low": 1.90763, "close": 1.90765, "trail": null}
+{"ts": 1784925598, "event": "bar", "pair": "EURAUD", "time": 1784936340, "open": 1.62839, "high": 1.62839, "low": 1.62836, "close": 1.62837, "trail": null}
+{"ts": 1784925598, "event": "bar", "pair": "GBPCAD", "time": 1784936340, "open": 1.87749, "high": 1.87752, "low": 1.87745, "close": 1.87747, "trail": {"best": 1.8776, "stop": 1.8772, "best_diff_pips": 0.0, "stop_diff_pips": 4.02, "trailing_active": false}}
+{"ts": 1784925598, "event": "bar", "pair": "AUDNZD", "time": 1784936340, "open": 1.20647, "high": 1.20649, "low": 1.20646, "close": 1.20646, "trail": null}
+{"ts": 1784925658, "event": "bar", "pair": "EURAUD", "time": 1784936400, "open": 1.62837, "high": 1.62856, "low": 1.62836, "close": 1.62856, "trail": null}
+{"ts": 1784925658, "event": "bar", "pair": "GBPNZD", "time": 1784936400, "open": 2.30144, "high": 2.30152, "low": 2.30136, "close": 2.30152, "trail": null}
+{"ts": 1784925658, "event": "bar", "pair": "GBPAUD", "time": 1784936400, "open": 1.90763, "high": 1.90786, "low": 1.90763, "close": 1.90784, "trail": null}
+{"ts": 1784925659, "event": "bar", "pair": "GBPCAD", "time": 1784936400, "open": 1.87747, "high": 1.87747, "low": 1.87738, "close": 1.87741, "trail": {"best": 1.8776, "stop": 1.8772, "best_diff_pips": 0.0, "stop_diff_pips": 4.02, "trailing_active": false}}
+{"ts": 1784925659, "event": "bar", "pair": "EURNZD", "time": 1784936400, "open": 1.96453, "high": 1.96468, "low": 1.96452, "close": 1.96468, "trail": null}
+{"ts": 1784925659, "event": "bar", "pair": "AUDNZD", "time": 1784936400, "open": 1.20646, "high": 1.20646, "low": 1.20635, "close": 1.20635, "trail": null}
+{"ts": 1784925718, "event": "bar", "pair": "GBPNZD", "time": 1784936460, "open": 2.30152, "high": 2.30153, "low": 2.30136, "close": 2.30137, "trail": null}
+{"ts": 1784925718, "event": "bar", "pair": "GBPAUD", "time": 1784936460, "open": 1.90784, "high": 1.90788, "low": 1.90781, "close": 1.90785, "trail": null}
+{"ts": 1784925718, "event": "bar", "pair": "GBPCAD", "time": 1784936460, "open": 1.87741, "high": 1.87742, "low": 1.87741, "close": 1.87742, "trail": {"best": 1.8776, "stop": 1.8772, "best_diff_pips": 0.0, "stop_diff_pips": 4.02, "trailing_active": false}}
+{"ts": 1784925720, "event": "bar", "pair": "EURNZD", "time": 1784936460, "open": 1.96468, "high": 1.96468, "low": 1.96454, "close": 1.96462, "trail": null}
+{"ts": 1784925720, "event": "bar", "pair": "EURAUD", "time": 1784936460, "open": 1.62856, "high": 1.6286, "low": 1.62855, "close": 1.62855, "trail": null}
+{"ts": 1784925720, "event": "bar", "pair": "AUDNZD", "time": 1784936460, "open": 1.20635, "high": 1.20635, "low": 1.20634, "close": 1.20634, "trail": null}
+{"ts": 1784925778, "event": "bar", "pair": "GBPNZD", "time": 1784936520, "open": 2.30137, "high": 2.30153, "low": 2.30137, "close": 2.30141, "trail": null}
+{"ts": 1784925778, "event": "bar", "pair": "EURNZD", "time": 1784936520, "open": 1.96462, "high": 1.96476, "low": 1.96462, "close": 1.96466, "trail": null}
+{"ts": 1784925778, "event": "bar", "pair": "GBPAUD", "time": 1784936520, "open": 1.90785, "high": 1.90793, "low": 1.90785, "close": 1.90785, "trail": null}
+{"ts": 1784925778, "event": "bar", "pair": "EURAUD", "time": 1784936520, "open": 1.62856, "high": 1.62866, "low": 1.62855, "close": 1.62855, "trail": null}
+{"ts": 1784925778, "event": "bar", "pair": "GBPCAD", "time": 1784936520, "open": 1.87743, "high": 1.87745, "low": 1.8773, "close": 1.8773, "trail": {"best": 1.8776, "stop": 1.8772, "best_diff_pips": 0.0, "stop_diff_pips": 4.02, "trailing_active": false}}
+{"ts": 1784925778, "event": "bar", "pair": "AUDNZD", "time": 1784936520, "open": 1.20634, "high": 1.20635, "low": 1.20633, "close": 1.20633, "trail": null}
+{"ts": 1784925838, "event": "bar", "pair": "EURNZD", "time": 1784936580, "open": 1.96466, "high": 1.9647, "low": 1.96461, "close": 1.96466, "trail": null}
+{"ts": 1784925838, "event": "bar", "pair": "GBPAUD", "time": 1784936580, "open": 1.90785, "high": 1.90799, "low": 1.90777, "close": 1.90798, "trail": null}
+{"ts": 1784925838, "event": "bar", "pair": "EURAUD", "time": 1784936580, "open": 1.62856, "high": 1.6287, "low": 1.62854, "close": 1.6287, "trail": null}
+{"ts": 1784925838, "event": "bar", "pair": "GBPCAD", "time": 1784936580, "open": 1.8773, "high": 1.8775, "low": 1.87729, "close": 1.87747, "trail": {"best": 1.8776, "stop": 1.8772, "best_diff_pips": 0.0, "stop_diff_pips": 4.02, "trailing_active": false}}
+{"ts": 1784925838, "event": "bar", "pair": "AUDNZD", "time": 1784936580, "open": 1.20633, "high": 1.20639, "low": 1.20631, "close": 1.20631, "trail": null}
+{"ts": 1784925838, "event": "bar", "pair": "GBPNZD", "time": 1784936580, "open": 2.30141, "high": 2.30158, "low": 2.30137, "close": 2.30143, "trail": null}
+{"ts": 1784925898, "event": "bar", "pair": "EURNZD", "time": 1784936640, "open": 1.96466, "high": 1.9647, "low": 1.96436, "close": 1.9645, "trail": null}
+{"ts": 1784925898, "event": "bar", "pair": "GBPAUD", "time": 1784936640, "open": 1.90798, "high": 1.908, "low": 1.90788, "close": 1.90789, "trail": null}
+{"ts": 1784925898, "event": "bar", "pair": "EURAUD", "time": 1784936640, "open": 1.6287, "high": 1.6287, "low": 1.62853, "close": 1.6286, "trail": null}
+{"ts": 1784925898, "event": "bar", "pair": "GBPCAD", "time": 1784936640, "open": 1.87747, "high": 1.87758, "low": 1.87747, "close": 1.87747, "trail": {"best": 1.8776, "stop": 1.8772, "best_diff_pips": 0.0, "stop_diff_pips": 4.02, "trailing_active": false}}
+{"ts": 1784925898, "event": "bar", "pair": "AUDNZD", "time": 1784936640, "open": 1.20631, "high": 1.20637, "low": 1.20624, "close": 1.20624, "trail": null}
+{"ts": 1784925898, "event": "bar", "pair": "GBPNZD", "time": 1784936640, "open": 2.30143, "high": 2.30158, "low": 2.30136, "close": 2.30136, "trail": null}
+{"ts": 1784925958, "event": "bar", "pair": "GBPNZD", "time": 1784936700, "open": 2.30136, "high": 2.30136, "low": 2.30105, "close": 2.30117, "trail": null}
+{"ts": 1784925958, "event": "bar", "pair": "EURNZD", "time": 1784936700, "open": 1.9645, "high": 1.96452, "low": 1.96423, "close": 1.96423, "trail": null}
+{"ts": 1784925958, "event": "bar", "pair": "GBPAUD", "time": 1784936700, "open": 1.90789, "high": 1.90791, "low": 1.90768, "close": 1.90768, "trail": null}
+{"ts": 1784925958, "event": "bar", "pair": "EURAUD", "time": 1784936700, "open": 1.6286, "high": 1.6286, "low": 1.62835, "close": 1.62835, "trail": null}
+{"ts": 1784925958, "event": "bar", "pair": "GBPCAD", "time": 1784936700, "open": 1.87747, "high": 1.87754, "low": 1.87725, "close": 1.8773, "trail": {"best": 1.8776, "stop": 1.8772, "best_diff_pips": 0.0, "stop_diff_pips": 4.02, "trailing_active": false}}
+{"ts": 1784925958, "event": "bar", "pair": "AUDNZD", "time": 1784936700, "open": 1.20623, "high": 1.20629, "low": 1.20618, "close": 1.20625, "trail": null}
+{"ts": 1784926018, "event": "bar", "pair": "EURNZD", "time": 1784936760, "open": 1.96422, "high": 1.96434, "low": 1.96422, "close": 1.96434, "trail": null}
+{"ts": 1784926018, "event": "bar", "pair": "EURAUD", "time": 1784936760, "open": 1.62833, "high": 1.62838, "low": 1.62833, "close": 1.62838, "trail": null}
+{"ts": 1784926018, "event": "bar", "pair": "GBPCAD", "time": 1784936760, "open": 1.8773, "high": 1.87744, "low": 1.87723, "close": 1.87723, "trail": {"best": 1.8776, "stop": 1.8772, "best_diff_pips": 0.0, "stop_diff_pips": 4.02, "trailing_active": false}}
+{"ts": 1784926018, "event": "bar", "pair": "GBPAUD", "time": 1784936760, "open": 1.90765, "high": 1.90776, "low": 1.90761, "close": 1.90773, "trail": null}
+{"ts": 1784926018, "event": "bar", "pair": "AUDNZD", "time": 1784936760, "open": 1.20627, "high": 1.20631, "low": 1.2062, "close": 1.2063, "trail": null}
+{"ts": 1784926018, "event": "bar", "pair": "GBPNZD", "time": 1784936760, "open": 2.30111, "high": 2.30129, "low": 2.30107, "close": 2.30123, "trail": null}
+{"ts": 1784926078, "event": "bar", "pair": "GBPCAD", "time": 1784936820, "open": 1.87728, "high": 1.87736, "low": 1.87721, "close": 1.87726, "trail": {"best": 1.8776, "stop": 1.8772, "best_diff_pips": 0.0, "stop_diff_pips": 4.02, "trailing_active": false}}
+{"ts": 1784926078, "event": "bar", "pair": "EURAUD", "time": 1784936820, "open": 1.62838, "high": 1.6284, "low": 1.62838, "close": 1.62838, "trail": null}
+{"ts": 1784926078, "event": "bar", "pair": "GBPNZD", "time": 1784936820, "open": 2.30123, "high": 2.30134, "low": 2.30112, "close": 2.30132, "trail": null}
+{"ts": 1784926078, "event": "bar", "pair": "EURNZD", "time": 1784936820, "open": 1.96434, "high": 1.96437, "low": 1.96434, "close": 1.96436, "trail": null}
+{"ts": 1784926078, "event": "bar", "pair": "GBPAUD", "time": 1784936820, "open": 1.90773, "high": 1.9078, "low": 1.90767, "close": 1.90775, "trail": null}
+{"ts": 1784926078, "event": "bar", "pair": "AUDNZD", "time": 1784936820, "open": 1.2063, "high": 1.20635, "low": 1.20625, "close": 1.20635, "trail": null}
+{"ts": 1784926138, "event": "bar", "pair": "GBPNZD", "time": 1784936880, "open": 2.30132, "high": 2.30148, "low": 2.30128, "close": 2.30141, "trail": null}
+{"ts": 1784926138, "event": "bar", "pair": "EURNZD", "time": 1784936880, "open": 1.96436, "high": 1.9646, "low": 1.96436, "close": 1.96452, "trail": null}
+{"ts": 1784926138, "event": "bar", "pair": "EURAUD", "time": 1784936880, "open": 1.62838, "high": 1.62852, "low": 1.62838, "close": 1.62852, "trail": null}
+{"ts": 1784926138, "event": "bar", "pair": "GBPCAD", "time": 1784936880, "open": 1.87732, "high": 1.87738, "low": 1.87719, "close": 1.87735, "trail": {"best": 1.8776, "stop": 1.8772, "best_diff_pips": 0.0, "stop_diff_pips": 4.02, "trailing_active": false}}
+{"ts": 1784926138, "event": "close", "pair": "GBPCAD", "direction": 1, "entry_price": 1.8776, "exit_price": 1.8772, "gross_pnl": -13.32, "pips": -4.02, "hold_seconds": 569, "reason": "stop", "z_score": -4.528058423507028, "trail_exit": 1.8772}
+{"ts": 1784926138, "event": "bar", "pair": "GBPAUD", "time": 1784936880, "open": 1.90775, "high": 1.9079, "low": 1.90773, "close": 1.90789, "trail": null}
+{"ts": 1784926139, "event": "bar", "pair": "AUDNZD", "time": 1784936880, "open": 1.20635, "high": 1.20637, "low": 1.20626, "close": 1.20627, "trail": null}
+{"ts": 1784926198, "event": "bar", "pair": "GBPNZD", "time": 1784936940, "open": 2.30141, "high": 2.30164, "low": 2.30137, "close": 2.30155, "trail": null}
+{"ts": 1784926198, "event": "bar", "pair": "EURNZD", "time": 1784936940, "open": 1.96452, "high": 1.96486, "low": 1.96452, "close": 1.96475, "trail": null}
+{"ts": 1784926198, "event": "bar", "pair": "GBPAUD", "time": 1784936940, "open": 1.90789, "high": 1.90791, "low": 1.90777, "close": 1.90783, "trail": null}
+{"ts": 1784926198, "event": "bar", "pair": "EURAUD", "time": 1784936940, "open": 1.62852, "high": 1.62862, "low": 1.6284, "close": 1.62854, "trail": null}
+{"ts": 1784926198, "event": "bar", "pair": "GBPCAD", "time": 1784936940, "open": 1.87733, "high": 1.87737, "low": 1.87705, "close": 1.87708, "trail": null}
+{"ts": 1784926198, "event": "bar", "pair": "AUDNZD", "time": 1784936940, "open": 1.20627, "high": 1.20646, "low": 1.20627, "close": 1.20637, "trail": null}
+{"ts": 1784926258, "event": "bar", "pair": "EURNZD", "time": 1784937000, "open": 1.96475, "high": 1.96487, "low": 1.96457, "close": 1.96467, "trail": null}
+{"ts": 1784926258, "event": "bar", "pair": "GBPAUD", "time": 1784937000, "open": 1.90782, "high": 1.90792, "low": 1.90766, "close": 1.90783, "trail": null}
+{"ts": 1784926258, "event": "bar", "pair": "GBPCAD", "time": 1784937000, "open": 1.8771, "high": 1.87729, "low": 1.87693, "close": 1.8772, "trail": null}
+{"ts": 1784926258, "event": "bar", "pair": "GBPNZD", "time": 1784937000, "open": 2.30155, "high": 2.30164, "low": 2.30132, "close": 2.30152, "trail": null}
+{"ts": 1784926258, "event": "bar", "pair": "AUDNZD", "time": 1784937000, "open": 1.20636, "high": 1.20643, "low": 1.20621, "close": 1.20621, "trail": null}
+{"ts": 1784926258, "event": "bar", "pair": "EURAUD", "time": 1784937000, "open": 1.62854, "high": 1.62862, "low": 1.62854, "close": 1.62856, "trail": null}
+{"ts": 1784926318, "event": "bar", "pair": "GBPAUD", "time": 1784937060, "open": 1.90783, "high": 1.90793, "low": 1.90778, "close": 1.90792, "trail": null}
+{"ts": 1784926318, "event": "bar", "pair": "EURAUD", "time": 1784937060, "open": 1.62856, "high": 1.62866, "low": 1.62854, "close": 1.62865, "trail": null}
+{"ts": 1784926318, "event": "bar", "pair": "AUDNZD", "time": 1784937060, "open": 1.20621, "high": 1.20631, "low": 1.2062, "close": 1.20621, "trail": null}
+{"ts": 1784926318, "event": "bar", "pair": "EURNZD", "time": 1784937060, "open": 1.96467, "high": 1.96483, "low": 1.96463, "close": 1.96479, "trail": null}
+{"ts": 1784926318, "event": "bar", "pair": "GBPNZD", "time": 1784937060, "open": 2.30152, "high": 2.30168, "low": 2.30147, "close": 2.30168, "trail": null}
+{"ts": 1784926318, "event": "bar", "pair": "GBPCAD", "time": 1784937060, "open": 1.8772, "high": 1.87738, "low": 1.87717, "close": 1.87738, "trail": null}
+{"ts": 1784926378, "event": "bar", "pair": "GBPNZD", "time": 1784937120, "open": 2.30168, "high": 2.30168, "low": 2.30137, "close": 2.30141, "trail": null}
+{"ts": 1784926378, "event": "bar", "pair": "EURNZD", "time": 1784937120, "open": 1.96479, "high": 1.96481, "low": 1.96465, "close": 1.9647, "trail": null}
+{"ts": 1784926378, "event": "bar", "pair": "EURAUD", "time": 1784937120, "open": 1.62865, "high": 1.62868, "low": 1.6286, "close": 1.6286, "trail": null}
+{"ts": 1784926378, "event": "bar", "pair": "GBPAUD", "time": 1784937120, "open": 1.90792, "high": 1.90795, "low": 1.90779, "close": 1.90782, "trail": null}
+{"ts": 1784926378, "event": "bar", "pair": "GBPCAD", "time": 1784937120, "open": 1.87738, "high": 1.87738, "low": 1.87717, "close": 1.8772, "trail": null}
+{"ts": 1784926379, "event": "bar", "pair": "AUDNZD", "time": 1784937120, "open": 1.2062, "high": 1.20635, "low": 1.20619, "close": 1.20626, "trail": null}
+{"ts": 1784926438, "event": "bar", "pair": "GBPNZD", "time": 1784937180, "open": 2.30141, "high": 2.30149, "low": 2.30108, "close": 2.30115, "trail": null}
+{"ts": 1784926438, "event": "bar", "pair": "GBPAUD", "time": 1784937180, "open": 1.90782, "high": 1.90785, "low": 1.90778, "close": 1.90779, "trail": null}
+{"ts": 1784926438, "event": "bar", "pair": "EURAUD", "time": 1784937180, "open": 1.6286, "high": 1.62865, "low": 1.62856, "close": 1.6286, "trail": null}
+{"ts": 1784926438, "event": "bar", "pair": "GBPCAD", "time": 1784937180, "open": 1.8772, "high": 1.87721, "low": 1.87713, "close": 1.87721, "trail": null}
+{"ts": 1784926438, "event": "bar", "pair": "AUDNZD", "time": 1784937180, "open": 1.20626, "high": 1.20632, "low": 1.20609, "close": 1.2061, "trail": null}
+{"ts": 1784926438, "event": "bar", "pair": "EURNZD", "time": 1784937180, "open": 1.9647, "high": 1.9647, "low": 1.96432, "close": 1.96447, "trail": null}
+{"ts": 1784926498, "event": "bar", "pair": "GBPNZD", "time": 1784937240, "open": 2.30115, "high": 2.30128, "low": 2.30104, "close": 2.30123, "trail": null}
+{"ts": 1784926498, "event": "bar", "pair": "EURNZD", "time": 1784937240, "open": 1.96447, "high": 1.96449, "low": 1.96435, "close": 1.9644, "trail": null}
+{"ts": 1784926498, "event": "bar", "pair": "GBPAUD", "time": 1784937240, "open": 1.90779, "high": 1.90783, "low": 1.90764, "close": 1.90775, "trail": null}
+{"ts": 1784926498, "event": "bar", "pair": "GBPCAD", "time": 1784937240, "open": 1.87721, "high": 1.87726, "low": 1.87719, "close": 1.87724, "trail": null}
+{"ts": 1784926498, "event": "bar", "pair": "AUDNZD", "time": 1784937240, "open": 1.20611, "high": 1.20619, "low": 1.20606, "close": 1.20612, "trail": null}
+{"ts": 1784926498, "event": "bar", "pair": "EURAUD", "time": 1784937240, "open": 1.6286, "high": 1.6286, "low": 1.62845, "close": 1.6285, "trail": null}
+{"ts": 1784926558, "event": "bar", "pair": "GBPCAD", "time": 1784937300, "open": 1.87724, "high": 1.87733, "low": 1.87722, "close": 1.87726, "trail": null}
+{"ts": 1784926558, "event": "bar", "pair": "AUDNZD", "time": 1784937300, "open": 1.20612, "high": 1.20613, "low": 1.20595, "close": 1.20603, "trail": null}
+{"ts": 1784926558, "event": "bar", "pair": "GBPAUD", "time": 1784937300, "open": 1.90776, "high": 1.90779, "low": 1.90761, "close": 1.90779, "trail": null}
+{"ts": 1784926558, "event": "bar", "pair": "EURAUD", "time": 1784937300, "open": 1.6285, "high": 1.62851, "low": 1.62839, "close": 1.62851, "trail": null}
+{"ts": 1784926558, "event": "bar", "pair": "EURNZD", "time": 1784937300, "open": 1.96437, "high": 1.96437, "low": 1.9641, "close": 1.96428, "trail": null}
+{"ts": 1784926558, "event": "bar", "pair": "GBPNZD", "time": 1784937300, "open": 2.3012, "high": 2.3012, "low": 2.30088, "close": 2.30104, "trail": null}
+{"ts": 1784926618, "event": "bar", "pair": "GBPCAD", "time": 1784937360, "open": 1.87726, "high": 1.87732, "low": 1.87707, "close": 1.87732, "trail": null}
+{"ts": 1784926618, "event": "bar", "pair": "GBPNZD", "time": 1784937360, "open": 2.30108, "high": 2.30116, "low": 2.30075, "close": 2.301, "trail": null}
+{"ts": 1784926618, "event": "bar", "pair": "EURNZD", "time": 1784937360, "open": 1.96422, "high": 1.96432, "low": 1.96403, "close": 1.96422, "trail": null}
+{"ts": 1784926618, "event": "bar", "pair": "GBPAUD", "time": 1784937360, "open": 1.90779, "high": 1.90779, "low": 1.9075, "close": 1.90778, "trail": null}
+{"ts": 1784926618, "event": "bar", "pair": "EURAUD", "time": 1784937360, "open": 1.62851, "high": 1.62851, "low": 1.62834, "close": 1.62849, "trail": null}
+{"ts": 1784926618, "event": "bar", "pair": "AUDNZD", "time": 1784937360, "open": 1.20603, "high": 1.20619, "low": 1.2059, "close": 1.20599, "trail": null}
+{"ts": 1784926678, "event": "bar", "pair": "GBPNZD", "time": 1784937420, "open": 2.301, "high": 2.30148, "low": 2.30066, "close": 2.30126, "trail": null}
+{"ts": 1784926678, "event": "bar", "pair": "AUDNZD", "time": 1784937420, "open": 1.20605, "high": 1.20618, "low": 1.20584, "close": 1.20609, "trail": null}
+{"ts": 1784926678, "event": "bar", "pair": "EURNZD", "time": 1784937420, "open": 1.96422, "high": 1.96432, "low": 1.96395, "close": 1.96425, "trail": null}
+{"ts": 1784926678, "event": "bar", "pair": "GBPAUD", "time": 1784937420, "open": 1.90778, "high": 1.90812, "low": 1.90737, "close": 1.90764, "trail": null}
+{"ts": 1784926678, "event": "bar", "pair": "EURAUD", "time": 1784937420, "open": 1.62849, "high": 1.62849, "low": 1.62822, "close": 1.62839, "trail": null}
+{"ts": 1784926678, "event": "bar", "pair": "GBPCAD", "time": 1784937420, "open": 1.87732, "high": 1.87762, "low": 1.87709, "close": 1.87732, "trail": null}
+{"ts": 1784926738, "event": "bar", "pair": "GBPNZD", "time": 1784937480, "open": 2.30124, "high": 2.30164, "low": 2.30086, "close": 2.30112, "trail": null}
+{"ts": 1784926738, "event": "bar", "pair": "GBPAUD", "time": 1784937480, "open": 1.90764, "high": 1.90816, "low": 1.90722, "close": 1.90754, "trail": null}
+{"ts": 1784926738, "event": "bar", "pair": "EURNZD", "time": 1784937480, "open": 1.96425, "high": 1.9643, "low": 1.96395, "close": 1.96395, "trail": null}
+{"ts": 1784926738, "event": "bar", "pair": "EURAUD", "time": 1784937480, "open": 1.62839, "high": 1.62845, "low": 1.62777, "close": 1.62835, "trail": null}
+{"ts": 1784926738, "event": "bar", "pair": "GBPCAD", "time": 1784937480, "open": 1.87732, "high": 1.87798, "low": 1.87732, "close": 1.87747, "trail": null}
+{"ts": 1784926738, "event": "signal", "pair": "AUDNZD", "direction": 1, "z_score": -9.5479, "z_mean": -1.9e-05, "z_std": 0.00011814, "return": 0.0, "atr": 0.000137, "confidence": 1.0, "bar_time": 1784937480, "bar_open": 1.20609, "bar_high": 1.20609, "bar_low": 1.20541, "bar_close": 1.20541, "stop_a": 3.0, "trig_a": 1.0, "gap_a": 0.05, "tp_mult": 0.5, "min_tp_pips": 5.0, "z_window": 50, "z_buf_size": 50}
+{"ts": 1784926738, "event": "bar", "pair": "AUDNZD", "time": 1784937480, "open": 1.20609, "high": 1.20609, "low": 1.20541, "close": 1.20541, "trail": null}
