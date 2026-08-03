@@ -1,4 +1,17 @@
-//+------------------------------------------------------------------+
+#!/usr/bin/env python3
+"""Deploy Proven 9-Pair Ultra Monster EA (v106) to VPS cleanly."""
+
+import os, subprocess, time
+
+LOCAL_DIR = r"C:\Trading\Agentic_Trading\proxima_x\paper_trade\mt5_backtest"
+MQ5_FILE = os.path.join(LOCAL_DIR, "Ultra_Monster_MT5_v106.mq5")
+EX5_FILE = os.path.join(LOCAL_DIR, "Ultra_Monster_MT5_v106.ex5")
+METAEDITOR = r"C:\Program Files\FundedNext MT5 Terminal\MetaEditor64.exe"
+
+SSH_KEY = r"C:\Users\Arjun Sasi\Downloads\ssh-key-2026-07-28.key"
+VPS_HOST = "ubuntu@140.245.234.92"
+
+CODE_ULTRA_MONSTER_V106 = """//+------------------------------------------------------------------+
 //|                                Ultra_Monster_MT5_v106.mq5        |
 //|   🔥 ULTRA MONSTER Engine v106 — 9-Pair Rolling ORB (75%+ WR)    |
 //+------------------------------------------------------------------+
@@ -6,7 +19,7 @@
 #property version   "1.06"
 #property strict
 
-#include <Trade\Trade.mqh>
+#include <Trade\\Trade.mqh>
 CTrade trade;
 
 input double   BASE_LOT            = 0.15;    // Base Lot Size for $6k account
@@ -165,3 +178,58 @@ void OnTick() {
       CheckEntry();
    }
 }
+"""
+
+def main():
+    print("="*115)
+    print("DEPLOYING PROVEN 9-PAIR ULTRA MONSTER V106 TO VPS...")
+    print("="*115)
+
+    with open(MQ5_FILE, "w", encoding="utf-8") as f:
+        f.write(CODE_ULTRA_MONSTER_V106)
+    print(f"🟢 Saved local source: {MQ5_FILE}")
+
+    subprocess.run([METAEDITOR, f"/compile:{MQ5_FILE}"], check=False)
+    time.sleep(2.5)
+
+    if os.path.exists(EX5_FILE):
+        print(f"🟢 Compiled local binary: {EX5_FILE} ({os.path.getsize(EX5_FILE)} bytes)")
+
+    # Upload to /tmp on VPS first, then move to FTMO MT5 directory
+    subprocess.run(["scp", "-i", SSH_KEY, MQ5_FILE, f"{VPS_HOST}:/tmp/Ultra_Monster_MT5_v106.mq5"], check=True)
+    if os.path.exists(EX5_FILE):
+        subprocess.run(["scp", "-i", SSH_KEY, EX5_FILE, f"{VPS_HOST}:/tmp/Ultra_Monster_MT5_v106.ex5"], check=True)
+
+    vps_cmd = """
+target_dir="/home/ubuntu/.wine/drive_c/Program Files/FTMO Global Markets MT5 Terminal/MQL5/Experts/"
+cp /tmp/Ultra_Monster_MT5_v106.mq5 "$target_dir"
+[ -f /tmp/Ultra_Monster_MT5_v106.ex5 ] && cp /tmp/Ultra_Monster_MT5_v106.ex5 "$target_dir"
+
+cat << 'EOF' > /tmp/compile_ultra_v106.py
+import subprocess, os, time
+
+exp_dir = '/home/ubuntu/.wine/drive_c/Program Files/FTMO Global Markets MT5 Terminal/MQL5/Experts/'
+meta_cmd = '/home/ubuntu/.wine/drive_c/Program Files/FTMO Global Markets MT5 Terminal/MetaEditor64.exe'
+
+env = os.environ.copy()
+env['DISPLAY'] = ':0'
+
+mq5 = os.path.join(exp_dir, 'Ultra_Monster_MT5_v106.mq5')
+ex5 = os.path.join(exp_dir, 'Ultra_Monster_MT5_v106.ex5')
+
+subprocess.run(['wine', meta_cmd, f'/compile:{mq5}'], env=env, check=False)
+time.sleep(2.0)
+
+if os.path.exists(ex5):
+    print("🟢 VPS SUCCESS: Ultra_Monster_MT5_v106.ex5 | Size:", os.path.getsize(ex5), "Bytes | Updated:", time.ctime(os.path.getmtime(ex5)))
+else:
+    print("❌ VPS ERROR: Binary missing!")
+
+EOF
+python3 /tmp/compile_ultra_v106.py
+"""
+    subprocess.run(["ssh", "-i", SSH_KEY, VPS_HOST, vps_cmd], check=True)
+    print("="*115)
+
+if __name__ == "__main__":
+    main()

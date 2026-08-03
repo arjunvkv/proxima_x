@@ -19,7 +19,7 @@ class PredictiveEngine:
         return {}
 
     def get_live_predictions(self):
-        self.config = self.load_config() # Reload config dynamically if updated
+        self.config = self.load_config()
         now_utc = datetime.now(timezone.utc)
         strategies = self.config.get("strategies", [])
 
@@ -36,12 +36,6 @@ class PredictiveEngine:
                 seconds_left = int((next_t - now_utc).total_seconds())
             elif s_id == "tokyo_h0":
                 next_t = (now_utc + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-                seconds_left = int((next_t - now_utc).total_seconds())
-            elif s_id == "sunday_h22":
-                days_ahead = (6 - now_utc.weekday()) % 7
-                if days_ahead == 0 and now_utc.hour >= 22:
-                    days_ahead = 7
-                next_t = (now_utc + timedelta(days=days_ahead)).replace(hour=22, minute=0, second=0, microsecond=0)
                 seconds_left = int((next_t - now_utc).total_seconds())
             elif s_id == "cppf_z":
                 seconds_left = 180
@@ -63,6 +57,6 @@ class PredictiveEngine:
 if __name__ == "__main__":
     eng = PredictiveEngine()
     preds, cfg = eng.get_live_predictions()
-    print("CONFIG-DRIVEN ENGINE OUTPUT:")
+    print("CONFIG-DRIVEN ENGINE OUTPUT (6 ACTIVE STRATEGIES):")
     for p in preds:
         print(f"  • {p['name']:<28} | Symbol: {p['next_symbol']:<8} | Lot: {p['effective_lot']}L | Target Win: +${p['target_win_usd']}")
