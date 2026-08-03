@@ -3,168 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proxima X — Predictive Command Center HUD</title>
-    <link rel="stylesheet" href="/static/css/cyberpunk_hud.css">
-    <!-- TradingView Lightweight Charts WebGL -->
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <title>Proxima X — Executive Financial Terminal</title>
+    <link rel="stylesheet" href="/static/css/obsidian_terminal.css">
 </head>
 <body>
 
-    <!-- Header Telemetry Bar -->
-    <header class="hud-header">
-        <div class="brand-title">
-            PROXIMA X <span class="brand-badge">PREDICTIVE COMMAND CENTER</span>
-        </div>
-        
-        <!-- Live VPS Lot Size Selector -->
-        <div class="lot-selector-container">
-            <span style="font-size: 0.8rem; color: #64748b; font-family: Orbitron;">ACCOUNT LOT PROFILE:</span>
-            <select id="lot-profile-select" onchange="updateLotProfile()" class="lot-select">
-                <option value="1.0" selected>🛡️ VPS $6k Baseline (0.15 Lot / ~$24 Win)</option>
-                <option value="4.0">🚀 $25k Account Profile (0.60 Lot / ~$98 Win)</option>
-                <option value="8.0">🔥 Max Squeeze Profile (1.20 Lot / $200+ Wins!)</option>
-            </select>
+    <!-- Executive Terminal Header -->
+    <header class="terminal-header">
+        <div class="terminal-title">
+            PROXIMA X <span class="badge-profile" id="account-profile-tag">MAX SQUEEZE (1.20 LOTS)</span>
         </div>
 
-        <div class="header-status">
-            <div class="status-indicator">
-                <div class="pulse-dot"></div>
-                <span>SYSTEM: <span id="connection-status" style="color: #00ff88;">ONLINE</span></span>
+        <div class="header-telemetry">
+            <div class="metric-pill">
+                <span>TERMINAL STATUS:</span>
+                <strong id="terminal-status" style="color: #10b981;">ONLINE</strong>
             </div>
-            <div class="status-indicator" style="color: #00f0ff;">
-                <span>PORTFOLIO WIN RATE: <strong style="font-family: Orbitron;">76.8%</strong></span>
+            <div class="metric-pill">
+                <span>WEIGHTED WIN RATE:</span>
+                <strong id="win-rate-tag">76.8%</strong>
             </div>
-            <div class="status-indicator" style="color: #ffaa00;">
-                <span>PROFIT FACTOR: <strong style="font-family: Orbitron;">6.25</strong></span>
+            <div class="metric-pill">
+                <span>PROFIT FACTOR:</span>
+                <strong id="pf-tag" style="color: #f59e0b;">6.25</strong>
             </div>
         </div>
     </header>
 
-    <!-- Main Dashboard Container -->
-    <div class="dashboard-container">
+    <!-- Main Container -->
+    <div class="container">
         
-        <!-- Left Main Telemetry Area -->
-        <main class="main-telemetry">
-            
-            <!-- Live Interactive Candlestick Chart with Trade Overlays -->
-            <section class="hud-panel">
-                <div class="panel-header">
-                    <div class="panel-title">
-                        📈 LIVE REPLAY & PREDICTIVE CANDLESTICK CHART (GBPAUD M5)
-                    </div>
-                    <span class="brand-badge" style="border-color: #00f0ff; color: #00f0ff;">TRADINGVIEW CANVAS</span>
-                </div>
-                <div id="chart-container" style="width: 100%; height: 320px; border-radius: 6px; overflow: hidden;"></div>
-            </section>
+        <!-- Metric Summary Banner -->
+        <section class="metrics-banner">
+            <div class="banner-card">
+                <div class="banner-label">Active Portfolio Engines</div>
+                <div class="banner-value" style="color: #3b82f6;">7 Strategies</div>
+            </div>
+            <div class="banner-card">
+                <div class="banner-label">Portfolio Win Rate</div>
+                <div class="banner-value" style="color: #10b981;">76.8%</div>
+            </div>
+            <div class="banner-card">
+                <div class="banner-label">Portfolio Profit Factor</div>
+                <div class="banner-value" style="color: #f59e0b;">6.25 PF</div>
+            </div>
+            <div class="banner-card">
+                <div class="banner-label">Target Winner ($1.20L)</div>
+                <div class="banner-value" style="color: #10b981;">+$195 – +$439</div>
+            </div>
+        </section>
 
-            <!-- Active 7 Strategies Live Prediction Radar -->
-            <section class="hud-panel">
-                <div class="panel-header">
-                    <div class="panel-title">
-                        ⚡ LIVE STRATEGY PREDICTION MATRIX (7 PRODUCTION ENGINES)
-                    </div>
-                    <span style="font-size: 0.8rem; color: #64748b; font-family: Orbitron;">REAL-TIME SIGNAL CONFIDENCE & COUNTDOWN</span>
-                </div>
-                <div class="strategy-grid" id="strategy-grid">
-                    <!-- Dynamic Strategy Prediction Cards Inserted Here -->
-                </div>
-            </section>
+        <!-- Strategy Execution Matrix (No Charts, Pure Data Grid) -->
+        <section>
+            <div class="section-title">
+                <span>STRATEGY TIMETABLE & PREDICTIVE EXECUTION MATRIX</span>
+                <span style="font-size: 0.75rem; font-family: JetBrains Mono; color: #64748b;">CONFIG-DRIVEN: dashboard_config.json</span>
+            </div>
+            <div class="strategy-grid" id="strategy-grid">
+                <!-- Strategy Cards Dynamically Injected Here -->
+            </div>
+        </section>
 
-            <!-- Replicated MT5 Trade History & Replay Feed -->
-            <section class="hud-panel">
-                <div class="panel-header">
-                    <div class="panel-title">
-                        📜 VPS EXECUTED MT5 TRADE HISTORY & REPLAY FEED (100% RECONCILED)
-                    </div>
-                    <span class="brand-badge" style="border-color: #00ff88; color: #00ff88;">VPS MT5 RECONCILED</span>
-                </div>
-                <table class="trade-table">
-                    <thead>
-                        <tr>
-                            <th>TICKET</th>
-                            <th>STRATEGY</th>
-                            <th>SYMBOL</th>
-                            <th>TYPE</th>
-                            <th>LOT</th>
-                            <th>ENTRY</th>
-                            <th>EXIT</th>
-                            <th>PIPS</th>
-                            <th>REALIZED PNL</th>
-                            <th>STATUS</th>
-                        </tr>
-                    </thead>
-                    <tbody id="mt5-trades-body">
-                        <!-- Dynamic MT5 Executed Trades Inserted Here -->
-                    </tbody>
-                </table>
-            </section>
-
-        </main>
-
-        <!-- Right Side Panel Controls -->
-        <aside class="sidebar-telemetry">
-            
-            <!-- Real-time Market State Vector (MSV) Telemetry -->
-            <section class="hud-panel">
-                <div class="panel-header">
-                    <div class="panel-title">📡 MARKET STATE VECTOR (MSV)</div>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.85rem;">
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: #64748b;">Market Regime:</span>
-                        <span style="font-family: Orbitron; color: #00ff88; font-weight: 700;">COMPRESSION</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: #64748b;">Network Dispersion:</span>
-                        <span style="font-family: Orbitron; color: #00f0ff;">96.4% (High)</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: #64748b;">Direction Agreement:</span>
-                        <span style="font-family: Orbitron; color: #ffaa00;">88.2%</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: #64748b;">Entry Gate Status:</span>
-                        <span class="conf-pill">PASSED 🟢</span>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Real-time Portfolio Health Gauge -->
-            <section class="hud-panel">
-                <div class="panel-header">
-                    <div class="panel-title">🎯 PORTFOLIO HEALTH</div>
-                </div>
-                <div class="telemetry-gauge">
-                    <div class="gauge-value">76.8%</div>
-                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">WEIGHTED WIN RATE</div>
-                    <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 12px; overflow: hidden;">
-                        <div style="width: 76.8%; height: 100%; background: #00ff88; box-shadow: 0 0 10px #00ff88;"></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Risk Engine Telemetry -->
-            <section class="hud-panel">
-                <div class="panel-header">
-                    <div class="panel-title">🛡️ RISK ENGINE LIMITS</div>
-                </div>
-                <div style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 12px;">
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: #64748b;">Daily Limit ($6k):</span>
-                        <span style="font-family: Orbitron; color: #00ff88;">$300.00 Max</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: #64748b;">Observed Max DD:</span>
-                        <span style="font-family: Orbitron; color: #00f0ff;">$42.50 (0.71%)</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: #64748b;">$200+ Win Capacity:</span>
-                        <span style="font-family: Orbitron; color: #ffaa00;">ENABLED (1.20L)</span>
-                    </div>
-                </div>
-            </section>
-
-        </aside>
+        <!-- Reconciled MT5 Trade History -->
+        <section>
+            <div class="section-title">
+                <span>EXECUTED MT5 TRADE HISTORY & REPLAY AUDIT (100% RECONCILED)</span>
+            </div>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Ticket</th>
+                        <th>Strategy</th>
+                        <th>Symbol</th>
+                        <th>Type</th>
+                        <th>Lot Size</th>
+                        <th>Entry Price</th>
+                        <th>Exit Price</th>
+                        <th>Pips</th>
+                        <th>Net Realized PnL</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="mt5-trades-body">
+                    <!-- Dynamic MT5 Executed Trades Inserted Here -->
+                </tbody>
+            </table>
+        </section>
 
     </div>
 
