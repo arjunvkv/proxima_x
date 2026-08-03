@@ -159,7 +159,6 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
-
 }
 
 .card-name {
@@ -250,6 +249,12 @@ body {
 
 .val-green {
   color: var(--emerald-green);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.val-red {
+  color: var(--rose-red);
   font-family: var(--font-mono);
   font-weight: 600;
 }

@@ -76,7 +76,7 @@ function renderPredictions(predictions) {
                     <td style="color: #94a3b8; font-size: 0.75rem;">${p.regime}</td>
                 </tr>
                 <tr>
-                    <td class="label-cell">VPS Base Lot Size</td>
+                    <td class="label-cell">VPS Live Lot Size</td>
                     <td style="color: #f59e0b;">${p.vps_base_lot} Lots</td>
                 </tr>
                 <tr>
@@ -100,7 +100,11 @@ function renderMT5Trades(trades) {
     const tbody = document.getElementById("mt5-trades-body");
     if (!tbody) return;
 
-    tbody.innerHTML = trades.map(t => `
+    tbody.innerHTML = trades.map(t => {
+        const isWin = t.mt5_pnl >= 0;
+        const pnlSign = isWin ? "+" : "";
+        const pnlColorClass = isWin ? "val-green" : "val-red";
+        return `
         <tr>
             <td style="font-family: JetBrains Mono; color: #64748b;">#${t.ticket}</td>
             <td style="font-weight: 600;">${t.strategy}</td>
@@ -109,13 +113,13 @@ function renderMT5Trades(trades) {
             <td style="color: #f59e0b; font-family: JetBrains Mono; font-weight:700;">${t.mt5_lot} L</td>
             <td style="font-family: JetBrains Mono;">${t.mt5_entry}</td>
             <td style="font-family: JetBrains Mono;">${t.mt5_exit}</td>
-            <td class="val-green">+$${t.mt5_pnl.toFixed(2)}</td>
+            <td class="${pnlColorClass}">${pnlSign}$${t.mt5_pnl.toFixed(2)}</td>
             <td style="font-family: JetBrains Mono; color: #94a3b8;">${t.python_sim_entry}</td>
-            <td class="val-green">+$${t.python_sim_pnl.toFixed(2)}</td>
+            <td class="${pnlColorClass}">${pnlSign}$${t.python_sim_pnl.toFixed(2)}</td>
             <td style="font-family: JetBrains Mono; color: #10b981;">${t.discrepancy_pips.toFixed(1)} pips</td>
-            <td><span class="tag-confidence">${t.match_status}</span></td>
+            <td><span class="tag-confidence" style="border-color:${isWin ? '#10b981' : '#f43f5e'}; color:${isWin ? '#10b981' : '#f43f5e'};">${t.match_status}</span></td>
         </tr>
-    `).join('');
+    `}).join('');
 }
 
 function startLocalTimer() {
