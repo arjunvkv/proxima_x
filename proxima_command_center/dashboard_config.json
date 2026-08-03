@@ -1,8 +1,8 @@
 {
   "dashboard_title": "PROXIMA X — QUANTITATIVE TRADING TERMINAL",
   "theme": "obsidian_financial",
-  "account_profile": "VPS Live Lot Profile (0.15L - 0.25L)",
-  "account_balance_usd": 6000,
+  "account_profile": "Overridden VPS Live Profile",
+  "account_balance_usd": 25000,
   "lot_multiplier": 1.0,
   "refresh_interval_seconds": 1.0,
   "active_portfolio_count": 6,
@@ -13,7 +13,7 @@
     "currency": "USD"
   },
   "risk_limits": {
-    "max_daily_drawdown_usd": 300.0,
+    "max_daily_drawdown_usd": 1250.0,
     "observed_max_drawdown_usd": 42.5,
     "portfolio_win_rate_percent": 76.8,
     "portfolio_profit_factor": 6.25
@@ -24,12 +24,12 @@
       "name": "Ultra Monster (v106)",
       "type": "60m Rolling Range Breakout",
       "regime": "Compression Breakout",
-      "vps_base_lot": 0.15,
-      "effective_lot": 0.15,
+      "vps_base_lot": 1.20,
+      "effective_lot": 1.20,
       "win_rate": 76.01,
       "profit_factor": 6.38,
-      "target_win_usd": 24.75,
-      "target_loss_usd": 12.3,
+      "target_win_usd": 195.04,
+      "target_loss_usd": 98.24,
       "next_symbol": "GBPAUD",
       "direction": "BUY",
       "confidence": 94.2,
