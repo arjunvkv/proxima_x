@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Proxima X Command Center — High-Performance Cyberpunk Predictive Dashboard App."""
 
-import os, sys, asyncio, webbrowser
+import os, sys, asyncio, webbrowser, json
 from pathlib import Path
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
@@ -14,7 +14,6 @@ from proxima_command_center.mt5_history_loader import get_recent_mt5_executed_tr
 
 app = FastAPI(title="Proxima X Command Center")
 
-# Mount Static & Template directories
 BASE_DIR = Path(__file__).parent
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
@@ -28,14 +27,27 @@ async def get_dashboard():
 @app.websocket("/ws/telemetry")
 async def websocket_telemetry(websocket: WebSocket):
     await websocket.accept()
+    lot_multiplier = 1.0 # Default $6k VPS Lot profile
     try:
         while True:
-            predictions = predictive_engine.get_live_predictions()
-            trades = get_recent_mt5_executed_trades()
+            # Check for client messages (lot size multiplier updates)
+            try:
+                msg = await asyncio.wait_for(websocket.receive_text(), timeout=0.01)
+                data = json.loads(msg)
+                if "lot_multiplier" in data:
+                    lot_multiplier = float(data["lot_multiplier"])
+            except asyncio.TimeoutError:
+                pass
+            except Exception:
+                pass
+
+            predictions = predictive_engine.get_live_predictions(lot_multiplier=lot_multiplier)
+            trades = get_recent_mt5_executed_trades(lot_multiplier=lot_multiplier)
             
             payload = {
                 "predictions": predictions,
-                "mt5_trades": trades
+                "mt5_trades": trades,
+                "lot_multiplier": lot_multiplier
             }
             await websocket.send_json(payload)
             await asyncio.sleep(1.0)

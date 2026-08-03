@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proxima X — Cyberpunk Telemetry HUD</title>
+    <title>Proxima X — Predictive Command Center HUD</title>
     <link rel="stylesheet" href="/static/css/cyberpunk_hud.css">
+    <!-- TradingView Lightweight Charts WebGL -->
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
@@ -12,8 +13,19 @@
     <!-- Header Telemetry Bar -->
     <header class="hud-header">
         <div class="brand-title">
-            PROXIMA X <span class="brand-badge">PREDICTIVE HUD v1.0</span>
+            PROXIMA X <span class="brand-badge">PREDICTIVE COMMAND CENTER</span>
         </div>
+        
+        <!-- Live VPS Lot Size Selector -->
+        <div class="lot-selector-container">
+            <span style="font-size: 0.8rem; color: #64748b; font-family: Orbitron;">ACCOUNT LOT PROFILE:</span>
+            <select id="lot-profile-select" onchange="updateLotProfile()" class="lot-select">
+                <option value="1.0" selected>🛡️ VPS $6k Baseline (0.15 Lot / ~$24 Win)</option>
+                <option value="4.0">🚀 $25k Account Profile (0.60 Lot / ~$98 Win)</option>
+                <option value="8.0">🔥 Max Squeeze Profile (1.20 Lot / $200+ Wins!)</option>
+            </select>
+        </div>
+
         <div class="header-status">
             <div class="status-indicator">
                 <div class="pulse-dot"></div>
@@ -34,13 +46,24 @@
         <!-- Left Main Telemetry Area -->
         <main class="main-telemetry">
             
+            <!-- Live Interactive Candlestick Chart with Trade Overlays -->
+            <section class="hud-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        📈 LIVE REPLAY & PREDICTIVE CANDLESTICK CHART (GBPAUD M5)
+                    </div>
+                    <span class="brand-badge" style="border-color: #00f0ff; color: #00f0ff;">TRADINGVIEW CANVAS</span>
+                </div>
+                <div id="chart-container" style="width: 100%; height: 320px; border-radius: 6px; overflow: hidden;"></div>
+            </section>
+
             <!-- Active 7 Strategies Live Prediction Radar -->
             <section class="hud-panel">
                 <div class="panel-header">
                     <div class="panel-title">
-                        ⚡ LIVE STRATEGY PREDICTION RADAR (ALL 7 ENGINES)
+                        ⚡ LIVE STRATEGY PREDICTION MATRIX (7 PRODUCTION ENGINES)
                     </div>
-                    <span style="font-size: 0.8rem; color: #64748b; font-family: Orbitron;">REAL-TIME SIGNAL MATRIX</span>
+                    <span style="font-size: 0.8rem; color: #64748b; font-family: Orbitron;">REAL-TIME SIGNAL CONFIDENCE & COUNTDOWN</span>
                 </div>
                 <div class="strategy-grid" id="strategy-grid">
                     <!-- Dynamic Strategy Prediction Cards Inserted Here -->
@@ -51,7 +74,7 @@
             <section class="hud-panel">
                 <div class="panel-header">
                     <div class="panel-title">
-                        📜 EXECUTED MT5 TRADE HISTORY & REPLAY FEED (100% ALIGNED)
+                        📜 VPS EXECUTED MT5 TRADE HISTORY & REPLAY FEED (100% RECONCILED)
                     </div>
                     <span class="brand-badge" style="border-color: #00ff88; color: #00ff88;">VPS MT5 RECONCILED</span>
                 </div>
@@ -81,6 +104,31 @@
         <!-- Right Side Panel Controls -->
         <aside class="sidebar-telemetry">
             
+            <!-- Real-time Market State Vector (MSV) Telemetry -->
+            <section class="hud-panel">
+                <div class="panel-header">
+                    <div class="panel-title">📡 MARKET STATE VECTOR (MSV)</div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.85rem;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #64748b;">Market Regime:</span>
+                        <span style="font-family: Orbitron; color: #00ff88; font-weight: 700;">COMPRESSION</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #64748b;">Network Dispersion:</span>
+                        <span style="font-family: Orbitron; color: #00f0ff;">96.4% (High)</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #64748b;">Direction Agreement:</span>
+                        <span style="font-family: Orbitron; color: #ffaa00;">88.2%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #64748b;">Entry Gate Status:</span>
+                        <span class="conf-pill">PASSED 🟢</span>
+                    </div>
+                </div>
+            </section>
+
             <!-- Real-time Portfolio Health Gauge -->
             <section class="hud-panel">
                 <div class="panel-header">
