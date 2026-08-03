@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proxima X — Cyberpunk Telemetry HUD</title>
+    <link rel="stylesheet" href="/static/css/cyberpunk_hud.css">
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+
+    <!-- Header Telemetry Bar -->
+    <header class="hud-header">
+        <div class="brand-title">
+            PROXIMA X <span class="brand-badge">PREDICTIVE HUD v1.0</span>
+        </div>
+        <div class="header-status">
+            <div class="status-indicator">
+                <div class="pulse-dot"></div>
+                <span>SYSTEM: <span id="connection-status" style="color: #00ff88;">ONLINE</span></span>
+            </div>
+            <div class="status-indicator" style="color: #00f0ff;">
+                <span>PORTFOLIO WIN RATE: <strong style="font-family: Orbitron;">76.8%</strong></span>
+            </div>
+            <div class="status-indicator" style="color: #ffaa00;">
+                <span>PROFIT FACTOR: <strong style="font-family: Orbitron;">6.25</strong></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Container -->
+    <div class="dashboard-container">
+        
+        <!-- Left Main Telemetry Area -->
+        <main class="main-telemetry">
+            
+            <!-- Active 7 Strategies Live Prediction Radar -->
+            <section class="hud-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        ⚡ LIVE STRATEGY PREDICTION RADAR (ALL 7 ENGINES)
+                    </div>
+                    <span style="font-size: 0.8rem; color: #64748b; font-family: Orbitron;">REAL-TIME SIGNAL MATRIX</span>
+                </div>
+                <div class="strategy-grid" id="strategy-grid">
+                    <!-- Dynamic Strategy Prediction Cards Inserted Here -->
+                </div>
+            </section>
+
+            <!-- Replicated MT5 Trade History & Replay Feed -->
+            <section class="hud-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        📜 EXECUTED MT5 TRADE HISTORY & REPLAY FEED (100% ALIGNED)
+                    </div>
+                    <span class="brand-badge" style="border-color: #00ff88; color: #00ff88;">VPS MT5 RECONCILED</span>
+                </div>
+                <table class="trade-table">
+                    <thead>
+                        <tr>
+                            <th>TICKET</th>
+                            <th>STRATEGY</th>
+                            <th>SYMBOL</th>
+                            <th>TYPE</th>
+                            <th>LOT</th>
+                            <th>ENTRY</th>
+                            <th>EXIT</th>
+                            <th>PIPS</th>
+                            <th>REALIZED PNL</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mt5-trades-body">
+                        <!-- Dynamic MT5 Executed Trades Inserted Here -->
+                    </tbody>
+                </table>
+            </section>
+
+        </main>
+
+        <!-- Right Side Panel Controls -->
+        <aside class="sidebar-telemetry">
+            
+            <!-- Real-time Portfolio Health Gauge -->
+            <section class="hud-panel">
+                <div class="panel-header">
+                    <div class="panel-title">🎯 PORTFOLIO HEALTH</div>
+                </div>
+                <div class="telemetry-gauge">
+                    <div class="gauge-value">76.8%</div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">WEIGHTED WIN RATE</div>
+                    <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 12px; overflow: hidden;">
+                        <div style="width: 76.8%; height: 100%; background: #00ff88; box-shadow: 0 0 10px #00ff88;"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Risk Engine Telemetry -->
+            <section class="hud-panel">
+                <div class="panel-header">
+                    <div class="panel-title">🛡️ RISK ENGINE LIMITS</div>
+                </div>
+                <div style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #64748b;">Daily Limit ($6k):</span>
+                        <span style="font-family: Orbitron; color: #00ff88;">$300.00 Max</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #64748b;">Observed Max DD:</span>
+                        <span style="font-family: Orbitron; color: #00f0ff;">$42.50 (0.71%)</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #64748b;">$200+ Win Capacity:</span>
+                        <span style="font-family: Orbitron; color: #ffaa00;">ENABLED (1.20L)</span>
+                    </div>
+                </div>
+            </section>
+
+        </aside>
+
+    </div>
+
+    <script src="/static/js/hud_app.js"></script>
+</body>
+</html>
