@@ -1,0 +1,37 @@
+{
+  "1_eurjpy_triangle": {
+    "events": 227,
+    "WR": "51.1%",
+    "avg_ret_pct": "+0.0005%"
+  },
+  "2_volume_exhaustion": {
+    "events": 1711,
+    "WR": "53.1%",
+    "avg_ret_pct": "+0.0010%"
+  },
+  "3_european_open": {
+    "events": 444,
+    "WR": "58.1%",
+    "avg_ret_pct": "+0.0136%"
+  },
+  "4_wm_fix": {
+    "events": 735,
+    "WR": "40.2%",
+    "avg_ret_pct": "-0.0175%"
+  },
+  "5_tuesday_reversal": {
+    "events": 90,
+    "WR": "12.4%",
+    "avg_ret_pct": "-0.0643%"
+  },
+  "6_friday_squaring": {
+    "events": 90,
+    "WR": "37.8%",
+    "avg_ret_pct": "-0.0392%"
+  },
+  "7_bb_width_expansion": {
+    "events": 372090,
+    "WR": "50.0%",
+    "avg_ret_pct": "-0.0003%"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "FusionMarkets",
+  "spread": {"base_spread_pips": 0.3, "std_spread_pips": 0.15, "min_spread_pips": 0.0, "max_spread_pips": 1.5},
+  "slippage": {"mean_slippage_pips": 0.15, "std_slippage_pips": 0.1, "max_slippage_pips": 1.0},
+  "latency": {"base_ms": 8, "std_ms": 3, "jitter_ms": 2},
+  "fill": {"fill_rate": 0.997, "requote_rate": 0.003, "partial_fill_prob": 0.01},
+  "commission_per_lot": 2.5,
+  "commission_type": "per_lot",
+  "min_commission": 0.0,
+  "max_leverage": 500
+}

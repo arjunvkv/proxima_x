@@ -1,0 +1,44 @@
+{
+  "AUDUSD": {
+    "bars": 49915,
+    "date_range": "2026-06-08 00:00:00 to 2026-07-24 23:59:00",
+    "zero_spread_bars": 0,
+    "zero_spread_pct": 0.0,
+    "spread_min_pips": 200000.0,
+    "spread_max_pips": 10900000.0,
+    "spread_mean_pips": 574642.89,
+    "spread_median_pips": 300000.0,
+    "spread_p25_pips": 200000.0,
+    "spread_p75_pips": 500000.0,
+    "spread_p90_pips": 1200000.0,
+    "spread_p99_pips": 5200000.0
+  },
+  "EURAUD": {
+    "bars": 50274,
+    "date_range": "2026-06-08 00:00:00 to 2026-07-24 23:59:00",
+    "zero_spread_bars": 0,
+    "zero_spread_pct": 0.0,
+    "spread_min_pips": 700000.0,
+    "spread_max_pips": 13000000.0,
+    "spread_mean_pips": 1542286.27,
+    "spread_median_pips": 1000000.0,
+    "spread_p25_pips": 800000.0,
+    "spread_p75_pips": 1300000.0,
+    "spread_p90_pips": 1700000.0,
+    "spread_p99_pips": 13000000.0
+  },
+  "GBPAUD": {
+    "bars": 50271,
+    "date_range": "2026-06-08 00:00:00 to 2026-07-24 23:59:00",
+    "zero_spread_bars": 0,
+    "zero_spread_pct": 0.0,
+    "spread_min_pips": 700000.0,
+    "spread_max_pips": 13000000.0,
+    "spread_mean_pips": 1746957.49,
+    "spread_median_pips": 1200000.0,
+    "spread_p25_pips": 900000.0,
+    "spread_p75_pips": 1500000.0,
+    "spread_p90_pips": 2200000.0,
+    "spread_p99_pips": 13000000.0
+  }
+}

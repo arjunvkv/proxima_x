@@ -1,0 +1,1 @@
+﻿backtest "C:\Users\Arjun Sasi\Documents\cAlgo\Sources\Robots\TokyoH0.algo" EURUSD m5 01/01/2026 25/07/2026 --report="C:\Trading\Agentic_Trading\proxima_x\ctrader_bots\TokyoH0\report.html" --report-json="C:\Trading\Agentic_Trading\proxima_x\ctrader_bots\TokyoH0\report.json" --balance=10000 --data-mode=ticks --LookbackBars=6 --HoldBars=12 --TopN=5

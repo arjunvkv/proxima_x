@@ -1,0 +1,37 @@
+{
+  "1_fri_mon_gap": {
+    "events": 90,
+    "WR": "60.0%",
+    "avg_ret_pct": "+0.0203%"
+  },
+  "2_streak_fade": {
+    "events": 26587,
+    "WR": "36.5%",
+    "avg_ret_pct": "-0.0189%"
+  },
+  "3_cross_cascade": {
+    "events": 4459,
+    "WR": "47.9%",
+    "avg_ret_pct": "-0.0016%"
+  },
+  "4_hourly_orb": {
+    "events": 19290,
+    "WR": "68.1%",
+    "avg_ret_pct": "+0.0248%"
+  },
+  "5_seasonality": {
+    "events": 2516,
+    "WR": "77.0%",
+    "avg_ret_pct": "+0.0451%"
+  },
+  "6_range_contraction": {
+    "events": 3717,
+    "WR": "64.3%",
+    "avg_ret_pct": "+0.0184%"
+  },
+  "7_h1_alignment": {
+    "events": 1047,
+    "WR": "55.5%",
+    "avg_ret_pct": "+0.0227%"
+  }
+}

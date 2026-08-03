@@ -1,0 +1,11 @@
+{
+  "name": "FundedNext",
+  "spread": {"base_spread_pips": 0.6, "std_spread_pips": 0.25, "min_spread_pips": 0.1, "max_spread_pips": 2.5},
+  "slippage": {"mean_slippage_pips": 0.2, "std_slippage_pips": 0.15, "max_slippage_pips": 1.5},
+  "latency": {"base_ms": 10, "std_ms": 4, "jitter_ms": 2},
+  "fill": {"fill_rate": 0.99, "requote_rate": 0.01, "partial_fill_prob": 0.03},
+  "commission_per_lot": 4.0,
+  "commission_type": "per_lot",
+  "min_commission": 0.0,
+  "max_leverage": 100
+}

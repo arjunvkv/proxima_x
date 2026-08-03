@@ -1,0 +1,11 @@
+{
+  "name": "Dukascopy",
+  "spread": {"base_spread_pips": 0.5, "std_spread_pips": 0.2, "min_spread_pips": 0.1, "max_spread_pips": 2.0},
+  "slippage": {"mean_slippage_pips": 0.1, "std_slippage_pips": 0.1, "max_slippage_pips": 1.0},
+  "latency": {"base_ms": 5, "std_ms": 2, "jitter_ms": 1},
+  "fill": {"fill_rate": 0.995, "requote_rate": 0.005, "partial_fill_prob": 0.02},
+  "commission_per_lot": 3.0,
+  "commission_type": "per_lot",
+  "min_commission": 0.0,
+  "max_leverage": 200
+}

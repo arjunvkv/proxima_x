@@ -1,0 +1,37 @@
+{
+  "1_london_ny_overlap": {
+    "events": 444,
+    "WR": "56.3%",
+    "avg_ret_pct": "+0.0148"
+  },
+  "2_vol_expansion": {
+    "events": 4621,
+    "WR": "49.1%",
+    "avg_ret_pct": "+0.0009%"
+  },
+  "3_tokyo_momentum": {
+    "events": 441,
+    "WR": "15.5%",
+    "avg_ret_pct": "-0.0875%"
+  },
+  "4_spike_exhaustion": {
+    "events": 19838,
+    "WR": "6.8%",
+    "avg_ret_pct": "-0.0840%"
+  },
+  "5_cross_z_momentum": {
+    "events": 12040,
+    "WR": "49.3%",
+    "avg_ret_pct": "-0.0018%"
+  },
+  "6_us_session": {
+    "events": 441,
+    "WR": "49.0%",
+    "avg_ret_pct": "+0.0034%"
+  },
+  "7_month_end": {
+    "events": 36,
+    "WR": "61.1%",
+    "avg_ret_pct": "+0.0315%"
+  }
+}

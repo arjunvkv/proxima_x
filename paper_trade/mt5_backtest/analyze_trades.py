@@ -1,195 +1,206 @@
-"""
-Analyze trade details: time-of-day, direction, etc.
-"""
-import MetaTrader5 as mt5
-import numpy as np
-import pandas as pd
-from datetime import datetime, timedelta
-import sys
+import re
+from collections import defaultdict
 
-SYMBOL = sys.argv[1] if len(sys.argv) > 1 else "EURAUD"
-FROM_DATE = datetime.strptime(sys.argv[2], '%Y-%m-%d') if len(sys.argv) > 2 else datetime(2026, 6, 8)
-TO_DATE = datetime.strptime(sys.argv[3], '%Y-%m-%d') if len(sys.argv) > 3 else datetime(2026, 7, 25)
-Z_THRESHOLD = float(sys.argv[4]) if len(sys.argv) > 4 else 3.5
-STOP_A = float(sys.argv[5]) if len(sys.argv) > 5 else 3.0
-TRIG_A = float(sys.argv[6]) if len(sys.argv) > 6 else 1.0
-GAP_A = float(sys.argv[7]) if len(sys.argv) > 7 else 0.05
-BASE_LOT = float(sys.argv[8]) if len(sys.argv) > 8 else 0.5
-COMMISSION_PER_LOT = 5.0
-MAX_HOLD_BARS = 54
-Z_WINDOW = 50
-ATR_PERIOD = 20
-SLIPPAGE_PIPS = 1.0
-TRADE_START_HOUR = 0
-TRADE_END_HOUR = 7
+log_path = r"C:\Users\Arjun Sasi\AppData\Roaming\MetaQuotes\Terminal\81A933A9AFC5DE3C23B15CAB19C63850\Tester\logs\20260727.log"
 
-PIP_VALUE = {"EURAUD": 6.70, "EURNZD": 6.10, "GBPAUD": 6.10,
-              "GBPCAD": 7.50, "GBPNZD": 5.60, "AUDNZD": 5.60}.get(SYMBOL, 10.0)
+with open(log_path, encoding='utf-16') as f:
+    raw = f.read()
 
-def compute_atr(bars, period=20):
-    hl = bars['high'] - bars['low']
-    return hl.rolling(period).mean()
+lines = raw.replace('\r\n', '\n').split('\n')
 
-def compute_zscore(returns, window=50):
-    mean = returns.rolling(window).mean()
-    std = returns.rolling(window).std(ddof=1)
-    return (returns - mean) / std
+print(f"Total lines: {len(lines)}")
+print(f"File size: {len(raw)} chars")
 
-def run_backtest(bars):
-    trades = []
-    pos = 0
-    entry_price = 0.0
-    entry_idx = 0
-    entry_hour = 0
-    best_price = 0.0
-    current_stop = 0.0
-    bars_held = 0
-
-    atr = compute_atr(bars, ATR_PERIOD)
-    returns = bars['close'].diff()
-    z = compute_zscore(returns, Z_WINDOW)
-    require_history = max(Z_WINDOW, ATR_PERIOD) + 5
-
-    for i in range(require_history, len(bars)):
-        bar = bars.iloc[i]
-        hour = bar['time'].hour
-
-        if pos != 0:
-            bars_held += 1
-            atr_val = atr.iloc[i]
-            if pd.isna(atr_val) or atr_val <= 0:
-                continue
-            tg = TRIG_A * atr_val
-            gp = GAP_A * atr_val
-
-            if pos == 1:
-                high, low = bar['high'], bar['low']
-                if high > best_price:
-                    best_price = high
-                    if best_price - entry_price > tg:
-                        ns = best_price - gp
-                        if ns > current_stop:
-                            current_stop = ns
-                if low <= current_stop:
-                    exit_price, reason = current_stop, 'stop'
-                    raw_pnl = (exit_price - entry_price) * BASE_LOT * 100000
-                    commission = BASE_LOT * COMMISSION_PER_LOT
-                    pnl = raw_pnl - commission
-                    trades.append({'entry_time': bars.iloc[entry_idx]['time'], 'exit_time': bar['time'],
-                                   'entry_hour': entry_hour, 'exit_hour': hour,
-                                   'direction': 'LONG', 'entry': entry_price, 'exit': exit_price,
-                                   'raw_pnl': raw_pnl, 'commission': commission, 'pnl': pnl,
-                                   'reason': reason, 'bars_held': bars_held})
-                    pos = 0
-                    continue
-            else:
-                high, low = bar['high'], bar['low']
-                if low < best_price:
-                    best_price = low
-                    if entry_price - best_price > tg:
-                        ns = best_price + gp
-                        if ns < current_stop:
-                            current_stop = ns
-                if high >= current_stop:
-                    exit_price, reason = current_stop, 'stop'
-                    raw_pnl = (entry_price - exit_price) * BASE_LOT * 100000
-                    commission = BASE_LOT * COMMISSION_PER_LOT
-                    pnl = raw_pnl - commission
-                    trades.append({'entry_time': bars.iloc[entry_idx]['time'], 'exit_time': bar['time'],
-                                   'entry_hour': entry_hour, 'exit_hour': hour,
-                                   'direction': 'SHORT', 'entry': entry_price, 'exit': exit_price,
-                                   'raw_pnl': raw_pnl, 'commission': commission, 'pnl': pnl,
-                                   'reason': reason, 'bars_held': bars_held})
-                    pos = 0
-                    continue
-
-            if bars_held >= MAX_HOLD_BARS:
-                exit_price = bar['close']
-                raw_pnl = ((exit_price - entry_price) if pos == 1 else (entry_price - exit_price)) * BASE_LOT * 100000
-                commission = BASE_LOT * COMMISSION_PER_LOT
-                pnl = raw_pnl - commission
-                trades.append({'entry_time': bars.iloc[entry_idx]['time'], 'exit_time': bar['time'],
-                               'entry_hour': entry_hour, 'exit_hour': hour,
-                               'direction': 'LONG' if pos == 1 else 'SHORT',
-                               'entry': entry_price, 'exit': exit_price,
-                               'raw_pnl': raw_pnl, 'commission': commission, 'pnl': pnl,
-                               'reason': 'expiry', 'bars_held': bars_held})
-                pos = 0
-                continue
-
-        if pos != 0:
+# Parse all LOST/CLOSE events (these contain full trade data)
+trades = []
+for line in lines:
+    line = line.strip()
+    if not line:
+        continue
+    
+    # Only process trade lines
+    if 'OPEN ' in line and 'dir=' in line:
+        # Also capture OPEN info
+        continue  # we'll use close/lost lines instead
+    
+    # CLOSE rsn=stop pnl=...
+    m = re.match(r'^\w+\t\d+\t(\d+:\d+:\d+\.\d+)\tCore \d+\t(\d+\.\d+\.\d+)\s+(\d+:\d+:\d+)\s+(CLOSE \w+ rsn=\w+ pnl=[-\d.]+.*)', line)
+    if m:
+        log_ts = m.group(1)
+        date = m.group(2)
+        time = m.group(3)
+        msg = m.group(4)
+        
+        cm = re.match(r'CLOSE (\w+) rsn=(\w+) pnl=([-\d.]+) z=([-\d.e+]+) atr=([\d.e-]+) sprd=([\d.]+) held=(\d+) bars?', msg)
+        if cm:
+            t = {
+                'type': 'CLOSE',
+                'symbol': cm.group(1),
+                'reason': cm.group(2),
+                'pnl': float(cm.group(3)),
+                'z_entry': float(cm.group(4)),
+                'atr': float(cm.group(5)),
+                'spread': float(cm.group(6)),
+                'held_bars': int(cm.group(7)),
+                'date': date,
+                'time': time,
+                'log_ts': log_ts,
+                'result': 'WIN' if float(cm.group(3)) > 0 else 'LOSS',
+            }
+            trades.append(t)
             continue
-        if hour < TRADE_START_HOUR or hour >= TRADE_END_HOUR:
+    
+    # LOST dir=1 entry=... stop=... pnl=...
+    m = re.match(r'^\w+\t\d+\t(\d+:\d+:\d+\.\d+)\tCore \d+\t(\d+\.\d+\.\d+)\s+(\d+:\d+:\d+)\s+(LOST \w+ dir=\d+ entry=[\d.]+.*)', line)
+    if m:
+        log_ts = m.group(1)
+        date = m.group(2)
+        time = m.group(3)
+        msg = m.group(4)
+        
+        lm = re.match(r'LOST (\w+) dir=(\d+) entry=([\d.]+) stop=([\d.]+) pnl=([-\d.]+) atr=([\d.e-]+) z=([-\d.e+]+) sprd=([\d.]+) held=(\d+) bars?', msg)
+        if lm:
+            t = {
+                'type': 'LOST',
+                'symbol': lm.group(1),
+                'dir': int(lm.group(2)),
+                'entry': float(lm.group(3)),
+                'stop': float(lm.group(4)),
+                'pnl': float(lm.group(5)),
+                'atr': float(lm.group(6)),
+                'z_entry': float(lm.group(7)),
+                'spread': float(lm.group(8)),
+                'held_bars': int(lm.group(9)),
+                'date': date,
+                'time': time,
+                'log_ts': log_ts,
+                'result': 'WIN' if float(lm.group(5)) > 0 else 'LOSS',
+            }
+            trades.append(t)
             continue
+    
+    # STABLE entry
+    m = re.match(r'^\w+\t\d+\t(\d+:\d+:\d+\.\d+)\tCore \d+\t(\d+\.\d+\.\d+)\s+(\d+:\d+:\d+)\s+(STABLE entry z=.*)', line)
+    if m:
+        log_ts = m.group(1)
+        msg = m.group(4)
+        sm = re.match(r'STABLE entry z=([-\d.e+]+) z_cum=([-\d.e+]+) spd_z=([-\d.e+]+) vol_z=([-\d.e+]+) stab=([\d.e+]+)', msg)
+        if sm:
+            t = {
+                'type': 'STABLE_ENTRY',
+                'z_stable': float(sm.group(1)),
+                'z_cum': float(sm.group(2)),
+                'spd_z': float(sm.group(3)),
+                'vol_z': float(sm.group(4)),
+                'stab': float(sm.group(5)),
+                'log_ts': log_ts,
+            }
+            trades.append(t)
 
-        z_val = z.iloc[i]
-        atr_val = atr.iloc[i]
-        if pd.isna(z_val) or pd.isna(atr_val) or atr_val <= 0:
-            continue
+print(f"\nTotal parsed trade events: {len(trades)}")
+close_trades = [t for t in trades if t['type'] in ('CLOSE', 'LOST')]
+stable_entries = [t for t in trades if t['type'] == 'STABLE_ENTRY']
+print(f"  CLOSE/LOST trades: {len(close_trades)}")
+print(f"  STABLE_ENTRY lines: {len(stable_entries)}")
 
-        if abs(z_val) >= Z_THRESHOLD:
-            direction = -1 if z_val > 0 else 1
-            entry_price = bar['close'] + (SLIPPAGE_PIPS * 0.00001 * direction * -1)
-            s = STOP_A * atr_val
-            current_stop = entry_price - s if direction == 1 else entry_price + s
-            pos = direction
-            entry_idx = i
-            entry_hour = hour
-            best_price = entry_price
-            bars_held = 0
+# Group by run (log_ts)
+by_run = defaultdict(list)
+for t in close_trades:
+    by_run[t['log_ts']].append(t)
 
-    return pd.DataFrame(trades) if trades else pd.DataFrame()
+print(f"\n=== RESULTS BY RUN ===")
+for run_ts in sorted(by_run.keys()):
+    ts = by_run[run_ts]
+    total_pnl = sum(t['pnl'] for t in ts)
+    wins = sum(1 for t in ts if t['result'] == 'WIN')
+    losses = sum(1 for t in ts if t['result'] == 'LOSS')
+    sym = ts[0]['symbol'] if ts else '?'
+    print(f"Run {run_ts[:8]} | {sym} | {len(ts)} trades | {wins}W/{losses}L "
+          f"| WR={wins/len(ts)*100:.1f}% | PnL=${total_pnl:.2f}")
 
-if __name__ == '__main__':
-    if not mt5.initialize():
-        print("MT5 init failed!"); sys.exit(1)
-    rates = mt5.copy_rates_range(SYMBOL, mt5.TIMEFRAME_M1, FROM_DATE, TO_DATE)
-    mt5.shutdown()
-    if rates is None or len(rates) == 0:
-        print("No data!"); sys.exit(1)
+# Aggregate across all runs
+print(f"\n=== AGGREGATE BY PAIR ===")
+by_sym = defaultdict(list)
+for t in close_trades:
+    by_sym[t['symbol']].append(t)
 
-    bars = pd.DataFrame(rates)
-    bars['time'] = pd.to_datetime(bars['time'], unit='s')
-    trades = run_backtest(bars)
+for sym in sorted(by_sym.keys()):
+    ts = by_sym[sym]
+    total_pnl = sum(t['pnl'] for t in ts)
+    wins = sum(1 for t in ts if t['result'] == 'WIN')
+    losses = sum(1 for t in ts if t['result'] == 'LOSS')
+    avg_win = sum(t['pnl'] for t in ts if t['result'] == 'WIN') / wins if wins > 0 else 0
+    avg_loss = sum(t['pnl'] for t in ts if t['result'] == 'LOSS') / losses if losses > 0 else 0
+    print(f"{sym}: {len(ts)} trades | {wins}W/{losses}L | "
+          f"WR={wins/len(ts)*100:.1f}% | AvgW=${avg_win:.2f} | AvgL=${avg_loss:.2f} | "
+          f"Net=${total_pnl:.2f}")
 
-    if len(trades) == 0:
-        print("No trades"); sys.exit(0)
+# Z-score buckets
+print(f"\n=== Z-SCORE BUCKETS (ALL PAIRS) ===")
+buckets = defaultdict(list)
+for t in close_trades:
+    z = abs(t['z_entry'])
+    bucket = f"{int(z)}-{int(z+1)}" if z >= 0 else f"neg"
+    buckets[bucket].append(t)
 
-    print(f"\n=== {SYMBOL} {FROM_DATE.date()} to {TO_DATE.date()} ===")
-    print(f"Params: z={Z_THRESHOLD} stop={STOP_A} trail={TRIG_A} gap={GAP_A} lot={BASE_LOT}")
-    print(f"Total trades: {len(trades)}")
-    print(f"Net PnL: ${trades['pnl'].sum():+.2f}")
+for bucket in sorted(buckets.keys()):
+    ts = buckets[bucket]
+    total_pnl = sum(t['pnl'] for t in ts)
+    wins = sum(1 for t in ts if t['result'] == 'WIN')
+    print(f"  z={bucket}: {len(ts)} trades | {wins}W | "
+          f"WR={wins/len(ts)*100:.1f}% | PnL=${total_pnl:.2f}")
 
-    print(f"\n--- By Entry Hour (0-23 UTC) ---")
-    by_hour = trades.groupby('entry_hour').agg(
-        trades=('pnl', 'count'), net=('pnl', 'sum'),
-        wins=('pnl', lambda x: (x > 0).sum()),
-        avg=('pnl', 'mean')
-    )
-    by_hour['wr'] = (by_hour['wins'] / by_hour['trades'] * 100)
-    by_hour = by_hour.sort_values('net', ascending=False)
-    for idx, row in by_hour.iterrows():
-        print(f"  Hour {idx:2d} | {int(row['trades']):3d} trades | ${row['net']:+.1f} net | {row['wr']:.0f}% WR | ${row['avg']:+.1f} avg")
+# Spread buckets
+print(f"\n=== SPREAD BUCKETS ===")
+buckets = defaultdict(list)
+for t in close_trades:
+    s = t['spread']
+    bucket = f"{int(s)}"
+    buckets[bucket].append(t)
 
-    print(f"\n--- Direction Bias ---")
-    for d in ['LONG', 'SHORT']:
-        sub = trades[trades['direction'] == d]
-        if len(sub):
-            wr = (sub['pnl'] > 0).sum() / len(sub) * 100
-            print(f"  {d:5s}: {len(sub):3d} trades, ${sub['pnl'].sum():+7.2f} net, {wr:.0f}% WR")
+for bucket in sorted(buckets.keys(), key=int):
+    ts = buckets[bucket]
+    total_pnl = sum(t['pnl'] for t in ts)
+    wins = sum(1 for t in ts if t['result'] == 'WIN')
+    print(f"  sprd={bucket}: {len(ts)} trades | {wins}W | "
+          f"WR={wins/len(ts)*100:.1f}% | PnL=${total_pnl:.2f}")
 
-    print(f"\n--- Exit Reason ---")
-    for r in ['stop', 'expiry']:
-        sub = trades[trades['reason'] == r]
-        if len(sub):
-            print(f"  {r:6s}: {len(sub):3d} trades, ${sub['pnl'].sum():+7.2f} net")
+# Hour buckets
+print(f"\n=== HOUR OF DAY (UTC) ===")
+buckets = defaultdict(list)
+for t in close_trades:
+    h = t['time'].split(':')[0]
+    buckets[h].append(t)
 
-    print(f"\n--- Top 5 Winners ---")
-    top = trades.nlargest(5, 'pnl')
-    for _, t in top.iterrows():
-        print(f"  {t['direction']:5s} | entry_h={t['entry_hour']:2d} | ${t['pnl']:+.1f}")
+for h in sorted(buckets.keys()):
+    ts = buckets[h]
+    total_pnl = sum(t['pnl'] for t in ts)
+    wins = sum(1 for t in ts if t['result'] == 'WIN')
+    print(f"  h={h}: {len(ts)} trades | {wins}W | "
+          f"WR={wins/len(ts)*100:.1f}% | PnL=${total_pnl:.2f}")
 
-    print(f"\n--- Top 5 Losers ---")
-    bot = trades.nsmallest(5, 'pnl')
-    for _, t in bot.iterrows():
-        print(f"  {t['direction']:5s} | entry_h={t['entry_hour']:2d} | ${t['pnl']:+.1f}")
+# Held bars
+print(f"\n=== HELD BARS ===")
+buckets = defaultdict(list)
+for t in close_trades:
+    hb = t['held_bars']
+    bucket = '0-1' if hb <= 1 else '2-3' if hb <= 3 else '4-6' if hb <= 6 else '7-10' if hb <= 10 else '11+'
+    buckets[bucket].append(t)
+
+for bucket in ['0-1', '2-3', '4-6', '7-10', '11+']:
+    if bucket not in buckets:
+        continue
+    ts = buckets[bucket]
+    total_pnl = sum(t['pnl'] for t in ts)
+    wins = sum(1 for t in ts if t['result'] == 'WIN')
+    print(f"  held={bucket}: {len(ts)} trades | {wins}W | "
+          f"WR={wins/len(ts)*100:.1f}% | PnL=${total_pnl:.2f}")
+
+# Stability component analysis (for stable gate runs)
+print(f"\n=== STABILITY GATE COMPONENT ANALYSIS ===")
+# Match stable entries to trades
+print(f"Stable entry lines: {len(stable_entries)}")
+if stable_entries:
+    for entry in stable_entries[:5]:
+        print(f"  z={entry['z_stable']:.1f} z_cum={entry['z_cum']:.1f} spd_z={entry['spd_z']:.2f} "
+              f"vol_z={entry['vol_z']:.2f} stab={entry['stab']:.3f}")

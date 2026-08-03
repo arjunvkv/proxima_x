@@ -17,26 +17,27 @@ MAGIC = 202408
 
 CONFIG = {
     "pairs": ["EURUSD"],
-    "lot_size": 1.0,
+    "lot_size": 2.0,
     "magic": MAGIC,
     "max_concurrent": 1,
     "max_spread_mult": 2.0,
-    "stop_loss_pips": 5,
-    "session_start": 0,
-    "session_end": 23,
+    "stop_loss_pips": 10,
+    "session_start": 14,
+    "session_end": 19,
 }
+FN_TERMINAL = r"C:\Program Files\FundedNext MT5 Terminal\terminal64.exe"
 LOOP_INTERVAL = 0.1
 HEARTBEAT_INTERVAL = 30
 REPORT_INTERVAL = 300
 
-# Backtest reference stats (from _backtest_stop.py Oct-Dec 2025, 5p hard stop)
+# Backtest reference stats (FundedNext ticks Jun-Jul 2026, 14-19 UTC filter, 10p stop, 2.0 lots)
 BT_REF = {
     "EURUSD": {
-        "config": "5p/20s hold=30s stop=5p",
-        "trades_3mo": 3149, "trades_per_day": 48.4, "wr_pct": 65.0,
-        "avg_pips": 1.59, "gross_pips": 5000.9,
-        "max_consec_loss": 44, "max_dd_pips": 2136,
-        "avg_spread": 0.00003,
+        "config": "5p/20s hold=30s stop=10p hours=14-19UTC",
+        "trades_20d": 765, "trades_per_day": 38.2, "wr_pct": 61.3,
+        "avg_pips": 1.07, "gross_pips": 819,
+        "max_consec_loss": 0, "max_dd_pips": 0,
+        "avg_spread": 0.00008,
     },
 }
 
@@ -217,7 +218,7 @@ def main():
         f.write(str(os.getpid()))
 
     cfg = CONFIG
-    feed = Feed(mode="live", pairs=cfg["pairs"]).connect()
+    feed = Feed(mode="live", pairs=cfg["pairs"], mt5_path=FN_TERMINAL).connect()
     mt5_login = feed.mt5.account_info().login
     print(f"MT5 account: {mt5_login}", file=sys.stderr)
 
@@ -297,7 +298,8 @@ def main():
                 if bid <= 0 or ask <= 0: continue
                 dt = detectors[pair]; pip = dt.pip
                 spread = ask - bid
-                normal_spread = 0.00003
+                risk.update_spread_baseline(pair, spread)
+                normal_spread = risk.normal_spread(pair) or 0.00008
 
                 # Only feed detector on actual price change
                 prev = last_tick.get(pair)
