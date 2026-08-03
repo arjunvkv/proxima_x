@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from proxima_command_center.predictive_engine import PredictiveEngine
-from proxima_command_center.mt5_history_loader import get_recent_mt5_executed_trades
+from proxima_command_center.mt5_history_loader import get_side_by_side_trade_comparison
 
 app = FastAPI(title="Proxima X Trading Terminal")
 
@@ -31,7 +31,7 @@ async def websocket_telemetry(websocket: WebSocket):
         while True:
             predictions, config = predictive_engine.get_live_predictions()
             multiplier = config.get("lot_multiplier", 1.0)
-            trades = get_recent_mt5_executed_trades(lot_multiplier=multiplier)
+            trades = get_side_by_side_trade_comparison(lot_multiplier=multiplier)
             
             payload = {
                 "config": config,

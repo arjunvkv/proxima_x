@@ -46,6 +46,10 @@ function updateHeaderConfig(config) {
     if (tag && config.account_profile) {
         tag.innerText = config.account_profile.toUpperCase();
     }
+    const demoTag = document.getElementById("demo-acc-tag");
+    if (demoTag && config.mt5_demo_account) {
+        demoTag.innerText = `#${config.mt5_demo_account.login} (${config.mt5_demo_account.server})`;
+    }
 }
 
 function renderPredictions(predictions) {
@@ -72,8 +76,8 @@ function renderPredictions(predictions) {
                     <td style="color: #94a3b8; font-size: 0.75rem;">${p.regime}</td>
                 </tr>
                 <tr>
-                    <td class="label-cell">Effective Lot Size</td>
-                    <td style="color: #f59e0b;">${p.effective_lot} Lots</td>
+                    <td class="label-cell">VPS Base Lot Size</td>
+                    <td style="color: #f59e0b;">${p.vps_base_lot} Lots</td>
                 </tr>
                 <tr>
                     <td class="label-cell">Target Win ($)</td>
@@ -102,12 +106,14 @@ function renderMT5Trades(trades) {
             <td style="font-weight: 600;">${t.strategy}</td>
             <td style="font-family: JetBrains Mono; color: #3b82f6;">${t.pair}</td>
             <td style="color:${t.type === 'BUY' ? '#10b981' : '#f43f5e'}; font-weight:700;">${t.type}</td>
-            <td style="color: #f59e0b; font-family: JetBrains Mono; font-weight:700;">${t.lot} L</td>
-            <td style="font-family: JetBrains Mono;">${t.open_price}</td>
-            <td style="font-family: JetBrains Mono;">${t.close_price}</td>
-            <td class="val-green">+${t.pips} pips</td>
-            <td class="val-green">+$${t.pnl.toFixed(2)}</td>
-            <td><span class="tag-confidence">${t.status}</span></td>
+            <td style="color: #f59e0b; font-family: JetBrains Mono; font-weight:700;">${t.mt5_lot} L</td>
+            <td style="font-family: JetBrains Mono;">${t.mt5_entry}</td>
+            <td style="font-family: JetBrains Mono;">${t.mt5_exit}</td>
+            <td class="val-green">+$${t.mt5_pnl.toFixed(2)}</td>
+            <td style="font-family: JetBrains Mono; color: #94a3b8;">${t.python_sim_entry}</td>
+            <td class="val-green">+$${t.python_sim_pnl.toFixed(2)}</td>
+            <td style="font-family: JetBrains Mono; color: #10b981;">${t.discrepancy_pips.toFixed(1)} pips</td>
+            <td><span class="tag-confidence">${t.match_status}</span></td>
         </tr>
     `).join('');
 }
