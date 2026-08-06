@@ -34,6 +34,7 @@ from replay.tick_archive import TickArchive
 from core.adapters.broker import PaperBroker
 from core.adapters.clock import ReplayClock
 from data.execution_cost import ExecutionCost
+from strategies import trend_pullback
 
 SYMBOL = "EURJPY"
 INITIAL = 100000.0
@@ -52,11 +53,16 @@ GATE_MIN_PF = 1.2
 GATE_MIN_TRADES = 20
 GATE_MAX_TRADES = 400          # reject degenerate scalpers
 GATE_MAX_DD = 0.05             # 5% max drawdown gate
+GATE_MIN_EXPECTANCY = 10.0     # $/trade — PF alone can mask tiny avg returns (GPT 9.1)
 
 # --- strategy params (low-turnover 1-min momentum) ---
 EMA_FAST = 12
 EMA_SLOW = 30
-MIN_SPREAD_PTS = 20             # skip only degenerate wide-outlier bars (median ≈ 12)
+# Only block PATHOLOGICAL spread states (rollover/anomaly/liquidity events),
+# never "unfavorable" ones — the spread is already fully charged by bid/ask
+# fills, so gating normal spreads would double-count execution cost (GPT 8).
+# Median live spread ≈ 12 pts, p90 ≈ 16, pathological ≈ 286 → block > 40.
+MAX_ALLOWED_SPREAD_PTS = 40
 
 
 def ema(vals: list[float], n: int) -> list[float]:
@@ -118,7 +124,7 @@ def build_signals(ticks: list[dict]) -> dict[int, str]:
     sig = {}
     pos = 0
     for i in range(1, len(keys)):
-        if spreads[i] > MIN_SPREAD_PTS:
+        if spreads[i] > MAX_ALLOWED_SPREAD_PTS:
             continue
         new = 1 if fast[i] > slow[i] else -1
         if new != pos:
@@ -212,26 +218,49 @@ def run_window(ticks: list[dict], sig: dict) -> dict:
 
 def verdict(metrics: dict, window: str) -> dict:
     """Apply the GPT acceptance gate on execution-aware metrics."""
+    expectancy = (metrics["net_pnl"] / metrics["trades"]) if metrics["trades"] else 0.0
     checks = {
         "realistic_pf > %.2f" % GATE_MIN_PF: metrics["profit_factor"] > GATE_MIN_PF,
         "net_pnl > 0": metrics["net_pnl"] > 0,
+        "expectancy $/trade > %.1f" % GATE_MIN_EXPECTANCY: expectancy > GATE_MIN_EXPECTANCY,
         "max_drawdown < %.0f%%" % (GATE_MAX_DD * 100): metrics["max_drawdown"] < GATE_MAX_DD,
         "trades in [%d,%d]" % (GATE_MIN_TRADES, GATE_MAX_TRADES): GATE_MIN_TRADES <= metrics["trades"] <= GATE_MAX_TRADES,
     }
+    metrics["expectancy"] = round(expectancy, 2)
     passed = all(checks.values())
     return {"window": window, "passed": passed, "checks": checks,
             "reject_reason": "NONE" if passed else [k for k, v in checks.items() if not v]}
 
 
+STRATEGIES = {
+    "ema": {
+        "label": f"1-min EMA({EMA_FAST}/{EMA_SLOW}) cross",
+        "build": build_signals,
+    },
+    "trend_pullback": {
+        "label": "H1 EMA(20) trend + M5 pullback, ATR exit",
+        "build": lambda tk: trend_pullback.build_signals(tk, MAX_ALLOWED_SPREAD_PTS),
+    },
+}
+
+
 def main():
+    import sys as _sys
+    strat = _sys.argv[1] if len(_sys.argv) > 1 else "ema"
+    if strat not in STRATEGIES:
+        raise SystemExit(f"unknown strategy {strat!r}; choose {sorted(STRATEGIES)}")
+    build = STRATEGIES[strat]["build"]
+
     train = load_ticks(TRAIN_START, TRAIN_END)
     val = load_ticks(VAL_START, VAL_END)
-    print(f"[P9] train ticks: {len(train)}  val ticks: {len(val)}")
+    print(f"[P9:{strat}] train ticks: {len(train)}  val ticks: {len(val)}")
     report = {
         "symbol": SYMBOL,
-        "strategy": f"1-min EMA({EMA_FAST}/{EMA_SLOW}) cross",
+        "strategy": STRATEGIES[strat]["label"],
+        "strategy_id": strat,
         "gate": {"min_pf": GATE_MIN_PF, "min_trades": GATE_MIN_TRADES,
-                 "max_trades": GATE_MAX_TRADES, "max_dd": GATE_MAX_DD},
+                 "max_trades": GATE_MAX_TRADES, "max_dd": GATE_MAX_DD,
+                 "min_expectancy": GATE_MIN_EXPECTANCY},
         "train": None, "validation": None, "accepted": False, "notes": [],
     }
     for name, ticks, start, end, extra in [
@@ -241,7 +270,7 @@ def main():
         if not ticks:
             report["notes"].append(f"{name}: NO TICKS in window; skipped")
             continue
-        sig = build_signals(ticks)
+        sig = build(ticks)
         m = run_window(ticks, sig)
         v = verdict(m, name)
         report[name] = {"metrics": m, "gate": v, "window_days": (end - start).days, "notes": [extra]}
@@ -251,7 +280,8 @@ def main():
     report["conclusion"] = (
         "ACCEPT" if report["accepted"] else
         "REJECT (out-of-sample fails gate)")
-    with open("walkforward_report.json", "w") as fh:
+    out = f"walkforward_report_{strat}.json"
+    with open(out, "w") as fh:
         json.dump(report, fh, indent=2)
     print(json.dumps(report, indent=2))
     return 0 if report["accepted"] else 1

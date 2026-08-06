@@ -1,0 +1,77 @@
+{
+  "symbol": "EURJPY",
+  "strategy": "H1 EMA(20) trend + M5 pullback, ATR exit",
+  "strategy_id": "trend_pullback",
+  "gate": {
+    "min_pf": 1.2,
+    "min_trades": 20,
+    "max_trades": 400,
+    "max_dd": 0.05,
+    "min_expectancy": 10.0
+  },
+  "train": {
+    "metrics": {
+      "trades": 53,
+      "win_rate": 0.434,
+      "gross_pnl": 49.87,
+      "net_pnl": 49.87,
+      "profit_factor": 1.0065,
+      "max_drawdown": 0.0456,
+      "commission": 37.1,
+      "expectancy": 0.94
+    },
+    "gate": {
+      "window": "train",
+      "passed": false,
+      "checks": {
+        "realistic_pf > 1.20": false,
+        "net_pnl > 0": true,
+        "expectancy $/trade > 10.0": false,
+        "max_drawdown < 5%": true,
+        "trades in [20,400]": true
+      },
+      "reject_reason": [
+        "realistic_pf > 1.20",
+        "expectancy $/trade > 10.0"
+      ]
+    },
+    "window_days": 22,
+    "notes": [
+      "in-sample bullet"
+    ]
+  },
+  "validation": null,
+  "accepted": false,
+  "notes": [],
+  "val": {
+    "metrics": {
+      "trades": 11,
+      "win_rate": 0.6364,
+      "gross_pnl": 2481.03,
+      "net_pnl": 2481.03,
+      "profit_factor": 14.893,
+      "max_drawdown": 0.0015,
+      "commission": 7.7,
+      "expectancy": 225.55
+    },
+    "gate": {
+      "window": "val",
+      "passed": false,
+      "checks": {
+        "realistic_pf > 1.20": true,
+        "net_pnl > 0": true,
+        "expectancy $/trade > 10.0": true,
+        "max_drawdown < 5%": true,
+        "trades in [20,400]": false
+      },
+      "reject_reason": [
+        "trades in [20,400]"
+      ]
+    },
+    "window_days": 5,
+    "notes": [
+      "OUT-OF-SAMPLE"
+    ]
+  },
+  "conclusion": "REJECT (out-of-sample fails gate)"
+}
