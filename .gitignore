@@ -164,8 +164,10 @@ proxima_v2/
 # Tests
 tests/
 
-# Reality and regime analysis (standalone)
-reality/
+# Reality and regime analysis (standalone) — root-anchored so it does NOT
+# silently ignore proxima_ops/reality/ (the bare 'reality/' pattern caused the
+# original loss of that package, 74 commits / 0 objects, in 2026).
+/reality/
 
 # Generated reports (research)
 research/fsv/dashboard/fsv_full_verification_report.html
