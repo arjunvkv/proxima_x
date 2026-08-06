@@ -274,9 +274,13 @@ def live_loop(execute: bool, manage: bool) -> None:
             return True, f"drawdown {dd/init:.1%} >= 10% (eq={eq:.0f})"
         return False, "ok"
 
-    POST_FILL_TOL_S = 15 * 60  # max minutes after the nominal 00:10 fill that we still
-                            # accept a market fill (beyond this the signal deviates
-                            # from the curve's 00:10 bar and is skipped for the day)
+    POST_FILL_TOL_S = 300  # the fill bar lives 5 min (M5). A market order placed
+                            # while the fill bar is forming fills at ~that bar's
+                            # price (the engine's accepted approximation of the
+                            # curve's next-bar-open). If the process wakes after
+                            # the fill bar CLOSED, the order would fill at a
+                            # later bar -> deviates from the validated curve, so
+                            # we skip the day instead.
     started_at = now_str = server_now()
     MAX_RUNTIME_S = 26 * 3600  # hard safety cap so a stray process never hangs forever
 
