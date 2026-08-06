@@ -70,7 +70,9 @@ graphify-out/
 research/*/data/
 
 # Analysis and tools (not part of core)
-analysis/
+# Root-anchored (was bare 'analysis/') so it no longer shadows project
+# packages like mvs/analysis/ — the same class of bug that lost reality/.
+/analysis/
 backtesting/
 ci/
 docs/
