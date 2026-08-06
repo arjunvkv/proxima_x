@@ -26,11 +26,14 @@ TICK_SCHEMA = pa.schema([
     pa.field("digits", pa.int32()),
 ])
 
-BASE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data", "ticks")
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_PATH = os.path.join(REPO_ROOT, "data", "ticks")
 
 
-def _partition_path(symbol: str, year: int, month: int, day: int) -> str:
-    return os.path.join(BASE_PATH, symbol, str(year), f"{month:02d}", f"{day:02d}.parquet")
+def _partition_path(symbol: str, year: int, month: int, day: int,
+                    base: str = None) -> str:
+    base = base or BASE_PATH
+    return os.path.join(base, symbol, str(year), f"{month:02d}", f"{day:02d}.parquet")
 
 
 class TickArchive:
@@ -69,7 +72,7 @@ class TickArchive:
         for day_key, day_ticks in by_day.items():
             parts = day_key.split("-")
             year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
-            path = _partition_path(symbol, year, month, day)
+            path = _partition_path(symbol, year, month, day, base=self._base)
             self._write_partition(path, day_ticks)
 
     def _write_partition(self, path: str, ticks: list[dict]):
@@ -98,7 +101,7 @@ class TickArchive:
         paths = []
         d = start
         while d <= end:
-            path = _partition_path(symbol, d.year, d.month, d.day)
+            path = _partition_path(symbol, d.year, d.month, d.day, base=self._base)
             if os.path.exists(path):
                 paths.append(path)
             d += timedelta(days=1)
@@ -110,11 +113,10 @@ class TickArchive:
         return df
 
     def load_day(self, symbol: str, date: datetime) -> pl.LazyFrame:
-        path = _partition_path(symbol, date.year, date.month, date.day)
+        path = _partition_path(symbol, date.year, date.month, date.day, base=self._base)
         if os.path.exists(path):
             return pl.scan_parquet(path)
         return pl.LazyFrame()
-
     def load_random_window(self, symbol: str, days: int, seed: int = 42) -> pl.LazyFrame:
         rng = np.random.default_rng(seed)
         all_days = self._available_days(symbol)
