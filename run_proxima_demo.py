@@ -1322,6 +1322,35 @@ class ProximaDemo:
             ss["spread_p50"] = float(np.median(arr))
             ss["spread_p95"] = float(np.percentile(arr, 95))
 
+    def _spread_points(self, tick: dict) -> float:
+        """Spread in POINTS regardless of tick shape.
+
+        Demo spread consumers (spread_normalizer, spread model, gates) all
+        expect points — the live connector historically fed points. Canonical
+        ticks carry spread (price units) + spread_pts (points); raw live ticks
+        carry only spread-as-points; replay archive rows carry price units.
+        This is the single unit-normalization point so replay == live.
+        """
+        pts = tick.get("spread_pts") or tick.get("spread_points")
+        if not pts:
+            raw = tick.get("spread", 0)
+            if raw > 1:
+                pts = raw
+            else:
+                point = tick.get("point") or 1e-5
+                if raw:
+                    pts = int(raw / max(point, 1e-12))
+                else:
+                    # No explicit spread: derive from bid/ask (old default),
+                    # then convert to points so units stay consistent.
+                    bid = tick.get("bid", 0.0)
+                    ask = tick.get("ask", 0.0)
+                    if bid or ask:
+                        pts = int(max(ask - bid, 0.0) / max(point, 1e-12))
+                    else:
+                        pts = 0
+        return float(pts or 0)
+
     def _dispatch_tick(self, sym: str, tick: dict, eval_data: dict) -> None:
         """Shared tick-dispatch path for BOTH live and replay modes.
 
@@ -1335,7 +1364,7 @@ class ProximaDemo:
         bid = tick.get("bid", 0.0)
         ask = tick.get("ask", bid)
         price = ask if ask else bid
-        spread = tick.get("spread", max(ask - bid, 0.0))
+        spread = self._spread_points(tick)
         _ts = tick.get("time_sec") or tick.get("time") or tick.get("timestamp") or 0
 
         if sym in eval_data:
@@ -4454,7 +4483,8 @@ class ProximaDemo:
                                     block_reason = "NO_TICK"
                                     self._gate_audit_logger.log_rejection(sym, signal_id="?", gate="NO_TICK", value=None, threshold=None, context={"es_rank": es_percentile})
                                 else:
-                                    spread_raw = tick.get("spread", 0)
+                                    # Points-aligned with _dispatch_tick
+                                    spread_raw = self._spread_points(tick)
                                     # P1.3: Adaptive spread normalization
                                     utc_hour_s = datetime.utcnow().hour
                                     sess = get_session(utc_hour_s)
@@ -6019,6 +6049,12 @@ def main():
     _repair_duckdb()
     tick_source = getattr(env, 'tick_source', None) if env else None
     broker = getattr(env, 'broker', None) if env else None
+    # Phase 5 ship overlay: live/demo/paper run through the SAME canonical
+    # tick contract as replay (LiveTickSource wraps MT5Connector) so shipped
+    # live consumes byte-identical ticks to the validated backtest.
+    if tick_source is None and mode in ("demo", "live", "paper"):
+        from data.live_tick_source import LiveTickSource
+        tick_source = LiveTickSource(MT5Connector())
     demo = ProximaDemo(env=env, tick_source=tick_source, broker=broker, replay_mode=(mode == "replay"))
     demo._runtime_limit = args.runtime
     demo._tick_limit = args.replay_until_ticks
