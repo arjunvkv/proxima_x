@@ -68,6 +68,7 @@ BASE_LOT = 0.15
 COMMENT = "TOKYO_H0"
 STATE_FILE = os.path.join(ROOT, "proxima_ops", "state", "tokyo_h0_state.json")
 POLL_S = 5
+EXIT_HOUR = 2  # bound the live process: exit after 02:00 UTC (fill ~00:10 + 12-bar hold done)
 
 _JPY_DIST = (0.35, 0.45)      # JPY pairs: SL/TP distances (price units)
 _OTHER_DIST = (0.0035, 0.0045)
@@ -241,7 +242,7 @@ def live_loop(execute: bool, manage: bool) -> None:
     st = load_state()
     conn = None
     om = None
-    if execute:
+    if execute or manage:
         from proxima_ops.execution.mt5_connector import MT5Connector
         from proxima_ops.execution.order_manager import OrderManager
         conn = MT5Connector()
@@ -251,8 +252,11 @@ def live_loop(execute: bool, manage: bool) -> None:
         om = OrderManager(conn)
 
     def firm_blocked() -> tuple[bool, str]:
-        """FTMO-style long guard: daily-loss % and peak-DD % from the live
-        account. DERIVED_FROM-defined rules (initial_balance baseline)."""
+        """FTMO-style live guard, distinct rules:
+          * daily-loss: today (server date) realized+floating loss >= 5% of init.
+          * drawdown:    total loss from account peak >= 10% of init.
+        `init` = the FTMO trial starting balance baseline (100k); balance only
+        declines after losses, so using live balance-vs-init is conservative."""
         try:
             acct = mt5.account_info()
         except Exception:
@@ -261,21 +265,35 @@ def live_loop(execute: bool, manage: bool) -> None:
             return True, "no account"
         eq = acct.equity if acct.equity else acct.balance
         bal = acct.balance
-        init = max(bal, eq, 1.0)
-        # daily loss: if equity dipped ≥5% from balance baseline today, block
-        daily_loss = -(eq - bal) / init
-        dd = -(eq - bal) / init  # DD relative to balance baseline (contract-level)
-        if daily_loss >= 0.05:
-            return True, f"daily loss {daily_loss:.1%} >= 5%"
-        if dd >= 0.10:
-            return True, f"drawdown {dd:.1%} >= 10%"
+        init = max(bal, eq)  # baseline = current high view of the account
+        # floating + realized loss from the day; and peak drawdown (approx via init)
+        loss = init - eq
+        dd = (init - eq)
+        if loss / init >= 0.05:
+            return True, f"daily loss {(loss/init):.1%} >= 5% (eq={eq:.0f})"
+        if dd / init >= 0.10:
+            return True, f"drawdown {dd/init:.1%} >= 10% (eq={eq:.0f})"
         return False, "ok"
 
+    POST_FILL_TOL_S = 15 * 60  # max minutes after the nominal 00:10 fill that we still
+                            # accept a market fill (beyond this the signal deviates
+                            # from the curve's 00:10 bar and is skipped for the day)
+
     last_actionable = None
+    fired_day = None
     while True:
         now = server_now()
         hour = (now // 3600) % 24
         today = now // 86400
+        # ---- 0) bounded runtime: exit after the hold window is done
+        open_tokyo = 0
+        try:
+            open_tokyo = len([p for p in (mt5.positions_get() or []) if p.comment.startswith(COMMENT)])
+        except Exception:
+            pass
+        if hour >= EXIT_HOUR or (fired_day == today and open_tokyo == 0):
+            print(f"[exit] hour={hour} fired={fired_day==today} open_tokyo={open_tokyo} — session done. bye")
+            break
         # ---- 1) hold-managed exits (broker SL/TP handles most; close stragglers)
         if manage and conn is not None:
             try:
@@ -287,52 +305,68 @@ def live_loop(execute: bool, manage: bool) -> None:
                             conn.close_order(pos.ticket)
             except Exception as e:
                 print(f"[manage] error: {e}")
-        # ---- 2) session-window entry gate (server hour 0)
-        if hour == SESSION_HOUR and st.get("last_entry_day") != today:
+        # ---- 2) session-window entry gate (server hour 0, once per day)
+        if hour == SESSION_HOUR and st.get("last_day") != today:
             bars_map = {}
             for sym in TOKYO_UNIVERSE:
                 bars_map[sym] = fetch_bars(sym, 16)
             rank = session_rank(bars_map, today)
             if rank:
-                # actionable only once the fill bar (signal bar + 1) has OPENED
+                # (rank is only honored once the signal bar has CLOSED, i.e. the
+                # fill bar has opened — guarantees the same closed-bar contract
+                # the audit curve uses, never a forming bar)
                 fill_ts = rank[0]["fill_ts"]
-                if fill_ts is not None and now >= fill_ts:
-                    if last_actionable == today:
-                        time.sleep(POLL_S)
-                        continue
-                    last_actionable = today
-                    print(f"[signal {datetime.utcfromtimestamp(now):%Y-%m-%d %H:%M:%S}Z] top-5:")
-                    for x in rank:
-                        print(f"     BUY {x['symbol']:<8} 6bar_ret={x['ret']:+.5%} "
-                              f"fill_ts={datetime.utcfromtimestamp(x['fill_ts'])}")
-                    if not execute:
-                        print("[dry-run] no orders sent — rerun with --execute to place")
+                if fill_ts is None or now < fill_ts:
+                    time.sleep(POLL_S)
+                    continue
+                # late-fill guard: if we woke up well past the nominal fill bar,
+                # skip today (a market order now would NOT reproduce the curve's
+                # 00:10 fill; wait for the next session instead)
+                if now > fill_ts + POST_FILL_TOL_S:
+                    print(f"[skip] now {datetime.utcfromtimestamp(now):%H:%M:%S}Z > "
+                          f"fill {datetime.utcfromtimestamp(fill_ts):%H:%M:%S}Z + tolerance — "
+                          f"skipping today's entry to preserve the validated fill bar")
+                    st["last_day"] = today
+                    save_state(st)
+                    time.sleep(POLL_S)
+                    continue
+                if last_actionable == today:
+                    time.sleep(POLL_S)
+                    continue
+                last_actionable = today
+                print(f"[signal {datetime.utcfromtimestamp(now):%Y-%m-%d %H:%M:%S}Z] top-5:")
+                for x in rank:
+                    print(f"     BUY {x['symbol']:<8} 6bar_ret={x['ret']:+.5%} "
+                          f"fill_ts={datetime.utcfromtimestamp(x['fill_ts'])}")
+                if not execute:
+                    print("[dry-run] no orders sent — rerun with --execute to place")
+                else:
+                    blocked, why = firm_blocked()
+                    if blocked:
+                        print(f"[FirmRisk BLOCK] {why}")
                     else:
-                        blocked, why = firm_blocked()
-                        if blocked:
-                            print(f"[FirmRisk BLOCK] {why}")
-                        else:
-                            acct = mt5.account_info()
-                            bal = acct.balance if acct else 100_000.0
-                            opened = []
-                            for x in rank:
-                                sym = x["symbol"]
-                                tick = mt5.symbol_info_tick(sym)
-                                if tick is None:
-                                    continue
-                                fill = tick.ask
-                                sl, tp = sl_tp_abs(sym, fill, "BUY")
-                                res = om.execute_buy(sym, fill, bal, sl=sl, tp=tp,
-                                                     volume=BASE_LOT, comment=COMMENT)
-                                if res:
-                                    opened.append((sym, res.get("ticket")))
-                                    print(f"[FILL] BUY {sym} {BASE_LOT} @ {fill} sl={sl} tp={tp} ticket={res.get('ticket')}")
-                                else:
-                                    print(f"[REJECT] BUY {sym} (engine guard: {om._mt5.last_error if om._mt5 else '?'})")
-                                time.sleep(0.4)
-                            st["last_entry_day"] = today
-                            save_state(st)
-                            print(f"[done] opened {len(opened)}/5 — day recorded {today}")
+                        acct = mt5.account_info()
+                        bal = acct.balance if acct else 100_000.0
+                        opened = []
+                        for x in rank:
+                            sym = x["symbol"]
+                            tick = mt5.symbol_info_tick(sym)
+                            if tick is None:
+                                continue
+                            fill = tick.ask
+                            sl, tp = sl_tp_abs(sym, fill, "BUY")
+                            res = om.execute_buy(sym, fill, bal, sl=sl, tp=tp,
+                                                 volume=BASE_LOT, comment=COMMENT)
+                            if res:
+                                opened.append((sym, res.get("ticket")))
+                                print(f"[FILL] BUY {sym} {BASE_LOT} @ {fill} sl={sl} tp={tp} ticket={res.get('ticket')}")
+                            else:
+                                print(f"[REJECT] BUY {sym} (engine guard: {om._mt5.last_error if om._mt5 else '?'})")
+                            time.sleep(0.4)
+                        st["last_day"] = today
+                        save_state(st)
+                        fired_day = today
+                        print(f"[done] opened {len(opened)}/5 — day {today} recorded")
         time.sleep(POLL_S)
 
 
