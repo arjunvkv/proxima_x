@@ -37,6 +37,10 @@ from data.execution_cost import ExecutionCost
 from strategies import trend_pullback
 
 SYMBOL = "EURJPY"
+# Live FTMO symbol_info.trade_tick_value for EURJPY (USD per 0.001 point per
+# 1.0 lot, account USD). Single source of truth for backtest==live PnL.
+BROKER_TICK_VALUE_USD = float(
+    __import__("os").environ.get("PROXIMA_BROKER_TICK_VALUE", "0.6309745401773038"))
 INITIAL = 100000.0
 LOT = 0.1
 # FTMO 2-Step server timezone offset (hours from UTC), summer DT = +3. Day
@@ -155,7 +159,8 @@ def run_window(ticks: list[dict], sig: dict) -> dict:
 
     src = BouncedSource(ticks)
     broker = PaperBroker(tick_source=src, clock=ReplayClock(),
-                         execution_cost=ec, initial_balance=INITIAL)
+                         execution_cost=ec, initial_balance=INITIAL,
+                         tick_value_map={SYMBOL: BROKER_TICK_VALUE_USD})
 
     # bucket boundaries track on the fly
     pending = {}          # bucket_key -> earliest tick index

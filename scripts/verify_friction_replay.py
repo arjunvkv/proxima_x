@@ -38,6 +38,10 @@ from data.execution_cost import ExecutionCost
 from core.adapters.broker import PaperBroker
 
 SYMBOL = "EURJPY"
+# Live FTMO symbol_info.trade_tick_value for EURJPY (USD per 0.001 point per
+# 1.0 lot, account USD). Single source of truth for backtest==live PnL.
+BROKER_TICK_VALUE_USD = float(
+    __import__("os").environ.get("PROXIMA_BROKER_TICK_VALUE", "0.6309745401773038"))
 DAYS = 30
 FAST = 20   # EMA fast period (ticks)
 SLOW = 100  # EMA slow period
@@ -193,7 +197,8 @@ def main():
     src2 = SeekableSource(ticks)
     tclock = TapeClock()
     pb = PaperBroker(tick_source=src2, clock=tclock, execution_cost=ec,
-                     initial_balance=100000.0)
+                     initial_balance=100000.0,
+                     tick_value_map={SYMBOL: BROKER_TICK_VALUE_USD})
     tclock.bind(src2, ticks)
     mids = [t["mid"] for t in ticks]
     f = ema(mids, FAST)

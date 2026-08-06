@@ -91,11 +91,19 @@ class MT5Broker(Broker):
 
 class PaperBroker(Broker):
     def __init__(self, tick_source=None, clock=None, execution_model=None,
-                 initial_balance: float = 100000.0, execution_cost=None):
+                     initial_balance: float = 100000.0, execution_cost=None,
+                     tick_value_map: Optional[dict] = None):
         self._tick_source = tick_source
         self._clock = clock
         self._execution = execution_model
         self._execution_cost = execution_cost or ExecutionCost()
+        # tick_value_usd: symbol -> broker-authoritative USD value of ONE POINT
+        # (the symbol's machine point, e.g. 0.001 for EURJPY) per 1.0 lot.
+        # Mirrors live MT5 symbol_info.trade_tick_value. When present, per-trade
+        # PnL is computed EXACTLY as live deals would — the backtest<->live
+        # alignment contract. When absent (legacy), the old pip-based formula
+        # is preserved for backward compatibility.
+        self._tick_value_usd = dict(tick_value_map or {})
         self._ledger = None
         self._next_ticket = 1000000
         self._positions: dict[int, dict] = {}
@@ -251,6 +259,7 @@ class PaperBroker(Broker):
             "opened_at": now,
             "status": "OPEN",
             "commission": commission,
+            "point": tick.get("point", self._point(symbol)),
             "slippage": fill_price - (tick["ask"] if order_type.upper() == "BUY" else tick["bid"]),
         }
 
@@ -285,8 +294,16 @@ class PaperBroker(Broker):
             profit_points = (close_price - pos["entry"]) / pt
         else:
             profit_points = (pos["entry"] - close_price) / pt
-        profit_money = profit_points * pos["volume"] * (10 if "JPY" not in pos["symbol"] else 1000 / pos["entry"])
-
+        tv = self._tick_value_usd.get(pos["symbol"].upper())
+        if tv is not None:
+            # Broker-authoritative USD per machine POINT per 1.0 lot (live MT5
+            # trade_tick_value). profit_points is already in machine points
+            # (self._point returns 0.001 for JPY / 0.00001 direct / 0.01 gold).
+            # Backtest per-trade PnL then equals live deals exactly.
+            profit_money = profit_points * pos["volume"] * tv
+        else:
+            # Legacy per-pip conversion (backward-compatible default).
+            profit_money = profit_points * pos["volume"] * (10 if "JPY" not in pos["symbol"] else 1000 / pos["entry"])
         # Both legs' commission are borne by the trade (open was charged at
         # fill; charge the close leg now) — mirror of live MT5 per-side fees.
         close_commission = self._execution_cost.commission(pos["volume"])

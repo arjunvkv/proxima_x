@@ -11,14 +11,14 @@
   },
   "train": {
     "metrics": {
-      "trades": 53,
-      "win_rate": 0.434,
-      "gross_pnl": 49.87,
-      "net_pnl": 49.87,
-      "profit_factor": 1.0065,
-      "max_drawdown": 0.0456,
-      "commission": 37.1,
-      "expectancy": 0.94
+      "trades": 35,
+      "win_rate": 0.4857,
+      "gross_pnl": 12.58,
+      "net_pnl": 12.58,
+      "profit_factor": 1.0182,
+      "max_drawdown": 0.0031,
+      "commission": 24.5,
+      "expectancy": 0.36
     },
     "gate": {
       "window": "train",
@@ -45,26 +45,28 @@
   "notes": [],
   "val": {
     "metrics": {
-      "trades": 11,
-      "win_rate": 0.6364,
-      "gross_pnl": 2481.03,
-      "net_pnl": 2481.03,
-      "profit_factor": 14.893,
-      "max_drawdown": 0.0015,
-      "commission": 7.7,
-      "expectancy": 225.55
+      "trades": 15,
+      "win_rate": 0.6,
+      "gross_pnl": 27.33,
+      "net_pnl": 27.33,
+      "profit_factor": 1.0889,
+      "max_drawdown": 0.0018,
+      "commission": 10.5,
+      "expectancy": 1.82
     },
     "gate": {
       "window": "val",
       "passed": false,
       "checks": {
-        "realistic_pf > 1.20": true,
+        "realistic_pf > 1.20": false,
         "net_pnl > 0": true,
-        "expectancy $/trade > 10.0": true,
+        "expectancy $/trade > 10.0": false,
         "max_drawdown < 5%": true,
         "trades in [20,400]": false
       },
       "reject_reason": [
+        "realistic_pf > 1.20",
+        "expectancy $/trade > 10.0",
         "trades in [20,400]"
       ]
     },
