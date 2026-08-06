@@ -68,7 +68,6 @@ BASE_LOT = 0.15
 COMMENT = "TOKYO_H0"
 STATE_FILE = os.path.join(ROOT, "proxima_ops", "state", "tokyo_h0_state.json")
 POLL_S = 5
-EXIT_HOUR = 2  # bound the live process: exit after 02:00 UTC (fill ~00:10 + 12-bar hold done)
 
 _JPY_DIST = (0.35, 0.45)      # JPY pairs: SL/TP distances (price units)
 _OTHER_DIST = (0.0035, 0.0045)
@@ -278,21 +277,37 @@ def live_loop(execute: bool, manage: bool) -> None:
     POST_FILL_TOL_S = 15 * 60  # max minutes after the nominal 00:10 fill that we still
                             # accept a market fill (beyond this the signal deviates
                             # from the curve's 00:10 bar and is skipped for the day)
+    started_at = now_str = server_now()
+    MAX_RUNTIME_S = 26 * 3600  # hard safety cap so a stray process never hangs forever
 
     last_actionable = None
-    fired_day = None
+    session_decided = None   # UTC day for which we've fired or skipped an entry
+    target_day = None        # next upcoming 00:00 UTC session day to act on
     while True:
         now = server_now()
         hour = (now // 3600) % 24
         today = now // 86400
-        # ---- 0) bounded runtime: exit after the hold window is done
+        # runtime safety cap (a stray process shouldn't block the schedule forever)
+        if now - started_at > MAX_RUNTIME_S:
+            print(f"[exit] max runtime {MAX_RUNTIME_S//3600}h reached. bye")
+            break
+        # define the target session: the next 00:00 UTC that is actionable.
+        # If we're already inside hour 0 (0:00-0:59), the target is today.
+        if hour >= SESSION_HOUR + 1:
+            target_day = today + 1      # past hour 0 -> next session is tomorrow
+        else:
+            target_day = today          # inside hour 0 -> act on today
         open_tokyo = 0
         try:
             open_tokyo = len([p for p in (mt5.positions_get() or []) if p.comment.startswith(COMMENT)])
         except Exception:
             pass
-        if hour >= EXIT_HOUR or (fired_day == today and open_tokyo == 0):
-            print(f"[exit] hour={hour} fired={fired_day==today} open_tokyo={open_tokyo} — session done. bye")
+        # exit once the target session is DECIDED (fired or skipped) and its
+        # positions are all closed (hold done) — clean daily lifetime
+        if (target_day is not None and target_day < today) or \
+           (session_decided == today and open_tokyo == 0):
+            print(f"[exit] target={target_day} decided={session_decided} "
+                  f"open_tokyo={open_tokyo} hour={hour} — session done. bye")
             break
         # ---- 1) hold-managed exits (broker SL/TP handles most; close stragglers)
         if manage and conn is not None:
@@ -305,12 +320,12 @@ def live_loop(execute: bool, manage: bool) -> None:
                             conn.close_order(pos.ticket)
             except Exception as e:
                 print(f"[manage] error: {e}")
-        # ---- 2) session-window entry gate (server hour 0, once per day)
-        if hour == SESSION_HOUR and st.get("last_day") != today:
+        # ---- 2) session-window entry gate (server hour 0, once per target day)
+        if hour == SESSION_HOUR and st.get("last_day") != target_day:
             bars_map = {}
             for sym in TOKYO_UNIVERSE:
                 bars_map[sym] = fetch_bars(sym, 16)
-            rank = session_rank(bars_map, today)
+            rank = session_rank(bars_map, target_day)
             if rank:
                 # (rank is only honored once the signal bar has CLOSED, i.e. the
                 # fill bar has opened — guarantees the same closed-bar contract
@@ -325,15 +340,16 @@ def live_loop(execute: bool, manage: bool) -> None:
                 if now > fill_ts + POST_FILL_TOL_S:
                     print(f"[skip] now {datetime.utcfromtimestamp(now):%H:%M:%S}Z > "
                           f"fill {datetime.utcfromtimestamp(fill_ts):%H:%M:%S}Z + tolerance — "
-                          f"skipping today's entry to preserve the validated fill bar")
-                    st["last_day"] = today
+                          f"skipping this session to preserve the validated fill bar")
+                    st["last_day"] = target_day
                     save_state(st)
+                    session_decided = target_day
                     time.sleep(POLL_S)
                     continue
-                if last_actionable == today:
+                if last_actionable == target_day:
                     time.sleep(POLL_S)
                     continue
-                last_actionable = today
+                last_actionable = target_day
                 print(f"[signal {datetime.utcfromtimestamp(now):%Y-%m-%d %H:%M:%S}Z] top-5:")
                 for x in rank:
                     print(f"     BUY {x['symbol']:<8} 6bar_ret={x['ret']:+.5%} "
@@ -363,10 +379,10 @@ def live_loop(execute: bool, manage: bool) -> None:
                             else:
                                 print(f"[REJECT] BUY {sym} (engine guard: {om._mt5.last_error if om._mt5 else '?'})")
                             time.sleep(0.4)
-                        st["last_day"] = today
+                        st["last_day"] = target_day
                         save_state(st)
-                        fired_day = today
-                        print(f"[done] opened {len(opened)}/5 — day {today} recorded")
+                        session_decided = target_day
+                        print(f"[done] opened {len(opened)}/5 — session day {target_day} recorded")
         time.sleep(POLL_S)
 
 
