@@ -2,6 +2,8 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Optional
 
+from data.execution_cost import ExecutionCost
+
 logger = logging.getLogger("proxima.adapters.broker")
 
 
@@ -89,10 +91,11 @@ class MT5Broker(Broker):
 
 class PaperBroker(Broker):
     def __init__(self, tick_source=None, clock=None, execution_model=None,
-                 initial_balance: float = 100000.0):
+                 initial_balance: float = 100000.0, execution_cost=None):
         self._tick_source = tick_source
         self._clock = clock
         self._execution = execution_model
+        self._execution_cost = execution_cost or ExecutionCost()
         self._ledger = None
         self._next_ticket = 1000000
         self._positions: dict[int, dict] = {}
@@ -224,6 +227,12 @@ class PaperBroker(Broker):
             latency = self._execution.sample_latency()
             if self._clock and latency > 0:
                 self._clock.sleep(latency / 1000.0)
+        else:
+            # No ExecutionModel provided — apply shared cost-model slippage so
+            # friction parity holds even without a replay execution model.
+            fill_price = self._execution_cost.slippage_price(symbol, order_type, fill_price)
+
+        commission = self._execution_cost.commission(volume)
 
         ticket = self._next_ticket
         self._next_ticket += 1
@@ -241,6 +250,8 @@ class PaperBroker(Broker):
             "comment": comment,
             "opened_at": now,
             "status": "OPEN",
+            "commission": commission,
+            "slippage": fill_price - (tick["ask"] if order_type.upper() == "BUY" else tick["bid"]),
         }
 
         logger.info(f"PaperBroker: {order_type} {volume} {symbol} @ {fill_price} ticket={ticket}")
@@ -276,11 +287,19 @@ class PaperBroker(Broker):
             profit_points = (pos["entry"] - close_price) / pt
         profit_money = profit_points * pos["volume"] * (10 if "JPY" not in pos["symbol"] else 1000 / pos["entry"])
 
+        # Both legs' commission are borne by the trade (open was charged at
+        # fill; charge the close leg now) — mirror of live MT5 per-side fees.
+        close_commission = self._execution_cost.commission(pos["volume"])
+        open_commission = pos.get("commission", 0.0)
+        total_commission = open_commission + close_commission
+        profit_money -= total_commission
+
         now = self._clock.time() if self._clock else 0
         pos["status"] = "CLOSED"
         pos["closed_at"] = now
         pos["close_price"] = close_price
         pos["profit"] = profit_money
+        pos["commission"] = total_commission
 
         self._closed_pnl += profit_money
         self._balance += profit_money

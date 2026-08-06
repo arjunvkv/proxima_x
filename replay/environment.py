@@ -161,7 +161,18 @@ def build_replay_environment(config: ReplayConfig) -> Environment:
 
     tick_source = ReplayTickSource(feed)
     clock = replay_clock
-    broker = PaperBroker(tick_source=tick_source, clock=clock, execution_model=execution)
+
+    # Shared FTMO friction (Phase 2): commission + slippage band from Settings,
+    # so replay pays the same gross cost as the live path.
+    from data.execution_cost import ExecutionCost
+    from proxima_ops.config.settings import SETTINGS
+    execution_cost = ExecutionCost(
+        commission_per_lot=SETTINGS.commission_per_lot,
+        slippage_bps_range=(0.0, SETTINGS.slippage_bps_max),
+    )
+
+    broker = PaperBroker(tick_source=tick_source, clock=clock,
+                         execution_model=execution, execution_cost=execution_cost)
 
     # Parity ledger
     ledger = ParityLedger(symbol=",".join(config.symbols), seed=config.seed)

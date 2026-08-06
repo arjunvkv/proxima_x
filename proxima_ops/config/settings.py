@@ -90,6 +90,13 @@ class Settings:
     max_positions_total: int = 5
     max_positions_per_symbol: int = 1
 
+    # FTMO friction parity (Phase 2): per-lot per-side commission in USD.
+    # 0.0 = legacy (no commission); set to your FTMO rate (e.g. 3.5 = $3.5/lot)
+    # so replay PnL pays the same gross cost as live. Env override:
+    # PROXIMA_COMMISSION_PER_LOT. Slippage band in bps for the shared cost model.
+    commission_per_lot: float = float(os.environ.get("PROXIMA_COMMISSION_PER_LOT", "0.0"))
+    slippage_bps_max: float = 3.0
+
     # Telegram (paused — set TELEGRAM_TOKEN env var to enable)
     telegram_token: str = os.environ.get("TELEGRAM_TOKEN", "")
     telegram_chat_id: str = os.environ.get("TELEGRAM_CHAT_ID", "")
