@@ -237,7 +237,7 @@ def replay(day_str: str) -> None:
     return
 
 
-def live_loop(execute: bool, manage: bool) -> None:
+def live_loop(execute: bool, manage: bool, daemon: bool = False) -> None:
     st = load_state()
     conn = None
     om = None
@@ -282,7 +282,7 @@ def live_loop(execute: bool, manage: bool) -> None:
                             # later bar -> deviates from the validated curve, so
                             # we skip the day instead.
     started_at = now_str = server_now()
-    MAX_RUNTIME_S = 26 * 3600  # hard safety cap so a stray process never hangs forever
+    MAX_RUNTIME_S = (30 * 24 * 3600) if daemon else (26 * 3600)  # daemon: ~monthly recycle; one-shot: 26h cap
 
     last_actionable = None
     session_decided = None   # UTC day for which we've fired or skipped an entry
@@ -306,13 +306,25 @@ def live_loop(execute: bool, manage: bool) -> None:
             open_tokyo = len([p for p in (mt5.positions_get() or []) if p.comment.startswith(COMMENT)])
         except Exception:
             pass
-        # exit once the target session is DECIDED (fired or skipped) and its
-        # positions are all closed (hold done) — clean daily lifetime
+        # one-shot: exit once the target session is DECIDED (fired or skipped)
+        # and its positions are all closed (hold done) — clean daily lifetime.
+        # daemon: the same condition ROLLS the state to the next day and keeps
+        # running (no host-clock dependency — the gate is server time only).
         if (target_day is not None and target_day < today) or \
            (session_decided == today and open_tokyo == 0):
-            print(f"[exit] target={target_day} decided={session_decided} "
-                  f"open_tokyo={open_tokyo} hour={hour} — session done. bye")
-            break
+            if not daemon:
+                print(f"[exit] target={target_day} decided={session_decided} "
+                      f"open_tokyo={open_tokyo} hour={hour} — session done. bye")
+                break
+            # daemon: any completed/skipped/missed session rolls to the next day.
+            # Guarded: only roll when we've actually decided a session (fired or
+            # skipped) — helps avoid tight-loop noise at roll time.
+            if session_decided is not None:
+                print(f"[daemon] day {session_decided} done (open_tokyo={open_tokyo}) — "
+                      f"rolling to next session. wake @00:00Z")
+                session_decided = None
+                last_actionable = None
+                st = load_state()  # re-read in case a sibling rewrote it
         # ---- 1) hold-managed exits (broker SL/TP handles most; close stragglers)
         if manage and conn is not None:
             try:
@@ -401,6 +413,9 @@ def main():
                     help="also close TOKYO_H0 positions older than HOLD_BARS on each poll")
     ap.add_argument("--once", action="store_true",
                     help="run one session check and exit (for tests), default loop")
+    ap.add_argument("--daemon", action="store_true",
+                    help="run continuously across many sessions (no host-clock "
+                         "dependency); combine with --execute --manage")
     args = ap.parse_args()
 
     if not mt5.initialize(path=FTMO_TERMINAL, timeout=4000):
@@ -430,7 +445,7 @@ def main():
         mt5.shutdown()
         return
     try:
-        live_loop(args.execute, args.manage)
+        live_loop(args.execute, args.manage, args.daemon)
     finally:
         try:
             mt5.shutdown()
