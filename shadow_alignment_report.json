@@ -1,0 +1,8 @@
+{
+  "harness": "verify_shadow_alignment",
+  "mode": "A",
+  "symbol": "EURJPY",
+  "trades_checked": 25213,
+  "worst_pnl_delta_reconstructed": 0.0,
+  "verdict": "PASS"
+}
