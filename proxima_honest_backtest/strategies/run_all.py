@@ -5,7 +5,7 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -21,8 +21,14 @@ from proxima_honest_backtest.strategies import (
     CurrencyPressureStrategy,
     BlindSpotAlphaStrategy,
     MeanReversionStrategy,
+    UltraMonsterHonestStrategy,
 )
 from proxima_honest_backtest.strategies.multi_pair_engine import MultiPairBacktestEngine, MultiBacktestResult
+from proxima_honest_backtest.validation.masked_replay import (
+    MaskedReplayVerdict,
+    prove_no_lookahead_multi,
+    prove_no_lookahead_single,
+)
 from data.providers.mt5_provider import MT5Provider
 
 REPORT_DIR = Path(__file__).parent.parent / "reports"
@@ -40,6 +46,8 @@ ALL_18 = [
 ]
 
 DATA_CACHE: Dict[Tuple[str, str], pd.DataFrame] = {}
+
+StrategyRecord = Dict[str, Any]
 
 
 def L(lines, *args):
@@ -77,6 +85,36 @@ def check_survival(r) -> Dict[str, bool]:
     }
 
 
+def run_lookahead_gate(rec: StrategyRecord, data: Dict[str, pd.DataFrame]) -> Optional[MaskedReplayVerdict]:
+    """Mandatory anti-lookahead probe: strategy must reproduce identical trades
+    when the forming bar's close/high/low are masked (NaN). Returns the verdict,
+    or None if the gate cannot be evaluated (insufficient data)."""
+    try:
+        if rec["mode"] == "single":
+            pair = rec["pairs"][0]
+            if pair not in data or data[pair].empty:
+                return None
+            return prove_no_lookahead_single(
+                rec["factory"], pair, data[pair], BacktestEngine,
+                execution_simulator=ExecutionSimulator("exness"),
+            )
+        return prove_no_lookahead_multi(
+            rec["factory"], data, MultiPairBacktestEngine,
+            execution_simulator=ExecutionSimulator("exness"),
+        )
+    except Exception as exc:  # gate must never crash the battle royale
+        return MaskedReplayVerdict(
+            strategy_name=rec["name"],
+            passed=False,
+            full_n_trades=-1,
+            masked_n_trades=-1,
+            differing_trades=-1,
+            full_net_pnl=0.0,
+            masked_net_pnl=0.0,
+            notes=[f"gate error: {exc}"],
+        )
+
+
 def surv_flags(s: Dict[str, bool]) -> str:
     return f"PnL{'Y' if s['pnl_pos'] else 'N'} PF{'Y' if s['pf_gt_1'] else 'N'} Sh{'Y' if s['sharpe_gt_0_5'] else 'N'}"
 
@@ -88,7 +126,6 @@ SURVIVE_KEY = ["pnl_pos", "pf_gt_1", "sharpe_gt_0_5"]
 # STRATEGY REGISTRY
 # =====================================================================
 
-StrategyRecord = Dict[str, Any]
 
 
 def reg(key: str, name: str, group: str, pairs: List[str], factory: Callable, mode: str = "single") -> StrategyRecord:
@@ -115,6 +152,9 @@ STRATEGIES: List[StrategyRecord] = [
     reg("blind_spot", "Blind Spot Alpha", "Network", ALL_18,
         lambda: BlindSpotAlphaStrategy({"z_threshold": 2.0, "z_window": 400, "vol_window": 200, "hold_bars": 5}),
         mode="multi"),
+    reg("ultra_monster_honest", "Ultra Monster (strict honest)", "Breakout",
+        ["EURUSD", "GBPUSD", "USDJPY", "EURAUD", "GBPAUD", "EURJPY", "GBPJPY", "EURNZD", "GBPNZD"],
+        lambda: UltraMonsterHonestStrategy(), mode="multi"),
 ]
 
 
@@ -168,6 +208,24 @@ def main():
         L(report_lines, f"## {rec['group']}: {rec['name']}")
         L(report_lines, f"**Pairs**: {', '.join(rec['pairs'])}")
         L(report_lines, "")
+
+        # ---------------------------------------------------------------
+        # MANDATORY ANTI-LOOKAHEAD GATE
+        # ---------------------------------------------------------------
+        gate = run_lookahead_gate(rec, data)
+        if gate is None:
+            print("  [GATE] SKIP — insufficient data")
+            L(report_lines, "> **Anti-lookahead gate: SKIPPED (insufficient data)**")
+            L(report_lines, "")
+            continue
+        print(f"  [GATE] {gate.report_line()}")
+        L(report_lines, f"> **Anti-lookahead gate**: {gate.report_line()}")
+        L(report_lines, "")
+        if not gate.passed:
+            print(f"  [GATE] **FAIL** — strategy leaked the forming bar; refusing to run.")
+            L(report_lines, "> **Strategy REFUSED**: masked replay diverged — same-bar lookahead detected.")
+            L(report_lines, "")
+            continue
 
         t0 = time.time()
 

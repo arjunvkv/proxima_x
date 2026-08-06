@@ -52,7 +52,17 @@ class BacktestEngine:
         self.initial_equity = initial_equity
         self.volatility_lookback = volatility_lookback
 
-    def run(self, symbol: str, data: pd.DataFrame) -> BacktestResult:
+    def run(self, symbol: str, data: pd.DataFrame,
+            mask_for_strategy: bool = False) -> BacktestResult:
+        """Honest event-driven backtest.
+
+        `history` handed to `on_bar` contains ONLY closes strictly before the
+        current bar; the current bar's `open` is the earliest legitimate entry
+        price (filled from `entry_price` metadata or the bar open). The current
+        bar's close/high/low are never shown to the strategy. `mask_for_strategy`
+        serves them as NaN (anti-lookahead masked-replay probe); execution always
+        uses real market prices via `real_bars`.
+        """
         strategy = self.strategy
         strategy.reset()
 
@@ -71,17 +81,11 @@ class BacktestEngine:
         win_streak = 0
         max_consec_losses = 0
 
-        bars = data.iterrows()
-        for idx, (_, row) in enumerate(bars):
+        for idx, (_, row) in enumerate(data.iterrows()):
             ts = row.get("time") or pd.Timestamp.now()
-            history.append({
-                "close": float(row["close"]),
-                "high": float(row["high"]),
-                "low": float(row["low"]),
-                "volume": float(row.get("tick_volume", 0)),
-            })
 
-            bar_dict = {
+            # Real full bar used for execution (and appended to history AFTER decision).
+            real_bar = {
                 "time": ts,
                 "open": float(row.get("open", row["close"])),
                 "high": float(row["high"]),
@@ -90,20 +94,36 @@ class BacktestEngine:
                 "volume": float(row.get("tick_volume", 0)),
             }
 
-            signal = strategy.on_bar(bar_dict, history)
+            # Strategy view: history ALREADY contains only bars before this one
+            # (we append the current bar AFTER on_bar). Mask current OHLC if asked.
+            view = dict(real_bar)
+            if mask_for_strategy:
+                view.update({"close": float("nan"), "high": float("nan"), "low": float("nan")})
+
+            signal = strategy.on_bar(view, history)
+
+            # Append THIS bar to history only after the strategy has decided on it.
+            history.append({
+                "close": real_bar["close"],
+                "high": real_bar["high"],
+                "low": real_bar["low"],
+                "volume": real_bar["volume"],
+            })
 
             if signal is not None and position == 0 and abs(signal.signal) > 0.5:
                 direction = "LONG" if signal.signal > 0 else "SHORT"
                 quantity = 10000.0
                 volatility = self._estimate_volatility(history)
                 hour = ts.hour if hasattr(ts, "hour") else 0
+                price = float(signal.metadata.get("entry_price", real_bar["open"]))
                 report = self.simulator.execute_order(
                     side=direction,
                     quantity=quantity,
                     symbol=symbol,
-                    price=float(row["close"]),
+                    price=price,
                     volatility=volatility,
                     hour_utc=hour,
+                    timestamp=ts,
                 )
                 if report.filled:
                     position = 1 if direction == "LONG" else -1
@@ -114,7 +134,7 @@ class BacktestEngine:
 
             elif signal is not None and position != 0:
                 close_side = "SELL" if position == 1 else "BUY"
-                exit_price = float(row["close"])
+                exit_price = real_bar["open"]
                 pnl = self.simulator.calculate_pnl(
                     entry_price, exit_price, entry_qty,
                     "BUY" if position == 1 else "SELL", symbol,

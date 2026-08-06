@@ -13,6 +13,7 @@ from proxima_honest_backtest.engine.types import SignalResult, Trade
 from proxima_honest_backtest.examples.backtest_engine import BacktestResult
 from proxima_honest_backtest.execution.execution_simulator import ExecutionSimulator
 from proxima_honest_backtest.strategies.multi_pair_base import MultiPairStrategy
+from proxima_honest_backtest.core.decision_kernel import generate_decisions
 
 
 @dataclass
@@ -35,6 +36,7 @@ class MultiBacktestResult:
     reconciliation_pass: bool
     equity_curve: List[Tuple[datetime, float]]
     trades: List[Trade]
+    decisions: List[Dict[str, Any]] = field(default_factory=list)
     details: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -54,13 +56,30 @@ class MultiPairBacktestEngine:
         self.volatility_lookback = volatility_lookback
 
     def run(self, pairs_data: Dict[str, pd.DataFrame],
-            pre_aligned: Optional[List[Dict]] = None) -> MultiBacktestResult:
+            pre_aligned: Optional[List[Dict]] = None,
+            mask_for_strategy: bool = False) -> MultiBacktestResult:
+        """Run the honest backtest.
+
+        Honest contract: `history` handed to `on_bars` contains ONLY the closes of
+        bars strictly before the current bar (time-step). The current bar's `open`
+        is the earliest price the strategy may legitimately enter at — execution
+        fills at `entry_price` carried in signal metadata. The current bar's
+        `close`/`high`/`low` are NEVER shown to the strategy.
+
+        `mask_for_strategy=True` additionally serves the forming bar's
+        `close`/`high`/`low` as NaN to the strategy (used by the anti-lookahead
+        masked-replay probe). Execution always uses real market prices.
+        """
         strategy = self.strategy
         strategy.reset()
 
+        # Internal stream of closes including the current bar (vol estimate/equity only).
+        _closes: Dict[str, List[float]] = defaultdict(list)
+        # History conferred to the strategy: closes strictly BEFORE the current bar.
         history: Dict[str, List[float]] = defaultdict(list)
         trades: List[Trade] = []
         equity_curve: List[Tuple[datetime, float]] = []
+        decisions: List[Dict[str, Any]] = []
 
         positions: Dict[str, Dict[str, Any]] = {}
         equity = self.initial_equity
@@ -72,11 +91,11 @@ class MultiPairBacktestEngine:
 
         for ts_row in aligned:
             ts = ts_row["time"]
-            bars: Dict[str, Dict] = {}
+            real_bars: Dict[str, Dict] = {}
             for pair in pairs_data:
                 val = ts_row.get(pair)
                 if val is not None and not (isinstance(val, float) and np.isnan(val)):
-                    bars[pair] = {
+                    real_bars[pair] = {
                         "time": ts,
                         "open": ts_row.get(f"{pair}_open", val),
                         "high": ts_row.get(f"{pair}_high", val),
@@ -85,12 +104,23 @@ class MultiPairBacktestEngine:
                         "volume": ts_row.get(f"{pair}_volume", 0),
                         "spread": ts_row.get(f"{pair}_spread", 0),
                     }
-                    history[pair].append(val)
+                    _closes[pair].append(val)
 
-            if len(bars) < 2:
+            if len(real_bars) < 2:
                 continue
 
-            signals = strategy.on_bars(bars, dict(history))
+            # history[p] := _closes[p][:-1]  (closes strictly before current bar)
+            for p in _closes:
+                history[p] = _closes[p][:-1]
+
+            strategy_bars = real_bars
+            if mask_for_strategy:
+                strategy_bars = {
+                    p: {**b, "close": float("nan"), "high": float("nan"), "low": float("nan")}
+                    for p, b in real_bars.items()
+                }
+
+            signals = generate_decisions(strategy, strategy_bars, dict(history))
 
             if signals:
                 for signal in signals:
@@ -99,9 +129,13 @@ class MultiPairBacktestEngine:
 
                     if "ENTER" in action and pair not in positions:
                         direction = "LONG" if signal.signal > 0 else "SHORT"
+                        decisions.append({
+                            "ts": str(ts), "symbol": pair, "side": direction,
+                            "type": "ENTER",
+                        })
                         quantity = 10000.0
-                        price = float(signal.metadata.get("entry_price", bars[pair]["close"]))
-                        volatility = self._estimate_volatility(history.get(pair, []))
+                        price = float(signal.metadata.get("entry_price", real_bars[pair]["open"]))
+                        volatility = self._estimate_volatility(_closes.get(pair, []))
                         hour = ts.hour if hasattr(ts, "hour") else 0
 
                         report = self.simulator.execute_order(
@@ -122,8 +156,16 @@ class MultiPairBacktestEngine:
                             trades.append(report.trade)
 
                     elif "EXIT" in action and pair in positions:
+                        bar = real_bars.get(pair)
+                        if bar is None:
+                            continue
                         pos = positions.pop(pair)
-                        exit_price = bars[pair]["close"]
+                        decisions.append({
+                            "ts": str(ts), "symbol": pair, "side":
+                            "SELL" if pos["side"] == "LONG" else "BUY",
+                            "type": "EXIT",
+                        })
+                        exit_price = bar["open"]
                         pnl = self.simulator.calculate_pnl(
                             pos["entry_price"],
                             exit_price,
@@ -156,6 +198,7 @@ class MultiPairBacktestEngine:
 
         pair_summary = self._summarize(pairs_data, trades, equity_curve, pnl_list, max_consec_losses)
         pair_summary.trades = trades
+        pair_summary.decisions = decisions
         return pair_summary
 
     def _align_bars(self, pairs_data: Dict[str, pd.DataFrame]) -> List[Dict]:

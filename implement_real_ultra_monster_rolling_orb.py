@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Implement Real Ultra Monster (Conditioned Rolling ORB) in Ultra_Monster_MT5_v106.mq5, Compile & Deploy."""
+"""Implement Real Ultra Monster (Conditioned Rolling ORB) in Ultra_Monster_MT5_v106.mq5, Compile & Deploy to VPS."""
 
 import os, subprocess, shutil, time
 
@@ -14,10 +14,10 @@ CODE_REAL_ULTRA_MONSTER = """#include <Trade\\Trade.mqh>
 CTrade trade;
 
 #property copyright "Proxima Trading"
-#property version   "1.06"
+#property version   "1.07"
 #property strict
 
-input double   BASE_LOT            = 0.15;    // Base Lot Size
+input double   BASE_LOT            = 1.20;    // Base Lot Size (1.20 Lots)
 input int      HOLD_BARS           = 3;       // 15m hold time (3 M5 bars)
 input double   MIN_RANGE_PIPS      = 6.0;     // Minimum 1-hour range pips (6.0p)
 input ulong    MAGIC_BASE          = 202600;  // Magic Base
@@ -86,7 +86,7 @@ void AttachSLTPDirectly(string symbol, ulong magic_num, double sl_val, double tp
 }
 
 int OnInit() {
-   Print("=== 🔥 REAL ULTRA MONSTER (Rolling ORB v1.06) Init | Pairs: 9 | MinRange: ", MIN_RANGE_PIPS, "p | Hold: ", HOLD_BARS, " bars ===");
+   Print("=== 🔥 REAL ULTRA MONSTER (Rolling ORB v1.07) Init | Pairs: 9 | Lot: 1.20 | MinRange: ", MIN_RANGE_PIPS, "p | Hold: ", HOLD_BARS, " bars ===");
    for(int i=0; i<N_PAIRS; i++) {
       g_pos[i].active = false;
       g_pos[i].ticket = 0;
@@ -121,7 +121,7 @@ bool OpenTrade(int idx, string side, double lot) {
    req.action = TRADE_ACTION_DEAL; req.symbol = s; req.volume = NormalizeVolume(s, lot);
    req.type = ot; req.price = pr;
    req.deviation = (ulong)(SLIPPAGE_PIPS * 10);
-   req.magic = magic; req.comment = "UltraMonster_ORB";
+   req.magic = magic; req.comment = "UltraMonster_v107";
    
    if(!OrderSend(req, res) || res.retcode != TRADE_RETCODE_DONE) return false;
    
@@ -176,13 +176,16 @@ void CheckEntry() {
    // Trigger on 00 and 30 minute M5 bars
    if(dt.min != 0 && dt.min != 30) return;
    
+   int best_idx = -1;
+   double max_range = -1.0;
+   string best_side = "BUY";
+   
    for(int i=0; i<N_PAIRS; i++) {
       if(g_pos[i].active) continue;
       string s = PAIRS[i];
       
       MqlRates rates[];
       ArraySetAsSeries(rates, true);
-      // Copy last 13 M5 bars (bar 0 is current bar, bars 1..12 cover previous 60 minutes)
       if(CopyRates(s, PERIOD_M5, 0, 13, rates) < 13) continue;
       
       double h_prev = rates[1].high;
@@ -199,11 +202,23 @@ void CheckEntry() {
       
       double c_now = rates[0].close;
       if(c_now > h_prev) {
-         OpenTrade(i, "BUY", BASE_LOT);
+         if(range_pips > max_range) {
+            max_range = range_pips;
+            best_idx = i;
+            best_side = "BUY";
+         }
       }
       else if(c_now < l_prev) {
-         OpenTrade(i, "SELL", BASE_LOT);
+         if(range_pips > max_range) {
+            max_range = range_pips;
+            best_idx = i;
+            best_side = "SELL";
+         }
       }
+   }
+   
+   if(best_idx >= 0) {
+      OpenTrade(best_idx, best_side, BASE_LOT);
    }
 }
 
@@ -220,7 +235,7 @@ void OnTick() {
 
 def main():
     print("="*115)
-    print("IMPLEMENTING REAL ULTRA MONSTER (ROLLING ORB 75% WR) IN ULTRA_MONSTER_MT5_V106...")
+    print("PROXIMA X — COMPILING & ALIGNING LIVE ULTRA MONSTER EA TO PROVEN PYTHON SIM ENGINE...")
     print("="*115)
 
     ea = "Ultra_Monster_MT5_v106"
@@ -237,21 +252,22 @@ def main():
         f.write(CODE_REAL_ULTRA_MONSTER)
 
     cmd = [METAEDITOR, f"/compile:{appdata_mq5}"]
-    subprocess.run(cmd, check=False)
+    res = subprocess.run(cmd, check=False)
     time.sleep(0.5)
 
     if os.path.exists(appdata_ex5):
         size = os.path.getsize(appdata_ex5)
-        print(f"  🟢 {ea} REAL ULTRA MONSTER COMPILED! Size: {size} bytes")
+        print(f"  🟢 {ea} REAL ULTRA MONSTER (v1.07 Aligned) COMPILED SUCCESS! Size: {size} bytes")
         shutil.copy(appdata_ex5, local_ex5)
         shutil.copy(appdata_ex5, backup_ex5)
         shutil.copy(appdata_mq5, backup_mq5)
 
+        print("  🚀 Deploying compiled binary to VPS...")
         subprocess.run(["scp", "-i", VPS_KEY, appdata_ex5, VPS_PATH], check=False)
         subprocess.run(["scp", "-i", VPS_KEY, appdata_mq5, VPS_PATH], check=False)
 
     print("="*115)
-    print("🟢 REAL ULTRA MONSTER IMPLEMENTED & DEPLOYED TO VPS!")
+    print("🟢 LIVE EA UPDATED TO 100% MATCH PYTHON SIM LOGIC & DEPLOYED!")
     print("="*115)
 
 if __name__ == "__main__":

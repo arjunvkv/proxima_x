@@ -52,6 +52,11 @@ _LOOKAHEAD_PATTERNS: List[Dict[str, object]] = [
         "message": "centered rolling window uses future data",
         "severity": "error",
     },
+    {
+        "pattern": re.compile(r"\.get\(\s*[\"'](?:close|high|low)[\"']\s*\)"),
+        "message": "reads forming-bar close/high/low via .get() — same-bar lookahead; use history + open only",
+        "severity": "error",
+    },
 ]
 
 
@@ -179,3 +184,29 @@ class LookAheadLinter:
                         "message": "negative subscript indexing detected",
                         "severity": "warning",
                     })
+
+            # STRICT-HONEST-CONTRACT RULE: a strategy may act ONLY on `history`
+            # (closes strictly before the current bar) + the current bar's `open`.
+            # Reading the forming bar's `close`/`high`/`low` is SAME-BAR LOOKAHEAD
+            # (the Ultra Monster bug). `bars[p]["close"]` / `bar["close"]` / etc.
+            # inside a strategy body is flagged as an error.
+            if isinstance(node, ast.Subscript):
+                key = node.slice
+                is_ohlc_key = (
+                    isinstance(key, ast.Constant) and isinstance(key.value, str)
+                    and key.value in ("close", "high", "low")
+                )
+                if is_ohlc_key:
+                    root = node.value
+                    while isinstance(root, ast.Subscript):
+                        root = root.value
+                    if isinstance(root, ast.Name) and root.id in ("bars", "bar"):
+                        violations.append({
+                            "line": node.lineno,
+                            "col": node.col_offset,
+                            "message": (
+                                f"reads forming-bar '{key.value}' — same-bar "
+                                f"lookahead; use `history` (completed closes) + `open` only"
+                            ),
+                            "severity": "error",
+                        })

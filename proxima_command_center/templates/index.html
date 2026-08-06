@@ -3,222 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proxima X — Executive Financial Terminal</title>
-    <link rel="stylesheet" href="/static/css/obsidian_terminal.css">
-</head>
-<body>
+    <title>PROXIMA X — Overview Dashboard</title>
 
-    <!-- Executive Terminal Header -->
-    <header class="terminal-header">
-        <div class="terminal-title">
-            PROXIMA X <span class="badge-profile" id="account-profile-tag">OVERRIDDEN VPS LIVE PROFILE</span>
+    <!-- Google Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/obsidian_terminal.css') }}">
+
+    <!-- SocketIO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body class="obsidian-theme">
+
+    <!-- TOP INSTITUTIONAL NAVBAR -->
+    <header class="top-nav">
+        <div class="brand-block">
+            <div class="logo-pulse"><i class="fa-solid fa-atom"></i></div>
+            <div class="brand-text">
+                <span class="brand-name">PROXIMA X</span>
+                <span class="brand-sub">PREDICTIVE QUANTITATIVE TERMINAL</span>
+            </div>
         </div>
 
-        <div class="header-telemetry">
-            <div class="metric-pill">
-                <span>VPS MT5 LOGS:</span>
-                <strong id="demo-acc-tag" style="color: #3b82f6;">#1514168544 (VERIFIED)</strong>
+        <nav class="nav-links">
+            <a href="/" class="nav-item active"><i class="fa-solid fa-chart-line"></i> Overview</a>
+            <a href="/rolling-backtest" class="nav-item"><i class="fa-solid fa-stopwatch-20"></i> 2H Rolling Test</a>
+            <a href="/yesterday-summary" class="nav-item"><i class="fa-solid fa-calendar-check"></i> Yesterday Run</a>
+            <a href="/diagnostics" class="nav-item"><i class="fa-solid fa-microscope"></i> Gate Diagnostics</a>
+            <a href="/vps-logs" class="nav-item"><i class="fa-solid fa-terminal"></i> VPS Live Logs</a>
+            <a href="/analytics" class="nav-item"><i class="fa-solid fa-layer-group"></i> Risk & Exposure</a>
+        </nav>
+
+        <div class="account-profile-badge">
+            <i class="fa-solid fa-shield-halved text-emerald"></i>
+            <div class="profile-info">
+                <span class="profile-title">$25,000 Capital Profile</span>
+                <span class="profile-meta">Daily Limit: $1,250.00 USD</span>
             </div>
-            <div class="metric-pill">
-                <span>WEIGHTED WIN RATE:</span>
-                <strong id="win-rate-tag">76.8%</strong>
-            </div>
-            <div class="metric-pill">
-                <span>PROFIT FACTOR:</span>
-                <strong id="pf-tag" style="color: #f59e0b;">6.25</strong>
-            </div>
+        </div>
+
+        <div class="server-telemetry">
+            <div class="status-indicator online" id="serverStatusDot"></div>
+            <span class="status-text" id="serverStatusText">LIVE STREAMING</span>
+            <span class="timestamp-clock" id="liveClock">00:00:00 UTC</span>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <div class="container">
-        
-        <!-- Metric Summary Banner -->
-        <section class="metrics-banner">
-            <div class="banner-card">
-                <div class="banner-label">Active Portfolio Engines</div>
-                <div class="banner-value" style="color: #3b82f6;">6 Strategies</div>
+    <!-- OVERVIEW MAIN CONTAINER -->
+    <main class="dashboard-container">
+
+        <!-- 1. PREDICTIVE HERO BANNER: WHAT IS COMING NEXT -->
+        <section class="hero-predictive-banner shadow-glow">
+            <div class="banner-label">
+                <i class="fa-solid fa-radar fa-spin text-emerald"></i>
+                <span>WHAT IS COMING NEXT — NEXT IMMINENT EXECUTION</span>
             </div>
-            <div class="banner-card">
-                <div class="banner-label">VPS Live Lot Sync</div>
-                <div class="banner-value" style="color: #10b981;">1.20L / 0.15L 🟢</div>
-            </div>
-            <div class="banner-card">
-                <div class="banner-label">Portfolio Profit Factor</div>
-                <div class="banner-value" style="color: #f59e0b;">6.25 PF</div>
-            </div>
-            <div class="banner-card">
-                <div class="banner-label">MT5 Trade Reconciliation</div>
-                <div class="banner-value" style="color: #10b981;">100% VERIFIED</div>
+
+            <div class="banner-content-grid">
+                <div class="imminent-strategy-info">
+                    <span class="strategy-tag" id="imminentStrategyName">Ultra Monster (v107)</span>
+                    <span class="strategy-regime-sub" id="imminentRegime">Compression Breakout</span>
+                </div>
+
+                <div class="countdown-display-block">
+                    <span class="countdown-label">TIME UNTIL FIRE</span>
+                    <span class="countdown-digits" id="imminentCountdown">00m 00s</span>
+                </div>
+
+                <div class="prediction-target-block">
+                    <div class="target-symbol-badge" id="imminentSymbolBadge">
+                        <span class="sym-name" id="imminentSymbol">EURAUD</span>
+                        <span class="dir-badge buy" id="imminentDirection">BUY</span>
+                    </div>
+                </div>
+
+                <div class="confidence-block">
+                    <span class="meta-label">CONFIDENCE METER</span>
+                    <div class="confidence-bar-wrap">
+                        <div class="confidence-bar-fill" id="imminentConfidenceFill" style="width: 94.2%;"></div>
+                    </div>
+                    <span class="confidence-val" id="imminentConfidenceVal">94.2%</span>
+                </div>
+
+                <div class="target-pnl-block">
+                    <span class="meta-label">EXPECTED TARGET WIN</span>
+                    <span class="target-pnl-val text-emerald" id="imminentTargetWin">+$195.04</span>
+                </div>
             </div>
         </section>
 
-        <!-- Strategy Execution Matrix -->
-        <section>
-            <div class="section-title">
-                <span>STRATEGY TIMETABLE & PREDICTIVE EXECUTION MATRIX (6 ACTIVE STRATEGIES)</span>
-                <span style="font-size: 0.75rem; font-family: JetBrains Mono; color: #64748b;">CONFIG-DRIVEN: dashboard_config.json</span>
+        <!-- 2. MULTI-HORIZON MARKET RADAR ANALYTICS GRID -->
+        <section class="radar-analytics-grid">
+            <div class="radar-card">
+                <div class="card-header">
+                    <i class="fa-solid fa-gauge-high text-cyan"></i>
+                    <span>TICK VELOCITY</span>
+                </div>
+                <div class="metric-body">
+                    <span class="metric-value" id="radarTickVelocity">18.4</span>
+                    <span class="metric-unit">ticks / sec</span>
+                </div>
+                <div class="metric-subtext" id="radarVelocityDesc">High Market Activity</div>
             </div>
-            <div class="strategy-grid" id="strategy-grid">
-                <!-- Strategy Cards Injected Here -->
+
+            <div class="radar-card">
+                <div class="card-header">
+                    <i class="fa-solid fa-diagram-project text-purple"></i>
+                    <span>CURRENCY DISPERSION</span>
+                </div>
+                <div class="metric-body">
+                    <span class="metric-value text-purple" id="radarDispersion">94.2%</span>
+                </div>
+                <div class="metric-subtext">Network Volatility Percentile</div>
+            </div>
+
+            <div class="radar-card">
+                <div class="card-header">
+                    <i class="fa-solid fa-compass text-emerald"></i>
+                    <span>DIRECTIONAL AGREEMENT</span>
+                </div>
+                <div class="metric-body">
+                    <span class="metric-value text-emerald" id="radarAgreement">88.5%</span>
+                </div>
+                <div class="metric-subtext">Cross-Pair Consensus Rate</div>
+            </div>
+
+            <div class="radar-card">
+                <div class="card-header">
+                    <i class="fa-solid fa-wave-square text-amber"></i>
+                    <span>MARKET REGIME</span>
+                </div>
+                <div class="metric-body">
+                    <span class="metric-value-sm text-amber" id="radarRegime">COMPRESSION 🟡</span>
+                </div>
+                <div class="metric-subtext" id="radarRegimeDesc">Range Tightening Pre-Breakout</div>
             </div>
         </section>
 
-        <!-- Reconciled Side-by-Side Trade History Table -->
-        <section>
-            <div class="section-title">
-                <span>ACTUAL VPS LIVE MT5 EXECUTED DEALS VS PYTHON ENGINE SIMULATION (100% VERIFIED)</span>
+        <!-- 3. 6-STRATEGY EXECUTION TIMETABLE MATRIX -->
+        <section class="strategy-matrix-section">
+            <div class="section-title-bar">
+                <h3><i class="fa-solid fa-clock-rotate-left"></i> 6-STRATEGY PREDICTIVE TIMETABLE MATRIX ($25k PROFILE)</h3>
+                <span class="subtitle">Real-time execution countdowns & target outcomes</span>
             </div>
-            <table class="history-table">
-                <thead>
-                    <tr>
-                        <th>Ticket</th>
-                        <th>Strategy</th>
-                        <th>Symbol</th>
-                        <th>Type</th>
-                        <th>Lot</th>
-                        <th>MT5 Fill Entry</th>
-                        <th>MT5 Fill Exit</th>
-                        <th>MT5 Realized PnL</th>
-                        <th>Python Sim Entry</th>
-                        <th>Python Sim PnL</th>
-                        <th>Discrepancy</th>
-                        <th>Reconciliation Status</th>
-                    </tr>
-                </thead>
-                <tbody id="mt5-trades-body">
-                    <tr>
-                        <td style="font-family: JetBrains Mono; color: #64748b;">#510629410</td>
-                        <td style="font-weight: 600;">Ultra Monster (v106)</td>
-                        <td style="font-family: JetBrains Mono; color: #3b82f6;">EURUSD</td>
-                        <td style="color:#10b981; font-weight:700;">BUY</td>
-                        <td style="color: #f59e0b; font-family: JetBrains Mono; font-weight:700;">1.20 L</td>
-                        <td style="font-family: JetBrains Mono;">1.15470</td>
-                        <td style="font-family: JetBrains Mono;">1.15544</td>
-                        <td class="val-green">+$89.00</td>
-                        <td style="font-family: JetBrains Mono; color: #94a3b8;">1.15470</td>
-                        <td class="val-green">+$89.00</td>
-                        <td style="font-family: JetBrains Mono; color: #10b981;">0.0 pips</td>
-                        <td><span class="tag-confidence">EXACT MATCH 🟢</span></td>
-                    </tr>
-                    <tr>
-                        <td style="font-family: JetBrains Mono; color: #64748b;">#510587680</td>
-                        <td style="font-weight: 600;">CPPF Z (v106)</td>
-                        <td style="font-family: JetBrains Mono; color: #3b82f6;">EURAUD</td>
-                        <td style="color:#f43f5e; font-weight:700;">SELL</td>
-                        <td style="color: #f59e0b; font-family: JetBrains Mono; font-weight:700;">1.40 L</td>
-                        <td style="font-family: JetBrains Mono;">1.64814</td>
-                        <td style="font-family: JetBrains Mono;">1.64723</td>
-                        <td class="val-green">+$127.40</td>
-                        <td style="font-family: JetBrains Mono; color: #94a3b8;">1.64814</td>
-                        <td class="val-green">+$127.40</td>
-                        <td style="font-family: JetBrains Mono; color: #10b981;">0.0 pips</td>
-                        <td><span class="tag-confidence">EXACT MATCH 🟢</span></td>
-                    </tr>
-                    <tr>
-                        <td style="font-family: JetBrains Mono; color: #64748b;">#510587658</td>
-                        <td style="font-weight: 600;">CPPF Z (v106)</td>
-                        <td style="font-family: JetBrains Mono; color: #3b82f6;">GBPAUD</td>
-                        <td style="color:#f43f5e; font-weight:700;">SELL</td>
-                        <td style="color: #f59e0b; font-family: JetBrains Mono; font-weight:700;">1.40 L</td>
-                        <td style="font-family: JetBrains Mono;">1.92356</td>
-                        <td style="font-family: JetBrains Mono;">1.92338</td>
-                        <td class="val-green">+$25.20</td>
-                        <td style="font-family: JetBrains Mono; color: #94a3b8;">1.92356</td>
-                        <td class="val-green">+$25.20</td>
-                        <td style="font-family: JetBrains Mono; color: #10b981;">0.0 pips</td>
-                        <td><span class="tag-confidence">EXACT MATCH 🟢</span></td>
-                    </tr>
-                    <tr>
-                        <td style="font-family: JetBrains Mono; color: #64748b;">#510511225</td>
-                        <td style="font-weight: 600;">Ultra Monster (v106)</td>
-                        <td style="font-family: JetBrains Mono; color: #3b82f6;">AUDCAD</td>
-                        <td style="color:#10b981; font-weight:700;">BUY</td>
-                        <td style="color: #f59e0b; font-family: JetBrains Mono; font-weight:700;">1.20 L</td>
-                        <td style="font-family: JetBrains Mono;">0.98193</td>
-                        <td style="font-family: JetBrains Mono;">0.98172</td>
-                        <td class="val-red">-$25.20</td>
-                        <td style="font-family: JetBrains Mono; color: #94a3b8;">0.98193</td>
-                        <td class="val-red">-$25.20</td>
-                        <td style="font-family: JetBrains Mono; color: #10b981;">0.0 pips</td>
-                        <td><span class="tag-confidence" style="border-color:#f43f5e; color:#f43f5e;">EXACT MATCH 🔴</span></td>
-                    </tr>
-                    <tr>
-                        <td style="font-family: JetBrains Mono; color: #64748b;">#510486372</td>
-                        <td style="font-weight: 600;">Ultra Monster (v106)</td>
-                        <td style="font-family: JetBrains Mono; color: #3b82f6;">AUDCAD</td>
-                        <td style="color:#10b981; font-weight:700;">BUY</td>
-                        <td style="color: #f59e0b; font-family: JetBrains Mono; font-weight:700;">1.20 L</td>
-                        <td style="font-family: JetBrains Mono;">0.98209</td>
-                        <td style="font-family: JetBrains Mono;">0.98178</td>
-                        <td class="val-red">-$37.20</td>
-                        <td style="font-family: JetBrains Mono; color: #94a3b8;">0.98209</td>
-                        <td class="val-red">-$37.20</td>
-                        <td style="font-family: JetBrains Mono; color: #10b981;">0.0 pips</td>
-                        <td><span class="tag-confidence" style="border-color:#f43f5e; color:#f43f5e;">EXACT MATCH 🔴</span></td>
-                    </tr>
-                    <tr>
-                        <td style="font-family: JetBrains Mono; color: #64748b;">#510464517</td>
-                        <td style="font-weight: 600;">Ultra Monster (v106)</td>
-                        <td style="font-family: JetBrains Mono; color: #3b82f6;">AUDCAD</td>
-                        <td style="color:#10b981; font-weight:700;">BUY</td>
-                        <td style="color: #f59e0b; font-family: JetBrains Mono; font-weight:700;">1.20 L</td>
-                        <td style="font-family: JetBrains Mono;">0.98258</td>
-                        <td style="font-family: JetBrains Mono;">0.98236</td>
-                        <td class="val-red">-$26.40</td>
-                        <td style="font-family: JetBrains Mono; color: #94a3b8;">0.98258</td>
-                        <td class="val-red">-$26.40</td>
-                        <td style="font-family: JetBrains Mono; color: #10b981;">0.0 pips</td>
-                        <td><span class="tag-confidence" style="border-color:#f43f5e; color:#f43f5e;">EXACT MATCH 🔴</span></td>
-                    </tr>
-                    <tr>
-                        <td style="font-family: JetBrains Mono; color: #64748b;">#510451850</td>
-                        <td style="font-weight: 600;">Ultra Monster (v106)</td>
-                        <td style="font-family: JetBrains Mono; color: #3b82f6;">AUDCAD</td>
-                        <td style="color:#10b981; font-weight:700;">BUY</td>
-                        <td style="color: #f59e0b; font-family: JetBrains Mono; font-weight:700;">1.20 L</td>
-                        <td style="font-family: JetBrains Mono;">0.98258</td>
-                        <td style="font-family: JetBrains Mono;">0.98236</td>
-                        <td class="val-red">-$26.40</td>
-                        <td style="font-family: JetBrains Mono; color: #94a3b8;">0.98258</td>
-                        <td class="val-red">-$26.40</td>
-                        <td style="font-family: JetBrains Mono; color: #10b981;">0.0 pips</td>
-                        <td><span class="tag-confidence" style="border-color:#f43f5e; color:#f43f5e;">EXACT MATCH 🔴</span></td>
-                    </tr>
-                    <tr>
-                        <td style="font-family: JetBrains Mono; color: #64748b;">#509747605</td>
-                        <td style="font-weight: 600;">Ultra Monster (v106)</td>
-                        <td style="font-family: JetBrains Mono; color: #3b82f6;">EURNZD</td>
-                        <td style="color:#10b981; font-weight:700;">BUY</td>
-                        <td style="color: #f59e0b; font-family: JetBrains Mono; font-weight:700;">1.00 L</td>
-                        <td style="font-family: JetBrains Mono;">1.84500</td>
-                        <td style="font-family: JetBrains Mono;">1.84453</td>
-                        <td class="val-red">-$46.90</td>
-                        <td style="font-family: JetBrains Mono; color: #94a3b8;">1.84500</td>
-                        <td class="val-red">-$46.90</td>
-                        <td style="font-family: JetBrains Mono; color: #10b981;">0.0 pips</td>
-                        <td><span class="tag-confidence" style="border-color:#f43f5e; color:#f43f5e;">EXACT MATCH 🔴</span></td>
-                    </tr>
-                    <tr>
-                        <td style="font-family: JetBrains Mono; color: #64748b;">#509747601</td>
-                        <td style="font-weight: 600;">Ultra Monster (v106)</td>
-                        <td style="font-family: JetBrains Mono; color: #3b82f6;">EURUSD</td>
-                        <td style="color:#f43f5e; font-weight:700;">SELL</td>
-                        <td style="color: #f59e0b; font-family: JetBrains Mono; font-weight:700;">1.00 L</td>
-                        <td style="font-family: JetBrains Mono;">1.08450</td>
-                        <td style="font-family: JetBrains Mono;">1.08550</td>
-                        <td class="val-red">-$100.00</td>
-                        <td style="font-family: JetBrains Mono; color: #94a3b8;">1.08450</td>
-                        <td class="val-red">-$100.00</td>
-                        <td style="font-family: JetBrains Mono; color: #10b981;">0.0 pips</td>
-                        <td><span class="tag-confidence" style="border-color:#f43f5e; color:#f43f5e;">EXACT MATCH 🔴</span></td>
-                    </tr>
-                </tbody>
-            </table>
+
+            <div class="strategy-cards-container" id="strategyCardsContainer">
+                <!-- Dynamically populated -->
+            </div>
         </section>
 
-    </div>
+        <!-- 4. LIVE EXECUTED TRADE AUDIT TABLE -->
+        <section class="audit-table-section">
+            <div class="section-title-bar">
+                <h3><i class="fa-solid fa-list-check"></i> LIVE MT5 EXECUTED TRADES RECONCILIATION</h3>
+                <span class="subtitle">Side-by-side verification of executed trades on MT5 FTMO Account #1514168544</span>
+            </div>
 
-    <script src="/static/js/hud_app.js"></script>
+            <div class="table-scroll-wrapper">
+                <table class="audit-table">
+                    <thead>
+                        <tr>
+                            <th>Ticket / Time (UTC)</th>
+                            <th>Strategy Name</th>
+                            <th>Symbol</th>
+                            <th>Type</th>
+                            <th>Lot Size</th>
+                            <th>Entry → Exit Price</th>
+                            <th>Pips</th>
+                            <th>Realized Net PnL</th>
+                            <th>Hold Time</th>
+                            <th>Audit Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditTableBody">
+                        <!-- Dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- JS APP -->
+    <script src="{{ url_for('static', filename='js/hud_app.js') }}"></script>
 </body>
 </html>

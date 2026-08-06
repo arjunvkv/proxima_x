@@ -13,7 +13,7 @@ CTrade trade;
 input int      LOOKBACK_BARS      = 6;       // 30-min Lookback
 input int      HOLD_BARS          = 12;      // 60-min Hold Time
 input int      TOP_N              = 5;       // Top 5 Pairs
-input int      SESSION_HOUR       = 0;       // 00:00 UTC Session
+input int      SESSION_HOUR       = 0;       // 00:00 UTC Session (gated on TimeGMT)
 input double   BASE_LOT           = 0.15;    // Lot Size
 input ulong    MAGIC_BASE         = 202630;  // Magic Base (Non-overlapping)
 input double   SLIPPAGE_PIPS      = 1.0;     // Slippage Pips
@@ -159,8 +159,8 @@ void CheckExits() {
 }
 
 void CheckEntry() {
-   MqlDateTime dt; TimeCurrent(dt);
-   if(dt.hour != SESSION_HOUR || dt.min != 0) return;
+   MqlDateTime dt; TimeToStruct(TimeGMT(), dt);
+   if(dt.hour != SESSION_HOUR || dt.min > 5) return;
    
    double returns[N_PAIRS];
    int ids[N_PAIRS];

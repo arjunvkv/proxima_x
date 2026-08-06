@@ -160,12 +160,15 @@ class TokyoH0Strategy(MultiPairStrategy):
                         if ret_short > 0:  # short window not declining
                             continue
 
-            # Gap filter: skip if move is concentrated in last bar (gap open)
-            prev_bar = bars.get(pair, {}).get("close")
-            if prev_bar is not None and prev_bar > 0:
-                gap_pct = abs(curr - prev_bar) / prev_bar * 100
-                if gap_pct >= gap_thresh:
-                    continue
+            # Gap of last COMPLETED bar: skip if the move from the prior completed
+            # close to the current completed close is a large single-bar gap.
+            # (honest: uses history closes only, never the forming bar)
+            if len(closes) >= 3:
+                prev_close = closes[-2]
+                if prev_close > 0:
+                    gap_pct = abs(curr - prev_close) / prev_close * 100
+                    if gap_pct >= gap_thresh:
+                        continue
 
             # §19: Decision margin relative to recent volatility
             bar = bars.get(pair)

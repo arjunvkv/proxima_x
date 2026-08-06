@@ -1,0 +1,3 @@
+[submodule "mt5-connector"]
+	path = mt5-connector
+	url = https://github.com/aulekator/mt5-connector

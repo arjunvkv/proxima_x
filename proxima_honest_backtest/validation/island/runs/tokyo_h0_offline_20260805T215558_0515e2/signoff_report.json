@@ -1,0 +1,105 @@
+{
+  "run_id": "tokyo_h0_offline_20260805T215558_0515e2",
+  "honest_scope": "This validation proves the live execution infrastructure correctly preserves the validated strategy decision path and reconciles execution state with broker reality. The offline island validates event flow, state transitions, reconciliation logic, and execution plumbing using deterministic simulated execution. It does not prove historical liquidity, order-book behavior, market impact, partial-fill behavior, or profitability. True execution-price, latency, spread, and broker behavior validation requires the live FTMO demo phase.",
+  "environment": "offline",
+  "strategy": "tokyo_h0",
+  "sections": {
+    "decision_integrity": {
+      "total": 82,
+      "enters": 41,
+      "exits": 41
+    },
+    "execution_integrity": {
+      "orders_sent": 82,
+      "fills": 82,
+      "rejects": 0,
+      "avg_slippage_pips": 1.0
+    },
+    "position_reconciliation": {
+      "syncs": 0,
+      "pass": 0,
+      "fail": 0
+    },
+    "clock": {
+      "tick_events": 0
+    }
+  },
+  "verdict": "PASS",
+  "critical_fails": [],
+  "metrics": {
+    "n_decisions": 82,
+    "n_orders_sent": 82,
+    "n_fills": 82,
+    "n_rejects": 0,
+    "decision_mapping_pct": 100.0,
+    "reconciliation_pct": 100.0,
+    "orphan_count": 0,
+    "ghost_count": 0,
+    "duplicate_count": 0,
+    "sequence_violations": 0,
+    "avg_slippage_pips": 1.0,
+    "tick_events": 0
+  },
+  "level2_diff": {
+    "n_sim_fills": 82,
+    "n_broker_fills": 82,
+    "missing_broker": [],
+    "extra_broker": [],
+    "slippage_beyond_threshold": [
+      {
+        "decision_id": "0c22e2ebc39ffaac",
+        "symbol": "EURNZD",
+        "slip_pips": 2.0
+      },
+      {
+        "decision_id": "800a4c9f463efe77",
+        "symbol": "EURAUD",
+        "slip_pips": 2.0
+      },
+      {
+        "decision_id": "31df1cf4192464e4",
+        "symbol": "USDCAD",
+        "slip_pips": 2.0
+      },
+      {
+        "decision_id": "4ae6e40fc45e687c",
+        "symbol": "AUDJPY",
+        "slip_pips": 2.0
+      },
+      {
+        "decision_id": "ea193084fa64c2d9",
+        "symbol": "GBPNZD",
+        "slip_pips": 2.0
+      },
+      {
+        "decision_id": "ac5baef85e14a74c",
+        "symbol": "EURJPY",
+        "slip_pips": 2.0
+      },
+      {
+        "decision_id": "c2e20ff49616ccd4",
+        "symbol": "EURAUD",
+        "slip_pips": 2.0
+      },
+      {
+        "decision_id": "d5df8b9f92f92cc8",
+        "symbol": "NZDUSD",
+        "slip_pips": 2.0
+      },
+      {
+        "decision_id": "ae5dc9a5fee677dd",
+        "symbol": "NZDUSD",
+        "slip_pips": 2.0
+      },
+      {
+        "decision_id": "7751afdca97e1018",
+        "symbol": "GBPUSD",
+        "slip_pips": 2.0
+      }
+    ],
+    "max_slippage_pips": 2.0,
+    "avg_slippage_pips": 1.0,
+    "decision_mismatches": [],
+    "passed": false
+  }
+}

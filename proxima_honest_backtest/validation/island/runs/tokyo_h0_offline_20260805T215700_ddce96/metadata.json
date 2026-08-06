@@ -1,0 +1,15 @@
+{
+  "run_id": "tokyo_h0_offline_20260805T215700_ddce96",
+  "strategy": "tokyo_h0",
+  "env": "offline",
+  "months": [
+    1
+  ],
+  "scenario": "reject",
+  "seed": 0,
+  "n_aligned": 6006,
+  "sim_decisions": 41,
+  "broker_decisions": 41,
+  "n_sim_fills": 82,
+  "n_broker_fills": 0
+}

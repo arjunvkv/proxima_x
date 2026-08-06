@@ -5,6 +5,7 @@ from proxima_honest_backtest.strategies.tokyo_h0.strategy import TokyoH0Strategy
 from proxima_honest_backtest.strategies.dark_consensus.strategy import DarkConsensusStrategy
 from proxima_honest_backtest.strategies.currency_pressure.strategy import CurrencyPressureStrategy
 from proxima_honest_backtest.strategies.blind_spot_alpha.strategy import BlindSpotAlphaStrategy
+from proxima_honest_backtest.strategies.ultra_monster_honest.strategy import UltraMonsterHonestStrategy
 from proxima_honest_backtest.strategies.multi_pair_base import MultiPairStrategy
 
 __all__ = [
@@ -15,4 +16,5 @@ __all__ = [
     "DarkConsensusStrategy",
     "CurrencyPressureStrategy",
     "BlindSpotAlphaStrategy",
+    "UltraMonsterHonestStrategy",
 ]

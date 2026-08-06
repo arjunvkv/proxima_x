@@ -1,0 +1,12 @@
+{
+  "run_id": "tokyo_h0_offline_20260805T205913_27ffa2",
+  "strategy": "tokyo_h0",
+  "env": "offline",
+  "months": [
+    1,
+    2
+  ],
+  "scenario": "instant",
+  "seed": 0,
+  "n_aligned": 11726
+}

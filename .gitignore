@@ -250,3 +250,33 @@ phase5_report.md
 # Old MT5 tester HTML reports (replaced by RECON text evidence)
 *.htm
 
+# ---------------------------------------------------------------------------
+# Large generated artifacts / data — do not commit (over ~5MB)
+# ---------------------------------------------------------------------------
+# Compiled/source archives
+*.tar
+
+# Secrets
+.env
+.env.*
+
+# Large raw tick data (tracked legacy — untracked via git rm --cached below)
+strategies/tick_exhaustion_fader/tick_data/
+
+# Large generated reports (7-month backtest, cTrader cli reports)
+backtest_7m_18p.html
+backtest_7m_18p.json
+ctrader_bots/TokyoH0/cli_report.html
+ctrader_bots/TokyoH0/cli_report.json
+
+# Oversized sweep result data (24MB transient sweep output)
+proxima_honest_backtest/strategies/vwap_reversion/sweep_results.json
+
+# Live runtime state / order stream (not source)
+proxima_honest_backtest/live_logs/
+live_orders.jsonl
+
+# Transient deploy/audit profiles (chart templates, temp dirs)
+temp_profile_*/
+temp_v107_audit/
+

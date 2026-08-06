@@ -1,0 +1,78 @@
+{
+  "run_id": "tokyo_h0_offline_20260805T214711_a9e9ee",
+  "honest_scope": "This validation proves the live execution infrastructure correctly preserves the validated strategy decision path and reconciles execution state with broker reality. The offline island validates event flow, state transitions, reconciliation logic, and execution plumbing using deterministic simulated execution. It does not prove historical liquidity, order-book behavior, market impact, partial-fill behavior, or profitability. True execution-price, latency, spread, and broker behavior validation requires the live FTMO demo phase.",
+  "environment": "offline",
+  "strategy": "tokyo_h0",
+  "sections": {
+    "decision_integrity": {
+      "total": 82,
+      "enters": 41,
+      "exits": 41
+    },
+    "execution_integrity": {
+      "orders_sent": 82,
+      "fills": 82,
+      "rejects": 0,
+      "avg_slippage_pips": 0.0
+    },
+    "position_reconciliation": {
+      "syncs": 0,
+      "pass": 0,
+      "fail": 0
+    },
+    "clock": {
+      "tick_events": 0
+    }
+  },
+  "verdict": "FAIL",
+  "critical_fails": [
+    "NO_DUP_TICKET"
+  ],
+  "metrics": {
+    "n_decisions": 82,
+    "n_orders_sent": 82,
+    "n_fills": 82,
+    "n_rejects": 0,
+    "decision_mapping_pct": 100.0,
+    "reconciliation_pct": 100.0,
+    "orphan_count": 0,
+    "ghost_count": 0,
+    "duplicate_count": 0,
+    "sequence_violations": 0,
+    "avg_slippage_pips": 0.0,
+    "tick_events": 0
+  },
+  "level2_diff": {
+    "n_sim_fills": 82,
+    "n_broker_fills": 82,
+    "missing_broker": [
+      "01e19b09b31789b1",
+      "034536c0c55722b7",
+      "0697f0d1626fd577",
+      "0a1dd0ebb1645868",
+      "0bcab7f5f1fcd166",
+      "0c476b7b55171ae9",
+      "0d65ba4ea405956b",
+      "0dcf04da47c95bf4",
+      "15f4cb7679cc50fe",
+      "1912e1b5a2b2167c"
+    ],
+    "extra_broker": [
+      "09b2d894b3880330",
+      "0b8c4fb2f6b00c46",
+      "0bc6041093cc6980",
+      "0c0bdb211ce520a2",
+      "0d46be086b731ab7",
+      "0d7798605bc12803",
+      "0ec0f20a3eb7b586",
+      "0f41464729927d77",
+      "1064f54f56a01fad",
+      "1597cbf0b9035e89"
+    ],
+    "slippage_beyond_threshold": [],
+    "max_slippage_pips": 0.0,
+    "avg_slippage_pips": 0.0,
+    "decision_mismatches": [],
+    "passed": false
+  }
+}

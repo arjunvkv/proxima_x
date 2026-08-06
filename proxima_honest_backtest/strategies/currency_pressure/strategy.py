@@ -73,7 +73,6 @@ class CurrencyPressureStrategy(MultiPairStrategy):
         self._curr_history: Dict[str, List[float]] = {c: [] for c in ALL_CURRENCIES}
         self._pair_returns: Dict[str, List[float]] = {}
         self._positions: Dict[str, Dict] = {}
-        self._prev_closes: Dict[str, float] = {}
         self._pair_vol_fixed: Dict[str, float] = {}
         self._vol_warmup_done = False
 
@@ -81,7 +80,6 @@ class CurrencyPressureStrategy(MultiPairStrategy):
         self._curr_history = {c: [] for c in ALL_CURRENCIES}
         self._pair_returns = {}
         self._positions = {}
-        self._prev_closes = {}
         self._pair_vol_fixed = {}
         self._vol_warmup_done = False
 
@@ -98,19 +96,22 @@ class CurrencyPressureStrategy(MultiPairStrategy):
 
         self._check_exits(ts, signals)
 
+        # Strict contract: close-to-close returns from COMPLETED closes only.
+        # history[pair] = all closes strictly before the current bar, so
+        # closes[-1]/closes[-2] are the two most recent completed bars.
         minute_returns = {}
         for pair in self.parameters["pairs"]:
-            if pair not in bars or not bars[pair]:
+            closes = history.get(pair, [])
+            if len(closes) < 2:
                 continue
-            close = bars[pair]["close"]
-            prev = self._prev_closes.get(pair)
-            if prev and prev > 0 and close > 0:
-                ret = np.log(close / prev)
+            curr = closes[-1]
+            prev = closes[-2]
+            if prev > 0 and curr > 0:
+                ret = np.log(curr / prev)
                 minute_returns[pair] = ret
                 if pair not in self._pair_returns:
                     self._pair_returns[pair] = []
                 self._pair_returns[pair].append(ret)
-            self._prev_closes[pair] = close
 
         if len(minute_returns) < 5:
             return signals
@@ -163,7 +164,7 @@ class CurrencyPressureStrategy(MultiPairStrategy):
                 "direction": trade_dir,
                 "entry_time": ts,
                 "bars_held": 0,
-                "entry_price": bars[pair]["close"],
+                "entry_price": bars[pair]["open"],
             }
 
             signals.append(SignalResult(
@@ -176,6 +177,7 @@ class CurrencyPressureStrategy(MultiPairStrategy):
                     "currency": c,
                     "action": "ENTER_LONG" if trade_dir > 0 else "ENTER_SHORT",
                     "z_score": round(float(z), 2),
+                    "entry_price": float(bars[pair]["open"]),
                 },
             ))
 

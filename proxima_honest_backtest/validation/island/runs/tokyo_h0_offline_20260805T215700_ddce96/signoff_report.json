@@ -1,0 +1,65 @@
+{
+  "run_id": "tokyo_h0_offline_20260805T215700_ddce96",
+  "honest_scope": "This validation proves the live execution infrastructure correctly preserves the validated strategy decision path and reconciles execution state with broker reality. The offline island validates event flow, state transitions, reconciliation logic, and execution plumbing using deterministic simulated execution. It does not prove historical liquidity, order-book behavior, market impact, partial-fill behavior, or profitability. True execution-price, latency, spread, and broker behavior validation requires the live FTMO demo phase.",
+  "environment": "offline",
+  "strategy": "tokyo_h0",
+  "sections": {
+    "decision_integrity": {
+      "total": 41,
+      "enters": 41,
+      "exits": 0
+    },
+    "execution_integrity": {
+      "orders_sent": 41,
+      "fills": 0,
+      "rejects": 41,
+      "avg_slippage_pips": 0.0
+    },
+    "position_reconciliation": {
+      "syncs": 0,
+      "pass": 0,
+      "fail": 0
+    },
+    "clock": {
+      "tick_events": 0
+    }
+  },
+  "verdict": "PASS",
+  "critical_fails": [],
+  "metrics": {
+    "n_decisions": 41,
+    "n_orders_sent": 41,
+    "n_fills": 0,
+    "n_rejects": 41,
+    "decision_mapping_pct": 100.0,
+    "reconciliation_pct": 100.0,
+    "orphan_count": 0,
+    "ghost_count": 0,
+    "duplicate_count": 0,
+    "sequence_violations": 0,
+    "avg_slippage_pips": 0.0,
+    "tick_events": 0
+  },
+  "level2_diff": {
+    "n_sim_fills": 82,
+    "n_broker_fills": 0,
+    "missing_broker": [
+      "0060380748eef327",
+      "06768df38e87bb11",
+      "072bac45f4dff781",
+      "099b9faccf021980",
+      "10706463bf75692b",
+      "1aab320fae81c2b3",
+      "1b3591574e1e2c9d",
+      "1cd8ff46a553c25c",
+      "25727871afa39c77",
+      "25b7dbed16a9ad24"
+    ],
+    "extra_broker": [],
+    "slippage_beyond_threshold": [],
+    "max_slippage_pips": 0.0,
+    "avg_slippage_pips": 0.0,
+    "decision_mismatches": [],
+    "passed": false
+  }
+}

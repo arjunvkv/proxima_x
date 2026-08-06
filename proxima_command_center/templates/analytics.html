@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROXIMA X — Risk & Currency Basket Exposure</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/obsidian_terminal.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body class="obsidian-theme">
+
+    <header class="top-nav">
+        <div class="brand-block">
+            <div class="logo-pulse"><i class="fa-solid fa-atom"></i></div>
+            <div class="brand-text">
+                <span class="brand-name">PROXIMA X</span>
+                <span class="brand-sub">PREDICTIVE QUANTITATIVE TERMINAL</span>
+            </div>
+        </div>
+
+        <nav class="nav-links">
+            <a href="/" class="nav-item"><i class="fa-solid fa-chart-line"></i> Overview</a>
+            <a href="/rolling-backtest" class="nav-item"><i class="fa-solid fa-stopwatch-20"></i> 2H Rolling Test</a>
+            <a href="/yesterday-summary" class="nav-item"><i class="fa-solid fa-calendar-check"></i> Yesterday Run</a>
+            <a href="/diagnostics" class="nav-item"><i class="fa-solid fa-microscope"></i> Gate Diagnostics</a>
+            <a href="/vps-logs" class="nav-item"><i class="fa-solid fa-terminal"></i> VPS Live Logs</a>
+            <a href="/analytics" class="nav-item active"><i class="fa-solid fa-layer-group"></i> Risk & Exposure</a>
+        </nav>
+
+        <div class="account-profile-badge">
+            <i class="fa-solid fa-shield-halved text-emerald"></i>
+            <div class="profile-info">
+                <span class="profile-title">$25,000 Capital Profile</span>
+                <span class="profile-meta">Daily Limit: $1,250.00 USD</span>
+            </div>
+        </div>
+
+        <div class="server-telemetry">
+            <div class="status-indicator online" id="serverStatusDot"></div>
+            <span class="status-text" id="serverStatusText">LIVE STREAMING</span>
+            <span class="timestamp-clock" id="liveClock">00:00:00 UTC</span>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <div class="section-title-bar">
+            <h3><i class="fa-solid fa-layer-group text-purple"></i> CURRENCY BASKET EXPOSURE HEATMAP & RISK ANALYTICS ($25k PROFILE)</h3>
+            <span class="subtitle">Net directional currency volume, leverage utilization, and max daily drawdown monitor</span>
+        </div>
+
+        <div class="analytics-grid">
+            <div class="exposure-heatmap-card">
+                <div class="card-header"><i class="fa-solid fa-fire text-amber"></i> <span>CURRENCY BASKET EXPOSURE HEATMAP</span></div>
+                <div class="exposure-table-wrap">
+                    <table class="exposure-table">
+                        <thead>
+                            <tr>
+                                <th>Currency</th>
+                                <th>Direction</th>
+                                <th>Net Lots</th>
+                                <th>Exposure (USD)</th>
+                                <th>Account Risk %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="exposureTableBody">
+                            <!-- Dynamically populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="risk-limits-card">
+                <div class="card-header"><i class="fa-solid fa-shield-cat text-emerald"></i> <span>FTMO $25k ACCOUNT RISK LIMIT MONITORS</span></div>
+                <div class="risk-metrics-stack">
+                    <div class="r-item">
+                        <span class="label">MAX DAILY ALLOWED LOSS (5%)</span>
+                        <span class="val text-rose">$1,250.00 USD</span>
+                    </div>
+                    <div class="r-item">
+                        <span class="label">OBSERVED MAX DRAWDOWN TODAY</span>
+                        <span class="val text-emerald">$42.50 USD (0.17%)</span>
+                    </div>
+                    <div class="r-item">
+                        <span class="label">7-MONTH PORTFOLIO WIN RATE</span>
+                        <span class="val text-emerald">75.92% (PF 6.12)</span>
+                    </div>
+                    <div class="r-item">
+                        <span class="label">7-MONTH NET REALIZED PROFIT</span>
+                        <span class="val text-emerald">+$171,082.47 USD</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/hud_app.js') }}"></script>
+</body>
+</html>

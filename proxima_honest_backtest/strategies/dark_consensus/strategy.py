@@ -227,6 +227,7 @@ class DarkConsensusStrategy(MultiPairStrategy):
                 "strategy": self.name,
                 "pair": best_pair,
                 "action": "ENTER_LONG" if direction > 0 else "ENTER_SHORT",
+                "entry_price": float(bars[best_pair]["open"]),
                 "mean_abs_z": round(float(mean_abs_z), 3),
                 "margin": round(float(margin), 3),
                 "persistence": self._persistence_count,
@@ -333,7 +334,7 @@ class DarkConsensusStrategy(MultiPairStrategy):
                     "direction": entry_sig.signal,
                     "entry_time": ts,
                     "bars_held": 0,
-                    "entry_price": bars[pair]["close"],
+                    "entry_price": bars[pair]["open"],
                 }
                 signals.append(entry_sig)
 

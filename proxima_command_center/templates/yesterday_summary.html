@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROXIMA X — Yesterday Full-Day Benchmark (Live vs Python)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/obsidian_terminal.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body class="obsidian-theme">
+
+    <header class="top-nav">
+        <div class="brand-block">
+            <div class="logo-pulse"><i class="fa-solid fa-atom"></i></div>
+            <div class="brand-text">
+                <span class="brand-name">PROXIMA X</span>
+                <span class="brand-sub">PREDICTIVE QUANTITATIVE TERMINAL</span>
+            </div>
+        </div>
+
+        <nav class="nav-links">
+            <a href="/" class="nav-item"><i class="fa-solid fa-chart-line"></i> Overview</a>
+            <a href="/rolling-backtest" class="nav-item"><i class="fa-solid fa-stopwatch-20"></i> 2H Rolling Test</a>
+            <a href="/yesterday-summary" class="nav-item active"><i class="fa-solid fa-calendar-check"></i> Yesterday Run</a>
+            <a href="/diagnostics" class="nav-item"><i class="fa-solid fa-microscope"></i> Gate Diagnostics</a>
+            <a href="/vps-logs" class="nav-item"><i class="fa-solid fa-terminal"></i> VPS Live Logs</a>
+            <a href="/analytics" class="nav-item"><i class="fa-solid fa-layer-group"></i> Risk & Exposure</a>
+        </nav>
+
+        <div class="account-profile-badge">
+            <i class="fa-solid fa-shield-halved text-emerald"></i>
+            <div class="profile-info">
+                <span class="profile-title">$25,000 Capital Profile</span>
+                <span class="profile-meta">Daily Limit: $1,250.00 USD</span>
+            </div>
+        </div>
+
+        <div class="server-telemetry">
+            <div class="status-indicator online" id="serverStatusDot"></div>
+            <span class="status-text" id="serverStatusText">LIVE STREAMING</span>
+            <span class="timestamp-clock" id="liveClock">00:00:00 UTC</span>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <div class="section-title-bar">
+            <h3><i class="fa-solid fa-calendar-check text-purple"></i> YESTERDAY FULL-DAY BENCHMARK: MT5 LIVE vs PYTHON BACKTEST</h3>
+            <span class="subtitle">Side-by-side full-day comparison for yesterday ({{ summary.date }}) calculated static once at app launch</span>
+        </div>
+
+        <!-- SIDE-BY-SIDE METRICS GRID: MT5 LIVE vs PYTHON BACKTEST -->
+        <section class="radar-analytics-grid">
+            <div class="radar-card">
+                <div class="card-header"><i class="fa-solid fa-bolt text-emerald"></i> <span>MT5 LIVE YESTERDAY WR</span></div>
+                <div class="metric-body">
+                    <span class="metric-value text-emerald">{{ summary.live_metrics.win_rate_percent }}%</span>
+                </div>
+                <div class="metric-subtext">MT5 Net PnL: ${{ summary.live_metrics.net_pnl_usd }} ({{ summary.live_metrics.total_trades }} Trades)</div>
+            </div>
+
+            <div class="radar-card">
+                <div class="card-header"><i class="fa-solid fa-bullseye text-cyan"></i> <span>PYTHON SIM YESTERDAY WR</span></div>
+                <div class="metric-body">
+                    <span class="metric-value text-cyan">{{ summary.python_metrics.win_rate_percent }}%</span>
+                </div>
+                <div class="metric-subtext">Sim Net PnL: +${{ summary.python_metrics.net_pnl_usd }} ({{ summary.python_metrics.total_trades }} Trades)</div>
+            </div>
+
+            <div class="radar-card">
+                <div class="card-header"><i class="fa-solid fa-scale-balanced text-purple"></i> <span>PYTHON PROFIT FACTOR</span></div>
+                <div class="metric-body">
+                    <span class="metric-value text-purple">{{ summary.python_metrics.profit_factor }}</span>
+                </div>
+                <div class="metric-subtext">Clean Execution PF Baseline</div>
+            </div>
+
+            <div class="radar-card">
+                <div class="card-header"><i class="fa-solid fa-layer-group text-amber"></i> <span>TOTAL UNIFIED TRADES</span></div>
+                <div class="metric-body">
+                    <span class="metric-value text-amber">{{ summary.trades|length }}</span>
+                </div>
+                <div class="metric-subtext">Live MT5 + Python Sim Trades</div>
+            </div>
+        </section>
+
+        <!-- UNIFIED SINGLE COMBINED TRADES TABLE FOR YESTERDAY WITH BUG DIAGNOSIS -->
+        <section class="audit-table-section">
+            <div class="section-title-bar">
+                <h3><i class="fa-solid fa-list-ol text-emerald"></i> UNIFIED YESTERDAY TRADES LOG (LIVE VPS EXECUTIONS HIGHLIGHTED)</h3>
+                <span class="subtitle">Combined single trade feed for yesterday ({{ summary.date }}) with dynamic bug diagnosis</span>
+            </div>
+
+            <div class="table-scroll-wrapper">
+                <table class="audit-table">
+                    <thead>
+                        <tr>
+                            <th>Date & Time (UTC)</th>
+                            <th>Execution Mode</th>
+                            <th>Ticket ID</th>
+                            <th>Strategy Name</th>
+                            <th>Symbol</th>
+                            <th>Side</th>
+                            <th>Lot Size</th>
+                            <th>Pips</th>
+                            <th>Simulated PnL ($)</th>
+                            <th>Live Close PnL ($)</th>
+                            <th>Diagnosis / Bug Reason</th>
+                            <th>Outcome</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in summary.trades %}
+                        <tr {% if t.is_live %}style="background: rgba(16, 185, 129, 0.08); border-left: 3px solid var(--accent-emerald);"{% endif %}>
+                            <td>
+                                <span style="font-family: var(--font-mono); font-size: 0.8rem;">{{ t.iso_timestamp }}</span>
+                                <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;" class="ist-time" data-utc="{{ t.iso_timestamp }}"></div>
+                            </td>
+                            <td>
+                                {% if t.is_live %}
+                                <span class="log-filter-btn active" style="background: var(--accent-emerald); color: #000; font-weight: 800;"><i class="fa-solid fa-bolt"></i> LIVE VPS</span>
+                                {% else %}
+                                <span class="log-filter-btn">PYTHON SIM</span>
+                                {% endif %}
+                            </td>
+                            <td><strong style="font-family: var(--font-mono);">#{{ t.ticket }}</strong></td>
+                            <td><strong>{{ t.strategy }}</strong></td>
+                            <td><strong>{{ t.pair }}</strong></td>
+                            <td><span class="dir-badge {{ t.side.lower() }}">{{ t.side }}</span></td>
+                            <td><span class="font-mono">{{ t.lot }}L</span></td>
+                            <td><span class="font-mono">{% if t.pips >= 0 %}+{% endif %}{{ t.pips }}p</span></td>
+                            <td>
+                                <span class="{% if t.sim_pnl >= 0 %}text-emerald{% else %}text-rose{% endif %} font-mono">
+                                    {% if t.sim_pnl >= 0 %}+{% endif %}${{ t.sim_pnl }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if t.is_live %}
+                                <strong class="{% if t.live_close_pnl >= 0 %}text-emerald{% else %}text-rose{% endif %} font-mono" style="font-size: 0.95rem;">
+                                    {% if t.live_close_pnl >= 0 %}+{% endif %}${{ t.live_close_pnl }}
+                                </strong>
+                                {% elif t.gate_reason == 'spread_gate' %}
+                                <span title="Confirmed: live EA blocked — spread exceeded 6pip gate at this session hour" style="font-size: 0.72rem; font-weight: 700; font-family: var(--font-mono); color: var(--accent-amber); background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.35); border-radius: 4px; padding: 2px 6px; white-space: nowrap;">🔒 &lt;6p gate</span>
+                                {% else %}
+                                <span style="color: var(--text-muted);">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span style="font-size: 0.75rem; font-weight: 700; font-family: var(--font-mono); color: {% if 'CLEAN' in t.bug_reason %}var(--accent-emerald){% elif 'BUG' in t.bug_reason %}var(--accent-rose){% else %}var(--accent-amber){% endif %};">
+                                    {{ t.bug_reason }}
+                                </span>
+                            </td>
+                            <td><span style="font-size: 0.75rem; font-weight: 700;">{% if t.is_win %}🟢 WIN{% else %}🔴 LOSS{% endif %}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/hud_app.js') }}"></script>
+    <script>
+        // Populate IST times: UTC+5:30 — show time only, flag +1d if date rolls over
+        document.querySelectorAll('.ist-time').forEach(el => {
+            const utcStr = (el.dataset.utc || '').replace(' UTC', '');
+            try {
+                const utcDate = new Date(utcStr.replace(' ', 'T') + 'Z');
+                const istOffsetMs = (5 * 60 + 30) * 60 * 1000;
+                const istDate = new Date(utcDate.getTime() + istOffsetMs);
+                const pad = n => String(n).padStart(2, '0');
+                const istTime = `${pad(istDate.getUTCHours())}:${pad(istDate.getUTCMinutes())}:${pad(istDate.getUTCSeconds())}`;
+                const istFormatted = `${istDate.getUTCFullYear()}-${pad(istDate.getUTCMonth()+1)}-${pad(istDate.getUTCDate())} ${istTime}`;
+                el.textContent = `${istFormatted} IST`;
+            } catch(e) {}
+        });
+    </script>
+</body>
+</html>

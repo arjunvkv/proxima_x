@@ -1,0 +1,76 @@
+{
+  "run_id": "tokyo_h0_offline_20260805T213235_8f3e2a",
+  "honest_scope": "This validation proves the live execution infrastructure correctly preserves the validated strategy decision path and reconciles execution state with broker reality. The offline island validates event flow, state transitions, reconciliation logic, and execution plumbing using deterministic simulated execution. It does not prove historical liquidity, order-book behavior, market impact, partial-fill behavior, or profitability. True execution-price, latency, spread, and broker behavior validation requires the live FTMO demo phase.",
+  "environment": "offline",
+  "strategy": "tokyo_h0",
+  "sections": {
+    "decision_integrity": {
+      "total": 158,
+      "enters": 79,
+      "exits": 79
+    },
+    "execution_integrity": {
+      "orders_sent": 79,
+      "fills": 79,
+      "rejects": 0,
+      "avg_slippage_pips": 0.0
+    },
+    "position_reconciliation": {
+      "syncs": 0,
+      "pass": 0,
+      "fail": 0
+    },
+    "clock": {
+      "tick_events": 0
+    }
+  },
+  "verdict": "PASS",
+  "critical_fails": [],
+  "metrics": {
+    "n_decisions": 158,
+    "n_orders_sent": 79,
+    "n_fills": 79,
+    "n_rejects": 0,
+    "decision_mapping_pct": 50.0,
+    "reconciliation_pct": 100.0,
+    "orphan_count": 0,
+    "ghost_count": 0,
+    "duplicate_count": 0,
+    "sequence_violations": 0,
+    "avg_slippage_pips": 0.0,
+    "tick_events": 0
+  },
+  "level2_diff": {
+    "n_sim_fills": 158,
+    "n_broker_fills": 79,
+    "missing_broker": [
+      "008fc7e9caaf125c",
+      "0091815c8a6aed7b",
+      "02ee7206fdc8ac93",
+      "038a7500ad3908ff",
+      "05c048fc49a4f75a",
+      "062c16fdb7e1b4e8",
+      "08579d62974cc8d2",
+      "0914c85cc50d4594",
+      "0a8399d28d9b3193",
+      "0ba78c386bd48c1f"
+    ],
+    "extra_broker": [
+      "00fadf9a7c8dd92b",
+      "08127257261e993c",
+      "088c1044bb699cc4",
+      "1176953460c6dc15",
+      "12160d544104ad97",
+      "127572aa90a6269e",
+      "196d040790cd4354",
+      "1caedc82539084d0",
+      "1fe5ff0c940c6612",
+      "28a2f9727dd5ae98"
+    ],
+    "slippage_beyond_threshold": [],
+    "max_slippage_pips": 0.0,
+    "avg_slippage_pips": 0.0,
+    "decision_mismatches": [],
+    "passed": false
+  }
+}

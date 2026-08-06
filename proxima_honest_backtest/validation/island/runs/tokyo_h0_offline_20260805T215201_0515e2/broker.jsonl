@@ -1,0 +1,1 @@
+{"event_seq": 1, "event_type": "DECISION", "event_time_utc": "2026-08-05T21:52:08.344Z", "strategy": "tokyo_h0", "run_id": "tokyo_h0_offline_20260805T215201_0515e2", "symbol": "EURUSD", "decision_id": "bd600edce082a093", "action": "ENTER", "side": "LONG", "quantity": 10000.0, "requested_price": 1.17179, "bar_ts_utc": "2026-01-06 00:05:00"}

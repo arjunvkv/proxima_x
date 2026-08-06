@@ -746,3 +746,46 @@ This is the **first strategy in the Honest Backtest framework to survive all 5 b
 - `proxima_v2/PROXIMA_V2_CALIBRATION_REPORT.md` — V2 calibration results
 - `research/live_validation/LIVE_VALIDATION_REPORT.md` — Live validation report
 - `research/msv_validation/MSV_FINAL_REPORT.md` — Market State Vector final research report
+
+## Strict Honest Contract + Masked-Replay Gate (Aug 2026)
+
+> **This is the anti-lookahead gate that all strategies in `proxima_honest_backtest` MUST pass
+> before they can be marked "survives" in `strategies/run_all.py`.**
+
+### The strict contract
+At bar `ts`, a strategy may act ONLY on:
+1. `history` — closes of bars **strictly before** `ts` (the engine serves `_closes[p][:-1]`), and
+2. the current bar's **open** (`bars[p]["open"]`, known at bar start).
+
+It must carry `entry_price` (bar open) in `SignalResult.metadata`; execution fills there.
+Reading the forming bar's `close`/`high`/`low` to make a decision = **same-bar lookahead**
+(the bug that inflated Ultra Monster).
+
+### The probe (provable, not heuristic)
+`validation/masked_replay.py` runs the identical backtest twice:
+1. **full** — strategy sees real OHLC.
+2. **masked** — the forming bar's close/high/low are served as **NaN** (open stays real).
+
+Identical trade fingerprints across the two runs (by `(timestamp, symbol, side, price, pnl,
+commission, quantity)`) → **PASS** (proven never used the forming bar). Any divergence → **FAIL**
+and `run_all.py` REFUSES to backtest/score the strategy.
+
+### Critical implementation detail
+The gate MUST give each of the two runs a **fresh, identically-seeded `ExecutionSimulator`**
+(`_fresh_simulator` in `masked_replay.py`). A shared simulator advances its RNG stream between
+runs, so every stochastic fill (spread/slippage/partial-fill) diverges and even provably-honest
+strategies report `diff=N`. This was the root cause of the original Tokyo H0 gate FAIL.
+
+### Verify (fast smoke)
+```
+cd proxima_honest_backtest
+python -m pytest tests/test_anti_lookahead -q   # 15 tests: strict passes, leaky fails
+# Full registry gate (9 strategies) on a 12k-bar/pair slice → all PASS in <2 min
+```
+
+### Status (Aug 2026)
+All 9 registered strategies pass the masked-replay gate (`diff=0`):
+V2z (3 configs), MeanReversion, TokyoH0, DarkConsensus, CurrencyPressure, BlindSpotAlpha,
+UltraMonsterHonest. Leaky single-bar reads (`bars[p]["close"]` etc.) are additionally rejected by
+`validation/linter.py` (AST rule) and by `tests/test_anti_lookahead/test_masked_replay.py`
+(`test_leaky_same_bar_fails` proves the probe catches real leaks).

@@ -10,7 +10,7 @@
 #include <Trade\Trade.mqh>
 CTrade trade;
 
-input double   BASE_LOT            = 0.15;    // Base Lot Size for $6k account
+input double   BASE_LOT            = 1.20;    // Base Lot Size for $6k account
 input int      HOLD_BARS           = 3;       // 15m Fast Scalp Exit (3 M5 bars)
 input double   MIN_RANGE_PIPS      = 6.0;     // 6.0 Pips Min Hourly Range
 input ulong    MAGIC_BASE          = 202600;  // Magic Base

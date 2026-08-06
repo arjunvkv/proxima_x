@@ -42,7 +42,15 @@ class MeanReversionStrategy(BaseStrategy):
         if len(history) < self.parameters["lookback"]:
             return None
 
-        close = bar.get("close")
+        try:
+            closes = list(history.get_column("close"))
+        except (KeyError, IndexError, TypeError):
+            return None
+        if len(closes) < self.parameters["lookback"]:
+            return None
+
+        # Strict contract: decide on the most recently COMPLETED bar only.
+        close = closes[-1]
         if close is None:
             return None
 
