@@ -242,6 +242,15 @@ def live_loop(execute: bool, manage: bool, daemon: bool = False) -> None:
     conn = None
     om = None
     if execute or manage:
+        # Attach-only: the FTMO terminal is ALREADY logged in via its GUI.
+        # settings.py's mt5_account/password target a DIFFERENT account
+        # (MetaQuotes-Demo 5051788806) — letting the connector re-login would
+        # switch accounts or IPC-timeout (-10005). Neutralize so connect() just
+        # attaches to the running FTMO instance.
+        from proxima_ops.config import settings as _cfg
+        _cfg.SETTINGS.mt5_account = 0
+        _cfg.SETTINGS.mt5_password = ""
+        _cfg.SETTINGS.mt5_server = ""
         from proxima_ops.execution.mt5_connector import MT5Connector
         from proxima_ops.execution.order_manager import OrderManager
         conn = MT5Connector()
