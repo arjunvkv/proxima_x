@@ -5823,6 +5823,41 @@ class ProximaDemo:
         else:
             print("[WFV SKIPPED] No validation records collected")
 
+        # Phase 3 — FTMO firm-risk survivability: does this session survive a
+        # real firm challenge (daily loss / max drawdown / max lot / min days)?
+        # Replay-only additive summary — never gates live execution.
+        try:
+            from proxima_ops.risk.firm_risk import FirmRiskEvaluator, FirmRiskConfig
+            from datetime import date as _date
+            completed = None
+            if hasattr(self, 'trade_ledger'):
+                completed = self.trade_ledger.get_completed()
+            if completed:
+                start_balance = float(self._risk_dashboard_balance() if hasattr(self, '_risk_dashboard_balance') else 100000.0)
+                cfg = FirmRiskConfig(initial_balance=start_balance)
+                evaluator = FirmRiskEvaluator(cfg)
+                snapshots = []
+                running = start_balance
+                for t in completed:
+                    pm = float(t.get("profit_money") or 0.0)
+                    running += pm
+                    ts = t.get("entry_time") or t.get("timestamp") or 0
+                    try:
+                        day = _date.fromtimestamp(int(ts))
+                    except Exception:
+                        day = _date.today()
+                    snapshots.append((day, running, float(t.get("volume") or 0.0)))
+                verdict = evaluator.evaluate(snapshots)
+                print(f"[FIRM RISK] {'SURVIVED' if verdict.survived else 'FAILED'} — {verdict.reason or 'all FTMO rules met'}")
+                print(f"  final_equity={verdict.final_equity:.2f} peak={verdict.peak_equity:.2f} "
+                      f"days={verdict.trading_days} max_dd={verdict.max_drawdown_pct_reached:.2%} "
+                      f"max_daily_loss={verdict.max_daily_loss_pct_reached:.2%} "
+                      f"max_lot={verdict.max_lot_seen} target_hit={verdict.target_hit}")
+            else:
+                print("[FIRM RISK SKIPPED] No completed trades in ledger")
+        except ImportError:
+            pass  # firm_risk module unavailable — non-blocking
+
         self.shutdown()
 
     def run_monitor(self):
