@@ -90,6 +90,10 @@ def normalize_tick(raw: Dict[str, Any], *, symbol: Optional[str] = None) -> Dict
     # between the live connector (which stores points) and the archive (price
     # units): downstream always reads a deterministic price-unit spread.
     spread = max(ask - bid, point) if (ask and bid) else 0.0
+    # Deterministic: quantize to point granularity so ask-bid float noise
+    # (e.g. 162.008-162.0 = 0.008000000000009777) cannot leak downstream.
+    if spread:
+        spread = round(spread / point) * point
     # Spread in points: from explicit field, else derived from price spread.
     if raw.get("spread_points") or raw.get("spread_pts"):
         spread_pts = _to_float(raw["spread_points"] if raw.get("spread_points") else raw.get("spread_pts"))
