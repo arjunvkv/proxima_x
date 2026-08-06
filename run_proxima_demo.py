@@ -1322,6 +1322,46 @@ class ProximaDemo:
             ss["spread_p50"] = float(np.median(arr))
             ss["spread_p95"] = float(np.percentile(arr, 95))
 
+    def _dispatch_tick(self, sym: str, tick: dict, eval_data: dict) -> None:
+        """Shared tick-dispatch path for BOTH live and replay modes.
+
+        Phase 1 (apples-to-apples): live and replay previously fed the same
+        engines through two divergent code paths with different field names
+        (``time`` vs ``time_sec`` vs ``timestamp``). This single method is the
+        one place a tick is ingested: tolerant field access accepts the
+        canonical contract (data.canonical_tick) OR any raw producer shape, so
+        a strategy tested on replay consumes byte-identical fields live.
+        """
+        bid = tick.get("bid", 0.0)
+        ask = tick.get("ask", bid)
+        price = ask if ask else bid
+        spread = tick.get("spread", max(ask - bid, 0.0))
+        _ts = tick.get("time_sec") or tick.get("time") or tick.get("timestamp") or 0
+
+        if sym in eval_data:
+            eval_data[sym]["price"] = price
+            eval_data[sym]["spread"] = spread
+            eval_data[sym]["ecdf_rank"] = self._ecdf.compute_and_update(sym, price)
+
+            if sym in self._shadow_set:
+                self._process_shadow_tick(sym, tick)
+                if "regime" not in eval_data.get(sym, {}):
+                    eval_data[sym]["regime"] = self._shadow_regime(sym)
+
+            self._tick_thermo.feed_ticks(sym, bid, ask, _ts)
+            self._rf_gate.feed_tick(sym, bid, ask, _ts, self._warmup_ticks)
+            self._thesis_graph.tick(sym, price)
+            self._validation.on_tick(sym, price, _ts)
+            self._canonical_tpi_buffer.append(sym, bid, ask, _ts)
+            if self._replay_tpi_buf is not None:
+                self._replay_tpi_buf.append(sym, bid, ask, _ts)
+            for _bd_t in list(self._battle_decay._states):
+                _bd_s = self._battle_decay._states[_bd_t]
+                if _bd_s.symbol == sym:
+                    _bd_s.feed_tick(bid, ask, _ts)
+        if sym:
+            self._warmup_ticks += 1
+
     def add_activity(self, msg: str):
         # Ignore verbose startup, mapping, and redundant syncing logs
         ignore_terms = [
@@ -2237,69 +2277,25 @@ class ProximaDemo:
                         logger.info("Replay feed exhausted — shutting down")
                         break
                     sym = tick.get("symbol")
-                    if sym and sym in eval_data:
-                        price = tick.get("ask", tick.get("bid", 0))
-                        eval_data[sym]["price"] = price
-                        eval_data[sym]["spread"] = tick.get("spread", 0)
-                        eval_data[sym]["ecdf_rank"] = self._ecdf.compute_and_update(sym, price)
-                        _ts = tick.get("time_sec", tick.get("timestamp", 0))
-                        self._tick_thermo.feed_ticks(sym, tick.get("bid", 0), tick.get("ask", 0), _ts)
-                        self._rf_gate.feed_tick(sym, tick.get("bid", 0), tick.get("ask", 0), _ts, self._warmup_ticks)
-                        self._thesis_graph.tick(sym, price)
-                        self._validation.on_tick(sym, price, _ts)
-                        self._canonical_tpi_buffer.append(sym, tick.get("bid", 0), tick.get("ask", 0), _ts)
-                        if self._replay_tpi_buf is not None:
-                            self._replay_tpi_buf.append(sym, tick.get("bid", 0), tick.get("ask", 0), _ts)
-                        # Feed tick to BattleDecay states for this symbol
-                        _bd_bid = tick.get("bid", 0)
-                        _bd_ask = tick.get("ask", 0)
-                        _bd_ts = tick.get("time_sec", tick.get("timestamp", 0))
-                        for _bd_t in list(self._battle_decay._states):
-                            _bd_s = self._battle_decay._states[_bd_t]
-                            if _bd_s.symbol == sym:
-                                _bd_s.feed_tick(_bd_bid, _bd_ask, _bd_ts)
-                    if sym:
-                        self._warmup_ticks += 1
+                    self._dispatch_tick(sym, tick, eval_data)
                 else:
                     _tick_start = _wall_perf_counter()
                     for sym in self._execution_symbols:
                         tick = self.tick_source.next_tick(sym) if self.tick_source else (self._tick_cache.get_tick(sym) if self._tick_cache else self.mt5.get_tick(sym))
                         if tick:
-                            price = tick["ask"]
-                            eval_data[sym]["price"] = price
-                            eval_data[sym]["spread"] = tick["spread"]
-                            eval_data[sym]["ecdf_rank"] = self._ecdf.compute_and_update(sym, price)
-                            if sym in self._shadow_set:
-                                self._process_shadow_tick(sym, tick)
-                                if "regime" not in eval_data[sym]:
-                                    eval_data[sym]["regime"] = self._shadow_regime(sym)
-                            self._tick_thermo.feed_ticks(sym, tick["bid"], tick["ask"], tick["time"])
-                            self._rf_gate.feed_tick(sym, tick["bid"], tick["ask"], tick["time"], self._warmup_ticks)
-                            self._thesis_graph.tick(sym, price)
-                            self._validation.on_tick(sym, price, tick.get("time", 0))
-                            self._canonical_tpi_buffer.append(sym, tick["bid"], tick["ask"], tick["time"])
-                            # Feed tick to BattleDecay states for this symbol
-                            _bd_bid = tick.get("bid", 0)
-                            _bd_ask = tick.get("ask", 0)
-                            _bd_ts = tick.get("time", 0)
-                            for _bd_t in list(self._battle_decay._states):
-                                _bd_s = self._battle_decay._states[_bd_t]
-                                if _bd_s.symbol == sym:
-                                    _bd_s.feed_tick(_bd_bid, _bd_ask, _bd_ts)
-                            # Count per-symbol tick for warmup (matching replay mode behavior)
-                            self._warmup_ticks += 1
+                            self._dispatch_tick(sym, tick, eval_data)
                         # Time cap: don't spend more than 15s per loop on tick dispatch
                         if _wall_perf_counter() - _tick_start > 15:
                             break
-                    # Feed ticks to TPI-eligible symbols (skip in acceptance mode for speed)
                     if not ACCEPTANCE_MODE and not getattr(self, '_replay_mode', False):
                         for tpi_sym in TPI_ELIGIBLE:
                             if tpi_sym not in (getattr(self, '_active_symbols', set()) or set()):
                                 tpi_tick = self.tick_source.next_tick(tpi_sym) if self.tick_source else (self._tick_cache.get_tick(tpi_sym) if self._tick_cache else self.mt5.get_tick(tpi_sym))
                                 if tpi_tick:
-                                    self._tick_thermo.feed_ticks(tpi_sym, tpi_tick["bid"], tpi_tick["ask"], tpi_tick["time"])
-                                    self._rf_gate.feed_tick(tpi_sym, tpi_tick["bid"], tpi_tick["ask"], tpi_tick["time"], self._warmup_ticks)
-                                    self._canonical_tpi_buffer.append(tpi_sym, tpi_tick["bid"], tpi_tick["ask"], tpi_tick["time"])
+                                    _tpi_ts = tpi_tick.get("time_sec") or tpi_tick.get("time") or tpi_tick.get("timestamp") or 0
+                                    self._tick_thermo.feed_ticks(tpi_sym, tpi_tick.get("bid", 0), tpi_tick.get("ask", 0), _tpi_ts)
+                                    self._rf_gate.feed_tick(tpi_sym, tpi_tick.get("bid", 0), tpi_tick.get("ask", 0), _tpi_ts, self._warmup_ticks)
+                                    self._canonical_tpi_buffer.append(tpi_sym, tpi_tick.get("bid", 0), tpi_tick.get("ask", 0), _tpi_ts)
                     print(f"[WHILE_DEBUG] After tick dispatch, _warmup_ticks={self._warmup_ticks}, eval_data keys={len(eval_data)}", flush=True)
 
                 # V3/V4 STEP 2+3+4: Ranking Engine + TOP-K + Rotation Stability (execution symbols only)
