@@ -1,0 +1,26 @@
+{
+  "symbol": "EURJPY",
+  "ticks": 2123678,
+  "naive": {
+    "trades": 28897,
+    "win_rate": 0.2554,
+    "gross_pnl": -1.14,
+    "max_drawdown": 0.0001,
+    "profit_factor": 0.987,
+    "net_pnl": -1.14,
+    "commission": 0.0
+  },
+  "realistic": {
+    "trades": 28896,
+    "win_rate": 0.0405,
+    "gross_pnl": -621045.34,
+    "max_drawdown": 6.2105,
+    "profit_factor": 0.042,
+    "commission": 20227.2,
+    "net_pnl": -621045.34,
+    "firm_verdict": false,
+    "firm_reason": "MAX_DRAWDOWN"
+  },
+  "realistic_over_naive": null,
+  "interpretation": "no naive edge (naive PnL<0); costs only amplify the loss"
+}
