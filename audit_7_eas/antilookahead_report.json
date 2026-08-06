@@ -1,0 +1,95 @@
+{
+  "per_strategy": {
+    "ultra_monster": {
+      "deterministic": true,
+      "n_trades": 9766,
+      "entry_fill_violations": [],
+      "entry_fill_ok": true,
+      "shuffle": {
+        "strategy": "ultra_monster",
+        "true_net": -65686.08,
+        "true_n": 9766,
+        "shuffled_net": 103102.7,
+        "shuffled_n": 8439,
+        "purple_passed": false,
+        "degradation_ratio": -1.57
+      }
+    },
+    "tokyo_h0": {
+      "deterministic": true,
+      "n_trades": 720,
+      "entry_fill_violations": [],
+      "entry_fill_ok": true,
+      "shuffle": {
+        "strategy": "tokyo_h0",
+        "true_net": 77662.4,
+        "true_n": 720,
+        "shuffled_net": 257.46,
+        "shuffled_n": 118,
+        "purple_passed": true,
+        "degradation_ratio": 0.003
+      }
+    },
+    "cppf": {
+      "deterministic": true,
+      "n_trades": 764,
+      "entry_fill_violations": [],
+      "entry_fill_ok": true,
+      "shuffle": {
+        "strategy": "cppf",
+        "true_net": -78322.0,
+        "true_n": 764,
+        "shuffled_net": 0.0,
+        "shuffled_n": 0,
+        "purple_passed": true,
+        "degradation_ratio": -0.0
+      }
+    },
+    "cpmc": {
+      "deterministic": true,
+      "n_trades": 299,
+      "entry_fill_violations": [],
+      "entry_fill_ok": true,
+      "shuffle": {
+        "strategy": "cpmc",
+        "true_net": -20851.0,
+        "true_n": 299,
+        "shuffled_net": 0.0,
+        "shuffled_n": 0,
+        "purple_passed": true,
+        "degradation_ratio": -0.0
+      }
+    },
+    "ny_h21": {
+      "deterministic": true,
+      "n_trades": 231,
+      "entry_fill_violations": [],
+      "entry_fill_ok": true,
+      "shuffle": {
+        "strategy": "ny_h21",
+        "true_net": -661.18,
+        "true_n": 231,
+        "shuffled_net": 101.19,
+        "shuffled_n": 4,
+        "purple_passed": false,
+        "degradation_ratio": -0.153
+      }
+    },
+    "msv_asian": {
+      "deterministic": true,
+      "n_trades": 16294,
+      "entry_fill_violations": [],
+      "entry_fill_ok": true,
+      "shuffle": {
+        "strategy": "msv_asian",
+        "true_net": 31166.09,
+        "true_n": 16294,
+        "shuffled_net": 1721349.63,
+        "shuffled_n": 47795,
+        "purple_passed": false,
+        "degradation_ratio": 55.231
+      }
+    }
+  },
+  "all_hard_checks_pass": true
+}

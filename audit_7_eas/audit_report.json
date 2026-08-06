@@ -1,0 +1,336 @@
+{
+  "ultra_monster": {
+    "strategy": "ultra_monster",
+    "pairs": 9,
+    "trades_total": 9766,
+    "train": {
+      "trades": 6836,
+      "win_rate": 0.4042,
+      "gross_pnl": -116.95,
+      "net_pnl": -7294.75,
+      "commission": 7177.8,
+      "profit_factor": 0.9936,
+      "max_drawdown": 7339.22,
+      "expectancy": -1.07,
+      "gate": {
+        "passed": false,
+        "checks": {
+          "PF > 1.2": false,
+          "net > 0": false,
+          "expectancy > $15/lot ($-7.13/lot)": false,
+          "DD below 20% of $100000 ($20000)": true,
+          "trades in [20,20000]": true
+        },
+        "reject": [
+          "PF > 1.2",
+          "net > 0",
+          "expectancy > $15/lot ($-7.13/lot)"
+        ],
+        "expectancy_per_lot": -7.13
+      }
+    },
+    "val": {
+      "trades": 2930,
+      "win_rate": 0.4294,
+      "gross_pnl": 518.33,
+      "net_pnl": -2558.17,
+      "commission": 3076.5,
+      "profit_factor": 1.0414,
+      "max_drawdown": 2707.28,
+      "expectancy": -0.87,
+      "gate": {
+        "passed": false,
+        "checks": {
+          "PF > 1.2": false,
+          "net > 0": false,
+          "expectancy > $15/lot ($-5.80/lot)": false,
+          "DD below 20% of $100000 ($20000)": true,
+          "trades in [20,20000]": true
+        },
+        "reject": [
+          "PF > 1.2",
+          "net > 0",
+          "expectancy > $15/lot ($-5.80/lot)"
+        ],
+        "expectancy_per_lot": -5.8
+      }
+    },
+    "val_frac": 0.3
+  },
+  "tokyo_h0": {
+    "strategy": "tokyo_h0",
+    "pairs": 18,
+    "trades_total": 720,
+    "train": {
+      "trades": 503,
+      "win_rate": 0.9006,
+      "gross_pnl": 8637.6,
+      "net_pnl": 8109.45,
+      "commission": 528.15,
+      "profit_factor": 8.9782,
+      "max_drawdown": 107.1,
+      "expectancy": 16.12,
+      "gate": {
+        "passed": true,
+        "checks": {
+          "PF > 1.2": true,
+          "net > 0": true,
+          "expectancy > $15/lot ($107.47/lot)": true,
+          "DD below 20% of $100000 ($20000)": true,
+          "trades in [20,20000]": true
+        },
+        "reject": [],
+        "expectancy_per_lot": 107.47
+      }
+    },
+    "val": {
+      "trades": 217,
+      "win_rate": 0.8986,
+      "gross_pnl": 3767.76,
+      "net_pnl": 3539.91,
+      "commission": 227.85,
+      "profit_factor": 9.1761,
+      "max_drawdown": 207.13,
+      "expectancy": 16.31,
+      "gate": {
+        "passed": true,
+        "checks": {
+          "PF > 1.2": true,
+          "net > 0": true,
+          "expectancy > $15/lot ($108.73/lot)": true,
+          "DD below 20% of $100000 ($20000)": true,
+          "trades in [20,20000]": true
+        },
+        "reject": [],
+        "expectancy_per_lot": 108.73
+      }
+    },
+    "val_frac": 0.3014
+  },
+  "cppf": {
+    "strategy": "cppf",
+    "pairs": 5,
+    "trades_total": 764,
+    "train": {
+      "trades": 534,
+      "win_rate": 0.2547,
+      "gross_pnl": -9437.25,
+      "net_pnl": -9997.95,
+      "commission": 560.7,
+      "profit_factor": 0.3086,
+      "max_drawdown": 10095.15,
+      "expectancy": -18.72,
+      "gate": {
+        "passed": false,
+        "checks": {
+          "PF > 1.2": false,
+          "net > 0": false,
+          "expectancy > $15/lot ($-124.80/lot)": false,
+          "DD below 20% of $100000 ($20000)": true,
+          "trades in [20,20000]": true
+        },
+        "reject": [
+          "PF > 1.2",
+          "net > 0",
+          "expectancy > $15/lot ($-124.80/lot)"
+        ],
+        "expectancy_per_lot": -124.8
+      }
+    },
+    "val": {
+      "trades": 230,
+      "win_rate": 0.3522,
+      "gross_pnl": -1508.85,
+      "net_pnl": -1750.35,
+      "commission": 241.5,
+      "profit_factor": 0.6069,
+      "max_drawdown": 1811.1,
+      "expectancy": -7.61,
+      "gate": {
+        "passed": false,
+        "checks": {
+          "PF > 1.2": false,
+          "net > 0": false,
+          "expectancy > $15/lot ($-50.73/lot)": false,
+          "DD below 20% of $100000 ($20000)": true,
+          "trades in [20,20000]": true
+        },
+        "reject": [
+          "PF > 1.2",
+          "net > 0",
+          "expectancy > $15/lot ($-50.73/lot)"
+        ],
+        "expectancy_per_lot": -50.73
+      }
+    },
+    "val_frac": 0.301
+  },
+  "cpmc": {
+    "strategy": "cpmc",
+    "pairs": 2,
+    "trades_total": 299,
+    "train": {
+      "trades": 209,
+      "win_rate": 0.3397,
+      "gross_pnl": -1702.5,
+      "net_pnl": -1921.95,
+      "commission": 219.45,
+      "profit_factor": 0.5418,
+      "max_drawdown": 2156.85,
+      "expectancy": -9.2,
+      "gate": {
+        "passed": false,
+        "checks": {
+          "PF > 1.2": false,
+          "net > 0": false,
+          "expectancy > $15/lot ($-61.33/lot)": false,
+          "DD below 20% of $100000 ($20000)": true,
+          "trades in [20,20000]": true
+        },
+        "reject": [
+          "PF > 1.2",
+          "net > 0",
+          "expectancy > $15/lot ($-61.33/lot)"
+        ],
+        "expectancy_per_lot": -61.33
+      }
+    },
+    "val": {
+      "trades": 90,
+      "win_rate": 0.3556,
+      "gross_pnl": -1111.2,
+      "net_pnl": -1205.7,
+      "commission": 94.5,
+      "profit_factor": 0.4203,
+      "max_drawdown": 1218.6,
+      "expectancy": -13.4,
+      "gate": {
+        "passed": false,
+        "checks": {
+          "PF > 1.2": false,
+          "net > 0": false,
+          "expectancy > $15/lot ($-89.33/lot)": false,
+          "DD below 20% of $100000 ($20000)": true,
+          "trades in [20,20000]": true
+        },
+        "reject": [
+          "PF > 1.2",
+          "net > 0",
+          "expectancy > $15/lot ($-89.33/lot)"
+        ],
+        "expectancy_per_lot": -89.33
+      }
+    },
+    "val_frac": 0.301
+  },
+  "ny_h21": {
+    "strategy": "ny_h21",
+    "pairs": 2,
+    "trades_total": 231,
+    "train": {
+      "trades": 161,
+      "win_rate": 0.4658,
+      "gross_pnl": 108.13,
+      "net_pnl": -173.62,
+      "commission": 281.75,
+      "profit_factor": 1.1189,
+      "max_drawdown": 284.52,
+      "expectancy": -1.08,
+      "gate": {
+        "passed": false,
+        "checks": {
+          "PF > 1.2": false,
+          "net > 0": false,
+          "expectancy > $15/lot ($-4.32/lot)": false,
+          "DD below 20% of $100000 ($20000)": true,
+          "trades in [20,20000]": true
+        },
+        "reject": [
+          "PF > 1.2",
+          "net > 0",
+          "expectancy > $15/lot ($-4.32/lot)"
+        ],
+        "expectancy_per_lot": -4.32
+      }
+    },
+    "val": {
+      "trades": 70,
+      "win_rate": 0.4714,
+      "gross_pnl": 130.82,
+      "net_pnl": 8.32,
+      "commission": 122.5,
+      "profit_factor": 1.4536,
+      "max_drawdown": 67.43,
+      "expectancy": 0.12,
+      "gate": {
+        "passed": false,
+        "checks": {
+          "PF > 1.2": true,
+          "net > 0": true,
+          "expectancy > $15/lot ($0.48/lot)": false,
+          "DD below 20% of $100000 ($20000)": true,
+          "trades in [20,20000]": true
+        },
+        "reject": [
+          "expectancy > $15/lot ($0.48/lot)"
+        ],
+        "expectancy_per_lot": 0.48
+      }
+    },
+    "val_frac": 0.303
+  },
+  "msv_asian": {
+    "strategy": "msv_asian",
+    "pairs": 18,
+    "trades_total": 16294,
+    "train": {
+      "trades": 11405,
+      "win_rate": 0.4801,
+      "gross_pnl": 15296.9,
+      "net_pnl": 926.6,
+      "commission": 14370.3,
+      "profit_factor": 1.2679,
+      "max_drawdown": 2498.64,
+      "expectancy": 0.08,
+      "gate": {
+        "passed": false,
+        "checks": {
+          "PF > 1.2": true,
+          "net > 0": true,
+          "expectancy > $15/lot ($0.44/lot)": false,
+          "DD below 20% of $100000 ($20000)": true,
+          "trades in [20,20000]": true
+        },
+        "reject": [
+          "expectancy > $15/lot ($0.44/lot)"
+        ],
+        "expectancy_per_lot": 0.44
+      }
+    },
+    "val": {
+      "trades": 4889,
+      "win_rate": 0.5046,
+      "gross_pnl": 10843.44,
+      "net_pnl": 4683.3,
+      "commission": 6160.14,
+      "profit_factor": 1.339,
+      "max_drawdown": 860.94,
+      "expectancy": 0.96,
+      "gate": {
+        "passed": false,
+        "checks": {
+          "PF > 1.2": true,
+          "net > 0": true,
+          "expectancy > $15/lot ($5.33/lot)": false,
+          "DD below 20% of $100000 ($20000)": true,
+          "trades in [20,20000]": true
+        },
+        "reject": [
+          "expectancy > $15/lot ($5.33/lot)"
+        ],
+        "expectancy_per_lot": 5.33
+      }
+    },
+    "val_frac": 0.3
+  }
+}

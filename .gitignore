@@ -224,5 +224,9 @@ threshold_reachability_report.json
 ab_validation_divergences.json
 ab_validation_report.txt
 live_outcome_audit_results.json
+# ---- EA audit scratch ----
+audit_7_eas/market/
+audit_7_eas/__pycache__/
+audit_7_eas/audit_run.log
 phase5_report.md
 
