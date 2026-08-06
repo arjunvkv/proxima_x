@@ -13,10 +13,18 @@ LOSS_STREAK_HALT_HOURS = 24
 
 
 class RiskGovernor:
-    def __init__(self):
+    def __init__(self, clock=None):
+        # Optional injectable clock for the day-boundary key. When replaying
+        # historical ticks, pass a ReplayClock so the daily-loss counter resets
+        # on the TAPE's trading day, not the machine's wall-clock day (FirmRisk
+        # alignment gap C5). None = legacy wall-clock behavior.
+        self._clock = clock
         self._daily_loss: float = 0.0
         self._daily_unrealized: float = 0.0
-        self._today: str = date.today().isoformat()
+        # Lazy day key: None until the first check() call. This prevents an
+        # epoch-start ReplayClock from wiping the first day's accrued loss
+        # on the very first check (init would snapshot 1970-01-01).
+        self._today: Optional[str] = None
         self._loss_streak: int = 0
         self._peak_equity: float = 0.0
         self._start_equity: float = 0.0
@@ -45,9 +53,17 @@ class RiskGovernor:
             self._peak_equity = equity
 
     def check(self) -> dict:
-        now = datetime.now()
-        today_str = date.today().isoformat()
-        if today_str != self._today:
+        # day boundary from the injected clock (replay day) or wall clock.
+        if self._clock is not None and getattr(self._clock, 'now', None):
+            now = self._clock.now()
+            today_str = now.date().isoformat()
+        else:
+            now = datetime.now()
+            today_str = date.today().isoformat()
+        if self._today is None:
+            # first observation: adopt the key, never reset.
+            self._today = today_str
+        elif today_str != self._today:
             self._daily_loss = 0.0
             self._daily_unrealized = 0.0
             self._today = today_str
