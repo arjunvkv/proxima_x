@@ -1333,22 +1333,24 @@ class ProximaDemo:
         """
         pts = tick.get("spread_pts") or tick.get("spread_points")
         if not pts:
-            raw = tick.get("spread", 0)
-            if raw > 1:
-                pts = raw
+            # bid/ask are price units in EVERY tick shape — derive points from
+            # them first (unambiguous). The raw `spread` field is ambiguous:
+            # live connector stores POINTS, replay archive stores PRICE units,
+            # and a 1-point spread (tight EURUSD) is indistinguishable by
+            # magnitude. Only fall back to raw spread when bid/ask are absent.
+            point = tick.get("point") or 1e-5
+            bid = tick.get("bid", 0.0)
+            ask = tick.get("ask", 0.0)
+            if bid or ask:
+                pts = round(max(ask - bid, 0.0) / max(point, 1e-12))
             else:
-                point = tick.get("point") or 1e-5
-                if raw:
+                raw = tick.get("spread", 0)
+                if raw > 1:
+                    pts = raw
+                elif raw:
                     pts = int(raw / max(point, 1e-12))
                 else:
-                    # No explicit spread: derive from bid/ask (old default),
-                    # then convert to points so units stay consistent.
-                    bid = tick.get("bid", 0.0)
-                    ask = tick.get("ask", 0.0)
-                    if bid or ask:
-                        pts = int(max(ask - bid, 0.0) / max(point, 1e-12))
-                    else:
-                        pts = 0
+                    pts = 0
         return float(pts or 0)
 
     def _dispatch_tick(self, sym: str, tick: dict, eval_data: dict) -> None:

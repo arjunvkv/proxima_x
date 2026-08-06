@@ -58,25 +58,54 @@ class FTMOTickIngester:
         if ticks is None or len(ticks) == 0:
             logger.warning(f"[FTMO_INGEST] No ticks for {symbol} {start}..{end}")
             return []
+        # Broker truth for point (e.g. EURJPY point=0.001 / 3-digit). Critical so
+        # replayed spread_pts resolves correctly for non-5-digit symbols.
+        point, digits = 1e-5, 5
+        try:
+            si = self._mt5.symbol_info(symbol)
+            if si is not None:
+                point = float(si.point) if getattr(si, "point", 0) else 1e-5
+                digits = int(getattr(si, "digits", 5) or 5)
+        except Exception:
+            pass
         out = []
         for t in ticks:
-            time_msc = int(getattr(t, "time_msc", 0))
-            bid = float(getattr(t, "bid", 0.0))
-            ask = float(getattr(t, "ask", 0.0))
+            time_msc = int(self._field(t, "time_msc", 0))
+            bid = float(self._field(t, "bid", 0.0))
+            ask = float(self._field(t, "ask", 0.0))
             out.append({
                 "timestamp_ns": time_msc * 1_000_000,   # ms -> ns
                 "time_sec": int(time_msc // 1000),
                 "time_msc": time_msc,
                 "bid": bid,
+                "point": point,
+                "digits": digits,
                 "ask": ask,
                 "spread": round(ask - bid, 8),          # canonical: price units
-                "last": float(getattr(t, "last", 0.0)),
-                "volume": float(getattr(t, "volume", 0.0)),
-                "volume_real": float(getattr(t, "volume_real", 0.0)),
-                "flags": int(getattr(t, "flags", 0)),
+                "last": float(self._field(t, "last", 0.0)),
+                "volume": float(self._field(t, "volume", 0.0)),
+                "volume_real": float(self._field(t, "volume_real", 0.0)),
+                "flags": int(self._field(t, "flags", 0)),
                 "symbol": symbol,
             })
         return out
+
+    @staticmethod
+    def _field(rec, name: str, default):
+        """Read a field from a numpy structured-array record OR a plain object.
+
+        MT5 copy_ticks_range returns numpy voids, where `rec.flags` collides
+        with numpy's own array-.flags attribute (memory flags), so getattr is
+        wrong for numpy records. Field indexing `rec[name]` is correct there,
+        but getattr is needed for plain objects. Try both.
+        """
+        try:
+            return rec[name]
+        except (KeyError, IndexError, TypeError, ValueError):
+            try:
+                return getattr(rec, name, default)
+            except Exception:
+                return default
 
     def ingest_range(self, symbol: str, start: datetime, end: datetime,
                      copy_all: bool = True) -> int:

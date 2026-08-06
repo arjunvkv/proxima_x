@@ -22,6 +22,8 @@ TICK_SCHEMA = pa.schema([
     pa.field("volume_real", pa.float64()),
     pa.field("flags", pa.int32()),
     pa.field("symbol", pa.utf8()),
+    pa.field("point", pa.float64()),
+    pa.field("digits", pa.int32()),
 ])
 
 BASE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data", "ticks")
@@ -44,6 +46,10 @@ class TickArchive:
         enriched = []
         for t in ticks:
             t["spread"] = t.get("spread", t.get("ask", 0) - t.get("bid", 0))
+            # Backfill point/digits for legacy writers (default 5-digit);
+            # real ingester rows carry broker truth (e.g. EURJPY point=0.001).
+            t["point"] = t.get("point") or 1e-5
+            t["digits"] = int(t.get("digits") or 5)
             enriched.append(t)
         # Add per-second sequence counter to preserve sub-second ticks
         from collections import Counter
@@ -77,6 +83,7 @@ class TickArchive:
             "bid": pl.Float64, "ask": pl.Float64, "spread": pl.Float64, "last": pl.Float64,
             "volume": pl.Float64, "volume_real": pl.Float64,
             "flags": pl.Int32, "symbol": pl.Utf8, "_seq": pl.Int64,
+            "point": pl.Float64, "digits": pl.Int32,
         })
         if existing is not None:
             dedup_cols = ["timestamp_ns", "symbol"]
@@ -98,7 +105,7 @@ class TickArchive:
         if not paths:
             return pl.LazyFrame()
         df = pl.scan_parquet(paths)
-        if "spread" not in df.columns:
+        if "spread" not in df.collect_schema().names():
             df = df.with_columns((pl.col("ask") - pl.col("bid")).alias("spread"))
         return df
 

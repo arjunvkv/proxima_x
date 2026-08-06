@@ -199,7 +199,8 @@ class MT5Connector:
                     f"time={tick.time} point={point} select_ok={select_ok}"
                 )
                 return {"symbol": broker_symbol, "bid": tick.bid, "ask": tick.ask,
-                        "spread": spread_pts, "time": tick.time}
+                        "spread": spread_pts, "time": tick.time,
+                        "point": point, "digits": int(sym_info.digits)}
 
             # Tick is None — log comprehensive diagnostics
             last_err = mt5.last_error()
