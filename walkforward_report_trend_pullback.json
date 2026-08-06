@@ -11,27 +11,26 @@
   },
   "train": {
     "metrics": {
-      "trades": 35,
-      "win_rate": 0.4857,
-      "gross_pnl": 12.58,
-      "net_pnl": 12.58,
-      "profit_factor": 1.0182,
-      "max_drawdown": 0.0031,
-      "commission": 24.5,
-      "expectancy": 0.36
+      "trades": 87,
+      "win_rate": 0.3103,
+      "gross_pnl": 137.7,
+      "net_pnl": 137.7,
+      "profit_factor": 1.7042,
+      "max_drawdown": 0.0013,
+      "commission": 60.9,
+      "expectancy": 1.58
     },
     "gate": {
       "window": "train",
       "passed": false,
       "checks": {
-        "realistic_pf > 1.20": false,
+        "realistic_pf > 1.20": true,
         "net_pnl > 0": true,
         "expectancy $/trade > 10.0": false,
         "max_drawdown < 5%": true,
         "trades in [20,400]": true
       },
       "reject_reason": [
-        "realistic_pf > 1.20",
         "expectancy $/trade > 10.0"
       ]
     },
@@ -43,31 +42,33 @@
   "validation": null,
   "accepted": false,
   "notes": [],
+  "determinism": {
+    "train_tick_hash": "8d6e1026c16f4850",
+    "OK": true
+  },
   "val": {
     "metrics": {
-      "trades": 15,
-      "win_rate": 0.6,
-      "gross_pnl": 27.33,
-      "net_pnl": 27.33,
-      "profit_factor": 1.0889,
-      "max_drawdown": 0.0018,
-      "commission": 10.5,
-      "expectancy": 1.82
+      "trades": 35,
+      "win_rate": 0.5429,
+      "gross_pnl": 181.89,
+      "net_pnl": 181.89,
+      "profit_factor": 7.4392,
+      "max_drawdown": 0.0001,
+      "commission": 24.5,
+      "expectancy": 5.2
     },
     "gate": {
       "window": "val",
       "passed": false,
       "checks": {
-        "realistic_pf > 1.20": false,
+        "realistic_pf > 1.20": true,
         "net_pnl > 0": true,
         "expectancy $/trade > 10.0": false,
         "max_drawdown < 5%": true,
-        "trades in [20,400]": false
+        "trades in [20,400]": true
       },
       "reject_reason": [
-        "realistic_pf > 1.20",
-        "expectancy $/trade > 10.0",
-        "trades in [20,400]"
+        "expectancy $/trade > 10.0"
       ]
     },
     "window_days": 5,

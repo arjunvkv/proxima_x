@@ -89,20 +89,49 @@ def ftmo_day(ts_sec: float):
 
 
 # --- ordering note: load_range may return a lazy union; we sort by time ---
+# DETERMINISM CONTRACT: row order after dedup must be stable. polars
+# .unique() without maintain_order=True shuffles row order across threads
+# (proven: same code+tape gave trade counts 35/43/57/60 before this fix).
+# Keep the sort->unique(keep first, maintain_order)->sort sequence so the
+# canonical tick stream is byte-reproducible. (see discover_7_of_gpt_round_3)
 def load_ticks(window_start: datetime, window_end: datetime) -> list[dict]:
-    """Return real ticks in [start, end) sorted by timestamp_ns, deduped."""
+    """Return real ticks in [start, end) sorted by timestamp_ns, deduped.
+
+    Deterministic by construction: sort, dedup-keeping-first-with-order,
+    then re-sort. Same code + same tape == identical tick list & order.
+    """
     ta = TickArchive()
     lf = ta.load_range(SYMBOL, window_start, window_end)
     if lf is None or lf.collect_schema().names() == []:
         return []
     df = (lf
           .sort("timestamp_ns")
-          .unique(subset=["timestamp_ns"])
+          .unique(subset=["timestamp_ns"], maintain_order=True)
+          .sort("timestamp_ns")
           .collect())
     out = df.to_dicts()
     for t in out:
         t["mid"] = (t.get("bid", 0.0) + t.get("ask", 0.0)) * 0.5
     return out
+
+
+def tick_hash(ticks: list[dict]) -> str:
+    """Content-addressed digest of the canonical tick stream (order-sensitive)."""
+    import hashlib
+    payload = [(t["timestamp_ns"], t.get("bid", 0.0), t.get("ask", 0.0))
+               for t in ticks]
+    return hashlib.sha256(repr(payload).encode()).hexdigest()
+
+
+def assert_deterministic(ticks_a: list[dict], ticks_b: list[dict], label: str = ""):
+    """Fail loudly if two loads of the same window differ (the G3 regression)."""
+    if len(ticks_a) != len(ticks_b):
+        raise AssertionError(f"{label}: tick COUNT changed {len(ticks_a)} -> {len(ticks_b)}")
+    ha, hb = tick_hash(ticks_a), tick_hash(ticks_b)
+    if ha != hb:
+        raise AssertionError(f"{label}: tick stream NON-deterministic "
+                             f"(hash {ha[:8]} != {hb[:8]})")
+    return ha
 
 
 def build_signals(ticks: list[dict]) -> dict[int, str]:
@@ -259,6 +288,10 @@ def main():
     train = load_ticks(TRAIN_START, TRAIN_END)
     val = load_ticks(VAL_START, VAL_END)
     print(f"[P9:{strat}] train ticks: {len(train)}  val ticks: {len(val)}")
+    # DETERMINISM GUARD: reload train and hash-check equality, so the G3
+    # tick-order nondeterminism can never silently corrupt a report again.
+    train_hash = assert_deterministic(train, load_ticks(TRAIN_START, TRAIN_END), "train")
+    print(f"[P9:{strat}] train_tick_hash={train_hash[:16]}... (deterministic ✓)")
     report = {
         "symbol": SYMBOL,
         "strategy": STRATEGIES[strat]["label"],
@@ -267,6 +300,7 @@ def main():
                  "max_trades": GATE_MAX_TRADES, "max_dd": GATE_MAX_DD,
                  "min_expectancy": GATE_MIN_EXPECTANCY},
         "train": None, "validation": None, "accepted": False, "notes": [],
+        "determinism": {"train_tick_hash": train_hash[:16], "OK": True},
     }
     for name, ticks, start, end, extra in [
         ("train", train, TRAIN_START, TRAIN_END, "in-sample bullet"),
