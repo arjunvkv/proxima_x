@@ -67,8 +67,9 @@ def normalize_tick(raw: Dict[str, Any], *, symbol: Optional[str] = None) -> Dict
         ts_ns = _to_int(raw["time_msc"]) * 1_000_000
     if not ts_ns and raw.get("time"):
         base = _to_int(raw["time"])
-        # If time looks like milliseconds (13 digits) vs seconds (10 digits)
-        ts_ns = base * 1_000_000 if base < 100_000_000_00 else base * 1_000
+        # If time looks like milliseconds (13 digits) vs seconds (10 digits):
+        # seconds -> ns needs x1e9; milliseconds -> ns needs x1e6.
+        ts_ns = base * 1_000_000_000 if base < 100_000_000_00 else base * 1_000_000
     if not ts_ns:
         ts_ns = 0
 
