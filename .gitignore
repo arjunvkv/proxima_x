@@ -76,7 +76,11 @@ ci/
 docs/
 tools/
 ml/
+!ml/
+!ml/*.py
 utils/
+!utils/
+!utils/*.py
 !mvs/utils/
 !mvs/utils/*.py
 paper_trading/

@@ -3,6 +3,7 @@ Telegram Bot Control Layer for Proxima Ops.
 
 python-telegram-bot v22+ required: pip install python-telegram-bot
 """
+from __future__ import annotations
 import logging
 import asyncio
 from typing import Optional, TYPE_CHECKING
