@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from data.execution_cost import ExecutionCost
+from core.execution.execution_event import ExecutionEvent
 
 logger = logging.getLogger("proxima.adapters.broker")
 
@@ -92,7 +93,8 @@ class MT5Broker(Broker):
 class PaperBroker(Broker):
     def __init__(self, tick_source=None, clock=None, execution_model=None,
                      initial_balance: float = 100000.0, execution_cost=None,
-                     tick_value_map: Optional[dict] = None):
+                     tick_value_map: Optional[dict] = None,
+                     execution_event_sink=None):
         self._tick_source = tick_source
         self._clock = clock
         self._execution = execution_model
@@ -119,6 +121,10 @@ class PaperBroker(Broker):
         self._slippage_points: dict[str, float] = {}
         self._bar_buffers: dict[str, list[dict]] = {}
         self._tick_buffers_for_bars: dict[str, list[dict]] = {}
+        # optional ExecutionEvent sink: when set, OPEN/CLOSE events are
+        # emitted so a live-shadow comparer can diff paper vs MT5 fills 1:1.
+        # None (default) = identical legacy behaviour.
+        self._execution_event_sink = execution_event_sink
 
     def _get_broker_symbol(self, symbol: str) -> str:
         return self._symbol_map.get(symbol.upper(), symbol)
@@ -219,6 +225,13 @@ class PaperBroker(Broker):
     def _point(self, symbol: str) -> float:
         return 0.01 if "JPY" in symbol else 0.0001
 
+    def _emit_execution(self, event):
+        """Forward an ExecutionEvent to the optional sink (no-op if unset)."""
+        if self._execution_event_sink is not None:
+            try:
+                self._execution_event_sink(event)
+            except Exception as e:
+                logger.warning(f"PaperBroker: execution sink raised: {e}")
     def place_order(self, symbol: str, order_type: str, volume: float,
                     price: float, sl: float = 0.0, tp: float = 0.0,
                     comment: str = "PROXIMA") -> Optional[dict]:
@@ -230,11 +243,12 @@ class PaperBroker(Broker):
         broker_sym = self._get_broker_symbol(symbol)
         fill_price = tick["ask"] if order_type.upper() == "BUY" else tick["bid"]
 
+        latency_ms = 0.0
         if self._execution:
             fill_price = self._execution.apply_slippage(symbol, fill_price, order_type)
-            latency = self._execution.sample_latency()
-            if self._clock and latency > 0:
-                self._clock.sleep(latency / 1000.0)
+            latency_ms = self._execution.sample_latency() or 0.0
+            if self._clock and latency_ms > 0:
+                self._clock.sleep(latency_ms / 1000.0)
         else:
             # No ExecutionModel provided — apply shared cost-model slippage so
             # friction parity holds even without a replay execution model.
@@ -263,6 +277,15 @@ class PaperBroker(Broker):
             "slippage": fill_price - (tick["ask"] if order_type.upper() == "BUY" else tick["bid"]),
         }
 
+        # emit OPEN execution event to the sink (optional).
+        self._emit_execution(ExecutionEvent(
+            event_type="OPEN", ticket=ticket, symbol=symbol, side=order_type.upper(),
+            volume=volume, timestamp=now, bid=tick.get("bid", 0.0), ask=tick.get("ask", 0.0),
+            requested_price=price, fill_price=fill_price, latency_ms=latency_ms,
+            slippage_points=fill_price - (tick["ask"] if order_type.upper() == "BUY" else tick["bid"]),
+            status="FILLED",
+            commission=(-commission),  # signed, MT5-shaped (neg = cost)
+        ))
         logger.info(f"PaperBroker: {order_type} {volume} {symbol} @ {fill_price} ticket={ticket}")
         if self._ledger is not None:
             self._ledger.add_trade({
@@ -361,6 +384,14 @@ class PaperBroker(Broker):
                 "phase": "close",
             })
 
+        # emit CLOSE execution event to the sink (optional).
+        self._emit_execution(ExecutionEvent(
+            event_type="CLOSE", ticket=ticket, symbol=pos["symbol"], side=pos["side"],
+            volume=pos["volume"], timestamp=now, bid=tick.get("bid", 0.0), ask=tick.get("ask", 0.0),
+            requested_price=pos["entry"], fill_price=close_price,
+            gross_profit=gross_profit_money, commission=(-total_commission), swap=0.0,
+            net_profit=profit_money,
+        ))
         logger.info(f"PaperBroker: Close {ticket} {pos['symbol']} profit={profit_money:.2f}")
         return True
 

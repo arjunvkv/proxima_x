@@ -5,6 +5,7 @@ from datetime import datetime
 import time as _time
 from proxima_ops.config.settings import SETTINGS
 from proxima_ops.execution.magic_resolver import generate_magic, infer_strategy_from_comment
+from core.execution.execution_event import ExecutionEvent
 
 logger = logging.getLogger("proxima_ops.mt5")
 
@@ -17,12 +18,15 @@ except ImportError:
 
 
 class MT5Connector:
-    def __init__(self):
+    def __init__(self, execution_event_sink=None):
         self._connected = False
         self._account_info = None
         self._last_error = None
         self._reconnect_attempts = 0
         self._max_reconnect_attempts = 10
+        # optional ExecutionEvent sink; emits OPEN/CLOSE after confirmed fills
+        # so a live-shadow comparer diffs MT5 fills vs PaperBroker 1:1.
+        self._execution_event_sink = execution_event_sink
         self._reconnect_delay_s = 5
 
     @property
@@ -330,6 +334,14 @@ class MT5Connector:
         # Most forex brokers default to IOC; RETURN causes retcode 10018
         return mt5.ORDER_FILLING_IOC
 
+    def _emit_execution(self, event):
+        """Forward an ExecutionEvent to the optional sink (no-op if unset)."""
+        if self._execution_event_sink is not None:
+            try:
+                self._execution_event_sink(event)
+            except Exception as e:
+                logger.error(f"MT5Connector: execution sink raised: {e}")
+
     def place_order(self, symbol: str, order_type: str, volume: float,
                     price: float, sl: float = 0.0, tp: float = 0.0,
                     comment: str = "PROXIMA_V2") -> Optional[dict]:
@@ -361,6 +373,22 @@ class MT5Connector:
             self._last_error = f"Order failed for {symbol}: retcode={result.retcode}, comment={result.comment}"
             logger.error(self._last_error)
             return None
+        # emit OPEN execution event (fields known at confirm; tick quote for
+        # bid/ask comes from the current market snapshot).
+        try:
+            _tic = mt5.symbol_info_tick(symbol)
+            _bid = _tic.bid if _tic is not None else None
+            _ask = _tic.ask if _tic is not None else None
+        except Exception:
+            _bid = _ask = None
+        self._emit_execution(ExecutionEvent(
+            event_type="OPEN", ticket=result.order, symbol=symbol,
+            side=order_type.upper(), volume=volume, timestamp=time.time(),
+            bid=_bid if _bid is not None else float(price),
+            ask=_ask if _ask is not None else float(price),
+            requested_price=float(price), fill_price=float(price),
+            status="FILLED", extra={"retcode": int(result.retcode)},
+        ))
         return {"ticket": result.order, "price": price,
                 "volume": volume, "type": order_type, "symbol": symbol}
 
@@ -408,6 +436,15 @@ class MT5Connector:
             self._last_error = f"Close order failed for ticket {ticket}: retcode={retcode} comment={rcomment} last_error={err_detail}"
             logger.error(f"[CLOSE_FAIL] ticket={ticket} sym={symbol} vol={pos.volume} type={mt5_type} price={price} deviation=50 retcode={retcode} comment={rcomment} req={request}")
             return False
+        # emit CLOSE execution event after confirmed close.
+        self._emit_execution(ExecutionEvent(
+            event_type="CLOSE", ticket=ticket, symbol=symbol, side=close_type,
+            volume=pos.volume, timestamp=time.time(),
+            bid=tick.bid if tick is not None else float(price),
+            ask=tick.ask if tick is not None else float(price),
+            requested_price=float(price), fill_price=float(price),
+            status="FILLED", extra={"retcode": int(result.retcode)},
+        ))
         return True
 
     def modify_position_sl_tp(self, ticket: int, sl: float, tp: float) -> bool:
