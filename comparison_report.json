@@ -12,12 +12,12 @@
   },
   "realistic": {
     "trades": 28896,
-    "win_rate": 0.0405,
-    "gross_pnl": -621045.34,
-    "max_drawdown": 6.2105,
-    "profit_factor": 0.042,
+    "win_rate": 0.0271,
+    "gross_pnl": -90313.24,
+    "max_drawdown": 0.9031,
+    "profit_factor": 0.028,
     "commission": 20227.2,
-    "net_pnl": -621045.34,
+    "net_pnl": -90313.24,
     "firm_verdict": false,
     "firm_reason": "MAX_DRAWDOWN"
   },
