@@ -1,0 +1,42 @@
+{
+  "harness": "verify_live_deal_alignment",
+  "symbol": "EURJPY",
+  "lot": 0.01,
+  "broker_tick_value": 0.6311497655278621,
+  "trades": [
+    {
+      "side": "BUY",
+      "position_id": 513853997,
+      "pass": true,
+      "live_entry": 182.521,
+      "paper_entry": 182.521,
+      "delta_entry": 0.0,
+      "live_exit": 182.506,
+      "paper_exit": 182.506,
+      "delta_exit": 0.0,
+      "live_net_pnl": -0.15,
+      "paper_net_pnl": -0.1547,
+      "delta_net_pnl": 0.0047,
+      "commission_live": -0.06
+    },
+    {
+      "side": "SELL",
+      "position_id": 513854004,
+      "pass": true,
+      "live_entry": 182.507,
+      "paper_entry": 182.507,
+      "delta_entry": 0.0,
+      "live_exit": 182.521,
+      "paper_exit": 182.521,
+      "delta_exit": 0.0,
+      "live_net_pnl": -0.15,
+      "paper_net_pnl": -0.1484,
+      "delta_net_pnl": -0.0016,
+      "commission_live": -0.06
+    }
+  ],
+  "aligned": 2,
+  "total": 2,
+  "verdict": "PASS",
+  "note": "per-trade net PnL == live within +/-$0.01 (MT5 profit-field cent-rounding); entry/exit price delta <= 0.001"
+}
