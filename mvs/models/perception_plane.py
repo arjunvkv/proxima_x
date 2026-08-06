@@ -43,7 +43,8 @@ class PerceptionStatePlane:
     def append_state(self, state: dict) -> int:
         row = np.zeros(1, dtype=PERCEPTION_DTYPE)
         for k in state:
-            row[k] = state[k]
+            if k in PERCEPTION_DTYPE.names:
+                row[k] = state[k]
         return self.pool.append(row[0])
 
     def latest(self) -> dict:

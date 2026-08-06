@@ -77,6 +77,8 @@ docs/
 tools/
 ml/
 utils/
+!mvs/utils/
+!mvs/utils/*.py
 paper_trading/
 
 # Standalone experiment run scripts

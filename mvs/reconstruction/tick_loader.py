@@ -4,19 +4,35 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 
 from proxima_ops.execution.mt5_connector import MT5Connector
-from mvs.utils.time_sync import TimeSync
+from data.canonical_tick import normalize_tick
 
 
 class TickLoader:
     __slots__ = (
-        "symbol", "connector", "replay_root",
+        "symbol", "connector", "tick_source", "replay_root",
         "_prev_mid", "_prev_velocity", "_prev_acceleration",
         "_prev_ts_ns", "_tick_id",
     )
 
-    def __init__(self, symbol: str, replay_root: str = "data/ticks") -> None:
+    def __init__(self, symbol: str, tick_source: Any = None,
+                 replay_root: str = "data/ticks") -> None:
+        """Tick loader for the MVS engine.
+
+        Parameters
+        ----------
+        symbol : str
+            Symbol to load ticks for.
+        tick_source : optional
+            Any object exposing ``next_tick(symbol)`` returning a raw tick
+            dict. Defaults to a live MT5 connector. Pass a
+            ``ReplayTickSource`` to run the engine against recorded ticks —
+            the canonical normalizer makes both paths byte-identical.
+        replay_root : str
+            Unused; kept for backward compatibility.
+        """
         self.symbol = symbol
         self.connector = MT5Connector()
+        self.tick_source = tick_source
         self.replay_root = Path(replay_root)
         self._prev_mid: Optional[float] = None
         self._prev_velocity: float = 0.0
@@ -28,16 +44,25 @@ class TickLoader:
         raise RuntimeError("Replay fallback not implemented in live mode. Use explicit replay adapter.")
 
     def _fetch_raw(self) -> Dict[str, Any]:
+        if self.tick_source is not None:
+            tick = self.tick_source.next_tick(self.symbol)
+            if tick is None:
+                return self._load_replay_tick()
+            # tick_source may already emit canonical ticks; normalize is
+            # idempotent on canonical input, so this is safe either way.
+            return normalize_tick(tick, symbol=self.symbol)
         tick = self.connector.get_tick(self.symbol)
         if tick is None:
             return self._load_replay_tick()
-        return tick
+        return normalize_tick(tick, symbol=self.symbol)
 
     def next(self) -> Dict[str, Any]:
         raw = self._fetch_raw()
         bid = float(raw["bid"])
         ask = float(raw["ask"])
-        ts_ns = int(raw.get("time_msc", raw["time"] * 1_000_000)) * 1000
+        ts_ns = int(raw.get("ts_ns") or 0)
+        if not ts_ns:
+            ts_ns = int(raw.get("time_msc", 0)) * 1_000_000
         mid = (bid + ask) * 0.5
         spread = ask - bid
 

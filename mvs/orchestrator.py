@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict, List, Any
 import time
 import numpy as np
 import polars as pl
@@ -35,13 +35,16 @@ class MVSEngine:
         "_running", "_open_trades_map", "_trade_tick_paths",
     )
 
-    def __init__(self, symbol: str, db_path: str = "mvs.duckdb") -> None:
+    def __init__(self, symbol: str, db_path: str = "mvs.duckdb",
+                 tick_source: Any = None) -> None:
         self.symbol = symbol
         self.market = MarketRealityPlane()
         self.perception = PerceptionStatePlane()
         self.action = ActionStatePlane()
         self.outcome = OutcomeStatePlane()
-        self.tick_loader = TickLoader(symbol)
+        # tick_source injectable: None -> live MT5; ReplayTickSource -> replay.
+        # Both emit canonical ticks, so the engine runs identically either way.
+        self.tick_loader = TickLoader(symbol, tick_source=tick_source)
         self.state_rebuilder = StateRebuilder(symbol)
         self.store = TruthStore(db_path)
         self.conflict_engine = TruthConflictEngine()
