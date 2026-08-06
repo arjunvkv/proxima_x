@@ -309,6 +309,7 @@ class PaperBroker(Broker):
         close_commission = self._execution_cost.commission(pos["volume"])
         open_commission = pos.get("commission", 0.0)
         total_commission = open_commission + close_commission
+        gross_profit_money = profit_money  # raw price PnL before both-leg fees
         profit_money -= total_commission
 
         now = self._clock.time() if self._clock else 0
@@ -323,6 +324,8 @@ class PaperBroker(Broker):
         self._equity = self._balance
 
         self._history.append({
+            # legacy / compatibility keys (semantics UNCHANGED:
+            # profit = NET per-trade PnL; entry/close = filled prices)
             "ticket": ticket,
             "symbol": pos["symbol"],
             "side": pos["side"],
@@ -332,6 +335,16 @@ class PaperBroker(Broker):
             "profit": profit_money,
             "opened_at": pos["opened_at"],
             "closed_at": now,
+            # new canonical MT5-shaped fields (added alongside; nothing
+            # removed) mapping 1:1 onto MT5 history_deals. commission is
+            # SIGNED like MT5 deal.commission (negative = cost), so
+            # net_profit == gross_profit + commission + swap exactly.
+            "price_open": pos["entry"],
+            "price_close": close_price,
+            "gross_profit": gross_profit_money,
+            "commission": -total_commission,
+            "swap": 0.0,
+            "net_profit": profit_money,
         })
 
         if self._ledger is not None:
