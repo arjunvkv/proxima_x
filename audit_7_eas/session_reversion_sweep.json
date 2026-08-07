@@ -1,0 +1,122 @@
+{
+  "0": {
+    "trades": 720,
+    "exp_lot": 107.87,
+    "edge": "REAL-EDGE"
+  },
+  "1": {
+    "trades": 720,
+    "exp_lot": -2.47,
+    "edge": "no-edge"
+  },
+  "2": {
+    "trades": 720,
+    "exp_lot": -3.73,
+    "edge": "no-edge"
+  },
+  "3": {
+    "trades": 720,
+    "exp_lot": -29.53,
+    "edge": "no-edge"
+  },
+  "4": {
+    "trades": 720,
+    "exp_lot": -13.47,
+    "edge": "no-edge"
+  },
+  "5": {
+    "trades": 720,
+    "exp_lot": -5.47,
+    "edge": "no-edge"
+  },
+  "6": {
+    "trades": 720,
+    "exp_lot": -16.53,
+    "edge": "no-edge"
+  },
+  "7": {
+    "trades": 720,
+    "exp_lot": -5.8,
+    "edge": "no-edge"
+  },
+  "8": {
+    "trades": 720,
+    "exp_lot": -3.93,
+    "edge": "no-edge"
+  },
+  "9": {
+    "trades": 720,
+    "exp_lot": 7.87,
+    "edge": "no-edge"
+  },
+  "10": {
+    "trades": 720,
+    "exp_lot": -11.93,
+    "edge": "no-edge"
+  },
+  "11": {
+    "trades": 720,
+    "exp_lot": -2.93,
+    "edge": "no-edge"
+  },
+  "12": {
+    "trades": 720,
+    "exp_lot": -13.33,
+    "edge": "no-edge"
+  },
+  "13": {
+    "trades": 720,
+    "exp_lot": -9.47,
+    "edge": "no-edge"
+  },
+  "14": {
+    "trades": 720,
+    "exp_lot": -11.0,
+    "edge": "no-edge"
+  },
+  "15": {
+    "trades": 720,
+    "exp_lot": -7.13,
+    "edge": "no-edge"
+  },
+  "16": {
+    "trades": 720,
+    "exp_lot": -7.4,
+    "edge": "no-edge"
+  },
+  "17": {
+    "trades": 720,
+    "exp_lot": -7.47,
+    "edge": "no-edge"
+  },
+  "18": {
+    "trades": 720,
+    "exp_lot": 3.0,
+    "edge": "no-edge"
+  },
+  "19": {
+    "trades": 720,
+    "exp_lot": -0.13,
+    "edge": "no-edge"
+  },
+  "20": {
+    "trades": 715,
+    "exp_lot": -9.93,
+    "edge": "no-edge"
+  },
+  "21": {
+    "trades": 715,
+    "exp_lot": 0.2,
+    "edge": "no-edge"
+  },
+  "22": {
+    "trades": 715,
+    "exp_lot": 0.53,
+    "edge": "no-edge"
+  },
+  "23": {
+    "trades": 715,
+    "exp_lot": -58.33,
+    "edge": "no-edge"
+  }
+}
