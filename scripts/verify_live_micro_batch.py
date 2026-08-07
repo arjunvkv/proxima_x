@@ -26,9 +26,11 @@ import MetaTrader5 as mt5
 from proxima_ops.backtest.pnl import trade_to_usd
 
 # JPY pairs (3-digit, point=0.001) + non-JPY (5-digit, point=0.00001)
-SYMBOLS = ["EURUSD", "USDJPY", "EURJPY", "GBPUSD", "GBPJPY", "AUDUSD",
-           "USDCHF", "EURGBP"]
-ROUND_TRIPS_PER_SYMBOL = 5   # -> 8 x 5 = 40 live matches
+# Authoritative 18-symbol TOKYO_UNIVERSE (matches run_tokyo_h0_live.py:60).
+SYMBOLS = ["EURUSD", "USDJPY", "GBPUSD", "AUDUSD", "EURJPY", "GBPJPY",
+           "EURAUD", "EURNZD", "GBPAUD", "GBPNZD", "GBPCAD", "AUDNZD",
+           "USDCAD", "NZDUSD", "EURGBP", "EURCHF", "USDCHF", "AUDJPY"]
+ROUND_TRIPS_PER_SYMBOL = 3   # -> 18 x 3 = 54 live matches
 LOT = 0.01
 ENGINE_COMMISSION_PER_LOT = 3.5   # engine constant; compared against live comm
 
