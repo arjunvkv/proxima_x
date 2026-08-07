@@ -36,12 +36,14 @@ from __future__ import annotations
 import os, sys, argparse, time, json
 from datetime import datetime, timedelta, timezone
 
-ROOT = r"C:\Trading\Proxima_X"
+ROOT = os.environ.get("PROXIMA_ROOT", r"C:\Trading\Proxima_X")
 sys.path.insert(0, ROOT)
 os.chdir(ROOT)
 
 # ---------------- attach-only guard: neutralize identity creds; pin FTMO path --
-os.environ["MT5_PATH"] = r"C:\Program Files\FTMO Global Markets MT5 Terminal\terminal64.exe"
+# MT5_PATH honored from env (Linux/Wine deploys set it); Windows default below.
+os.environ.setdefault("MT5_PATH",
+                      r"C:\Program Files\FTMO Global Markets MT5 Terminal\terminal64.exe")
 os.environ["MT5_ACCOUNT"] = ""
 os.environ["MT5_PASSWORD"] = ""
 os.environ["MT5_SERVER"] = ""
