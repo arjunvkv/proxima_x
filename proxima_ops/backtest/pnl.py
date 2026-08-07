@@ -41,6 +41,8 @@ def trade_to_usd(t: dict, volume: float,
         pip = pip_size(t["symbol"])
         gross = (t["pnl_pts"] / pip) * pip_value_usd(t["symbol"], t["entry"]) * volume
     comm = round(2 * COMMISSION_PER_LOT * volume, 8)
-    return {"symbol": t["symbol"], "pnl_pts": t["pnl_pts"], "entry": t.get("entry"),
-            "entry_ts": t.get("entry_ts"), "exit_ts": t.get("exit_ts"),
-            "gross_usd": round(gross, 8), "commission": comm, "net": round(gross - comm, 8)}
+    return {**{"symbol": t["symbol"], "pnl_pts": t["pnl_pts"], "entry": t.get("entry"),
+               "entry_ts": t.get("entry_ts"), "exit_ts": t.get("exit_ts"),
+               "side": t.get("side", "BUY"),
+               "reason": t.get("reason"),
+               "gross_usd": round(gross, 8), "commission": comm, "net": round(gross - comm, 8)}}
