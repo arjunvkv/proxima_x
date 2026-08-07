@@ -18,8 +18,15 @@ from .spec import StrategySpec
 from .pnl import trade_to_usd
 
 
-def _dist(symbol: str) -> tuple[float, float]:
-    return (0.35, 0.45) if "JPY" in symbol else (0.0035, 0.0045)
+def _dist(spec: StrategySpec, symbol: str) -> tuple[float, float]:
+    # Spec-driven SL/TP distances (fill-at-next-open stop-first contract).
+    # Tokyo spec: 0.5/0.7 JPY, 0.005/0.007 else. Cascade: 0.4/0.6 & 0.004/0.006.
+    ex = spec.exit
+    if ex.mode == "sl_tp_hold" and getattr(ex, "sl_tp", None):
+        return tuple(ex.sl_tp)
+    jp, nj = (ex.jpy_sl_tp if getattr(ex, "jpy_sl_tp", None) else (0.35, 0.45)), \
+             (ex.non_jpy_sl_tp if getattr(ex, "non_jpy_sl_tp", None) else (0.0035, 0.0045))
+    return jp if "JPY" in symbol else nj
 
 
 def fire_live(bars_map: dict[str, list[dict]], spec: StrategySpec,
@@ -65,7 +72,7 @@ def fire_live(bars_map: dict[str, list[dict]], spec: StrategySpec,
 def _run_position(bars, entry_idx: int, spec: StrategySpec, sym: str, side: str) -> dict:
     entry_idx = min(entry_idx, len(bars) - 1)
     entry = bars[entry_idx]["open"]
-    d_sl, d_tp = _dist(sym)
+    d_sl, d_tp = _dist(spec, sym)
     dirn = 1 if side == "BUY" else -1
     sl = entry - d_sl if side == "BUY" else entry + d_sl
     tp = entry + d_tp if side == "BUY" else entry - d_tp

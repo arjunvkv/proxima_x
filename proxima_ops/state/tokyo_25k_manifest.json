@@ -1,0 +1,77 @@
+{
+  "spec": {
+    "name": "tokyo_25k",
+    "universe": [
+      "EURUSD",
+      "USDJPY",
+      "GBPUSD",
+      "AUDUSD",
+      "EURJPY",
+      "GBPJPY",
+      "EURAUD",
+      "EURNZD",
+      "GBPAUD",
+      "GBPNZD",
+      "GBPCAD",
+      "AUDNZD",
+      "USDCAD",
+      "NZDUSD",
+      "EURGBP",
+      "EURCHF",
+      "USDCHF",
+      "AUDJPY"
+    ],
+    "feed": {
+      "kind": "bar",
+      "timeframe": "M5"
+    },
+    "signal": {
+      "rule": "weekend_gap",
+      "lookback": 6,
+      "pick": "n_worst",
+      "top_n": 3,
+      "side": "both",
+      "fill_bar": 1,
+      "per_hour": false,
+      "side_weight": 1.0,
+      "direction_map": null
+    },
+    "exit": {
+      "mode": "sl_tp_hold",
+      "hold_bars": 12,
+      "jpy_sl_tp": [
+        0.5,
+        0.7
+      ],
+      "non_jpy_sl_tp": [
+        0.005,
+        0.007
+      ],
+      "stop_first": true
+    },
+    "sessions": [
+      0
+    ],
+    "weekdays": null,
+    "base_lot": 0.35,
+    "comment": ""
+  },
+  "runtime": {
+    "post_only": true,
+    "post_fill_tol_s": 300,
+    "server_clock": true,
+    "attach_only": true,
+    "no_cron": true,
+    "max_positions": 5,
+    "state_file": "proxima_ops/state/{name}_state.json",
+    "terminal64": "C:\\Program Files\\FTMO Global Markets MT5 Terminal\\terminal64.exe",
+    "account": "",
+    "daily_loss_usd": 1250.0,
+    "max_dd_usd": 2500.0,
+    "profit_target_usd": 2500.0,
+    "session_hours": [
+      0
+    ],
+    "strategy": "tokyo"
+  }
+}
