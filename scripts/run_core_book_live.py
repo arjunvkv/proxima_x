@@ -176,13 +176,18 @@ def save_state(name: str, st: dict) -> None:
 
 # ----------------------------------------------------------- equity guard ----
 class EquityGuard:
-    """FTMO-style live guard on $25k rules, keyed to SERVER date (never host
-    wall clock). Blocks NEW entries only; open positions are SL/TP-managed."""
+    """FTMO-style live guard on $25k reference capital. Daily-loss and peak-DD
+    caps are expressed in ABSOLUTE dollars anchored to the reference capital
+    (initial), so a larger/demo account is still governed by the 25k book's
+    risk ceilings ($1,250 daily / $2,500 peak-DD at 5%/10%). Blocks NEW entries
+    only; open positions are SL/TP-managed."""
 
     def __init__(self, initial: float = 25000.0):
         self.peak = initial
         self.day_key = None
         self.day_open_eq = initial
+        self.daily_cap = initial * DAILY_LOSS_LIMIT_PCT
+        self.max_dd_cap = initial * MAX_DD_PCT
 
     def check(self) -> tuple[bool, str]:
         acct = mt5.account_info()
@@ -190,7 +195,8 @@ class EquityGuard:
             return True, "no account_info"
         eq = acct.equity if acct.equity else acct.balance
         bal = acct.balance
-        # account may already have float: peak-tracking uses equity high-water
+        # account may already have float: track peak as real equity high-water,
+        # but the block thresholds stay anchored to the 25k reference capital.
         if eq > self.peak:
             self.peak = eq
         day = server_now() // 86400
@@ -198,11 +204,13 @@ class EquityGuard:
             self.day_key = day
             self.day_open_eq = eq   # day-open equity (server-day boundary)
         day_loss = self.day_open_eq - eq
-        if day_loss > 0 and day_loss / self.day_open_eq >= DAILY_LOSS_LIMIT_PCT:
-            return True, f"daily loss {day_loss/self.day_open_eq:.1%} >= {DAILY_LOSS_LIMIT_PCT:.0%} (eq={eq:.0f})"
+        if day_loss > 0 and day_loss >= self.daily_cap:
+            return True, (f"daily loss {day_loss:.0f}$ >= cap {self.daily_cap:.0f}$ "
+                          f"({DAILY_LOSS_LIMIT_PCT:.0%} of ref cap) eq={eq:.0f}")
         dd = self.peak - eq
-        if dd > 0 and dd / self.peak >= MAX_DD_PCT:
-            return True, f"drawdown {dd/self.peak:.1%} >= {MAX_DD_PCT:.0%} (peak={self.peak:.0f} eq={eq:.0f})"
+        if dd > 0 and dd >= self.max_dd_cap:
+            return True, (f"drawdown {dd:.0f}$ >= cap {self.max_dd_cap:.0f}$ "
+                          f"({MAX_DD_PCT:.0%} of ref cap) peak={self.peak:.0f} eq={eq:.0f}")
         return False, "ok"
 
 
