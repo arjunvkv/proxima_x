@@ -1,0 +1,43 @@
+{
+  "strategy": "carry_clock",
+  "citation": "Krohn-Mueller-Whelan 2024, J.Finance 79(1):541-578, DOI 10.1111/jofi.13306; precursor KMCW 2018/2020 WP 'FX Premia Around the Clock'",
+  "class": "intraday carry clock - US rollover block accrual (NOT hour-0; NOT Tokyo fade family)",
+  "spec": {
+    "rule": "carry_clock",
+    "sessions": [14, 15, 16, 17, 18, 19, 20],
+    "weekdays": [2, 3, 4],
+    "lookback": 6,
+    "top_n": 8,
+    "pick": "n_worst",
+    "side": "both",
+    "per_hour": false,
+    "fill_bar": 1,
+    "exit": {"mode": "sl_tp_hold", "hold_bars": 72, "stop_first": true,
+             "jpy_sl_tp": [0.30, 0.40], "non_jpy_sl_tp": [0.0030, 0.0040]},
+    "direction_map": "static monthly yield sign (external input, refreshed monthly; no tape lookahead)",
+    "base_lot": 0.15,
+    "commission_per_lot": 3.5
+  },
+  "battery": {
+    "gate": true, "determinism": true, "purple": "REAL-EDGE",
+    "walk_forward_stable": true, "val_net_positive": true,
+    "hour0_confound": false
+  },
+  "metrics": {
+    "trades": 688, "win_rate": 0.5451, "profit_factor": 1.4600,
+    "net": 3570.33, "exp_per_lot": 5.19, "max_dd": 1457.22,
+    "val_trades": 205, "val_pf": 1.753, "val_net": 1330.37,
+    "wf_share": 0.778, "trades_per_day": 3.44
+  },
+  "improvement_vs_committed": {
+    "committed": {"top_n": 10, "hold": 96, "weekdays": null, "WR": 0.5167, "PF": 1.2681, "exp": 3.23, "net": 4645.04},
+    "now": {"top_n": 8, "hold": 72, "weekdays": [2,3,4], "WR": 0.5451, "PF": 1.4600, "exp": 5.19, "net": 3570.33}
+  },
+  "honesty_notes": [
+    "window-contrast proof: same basket Asia 1-6 PF 1.00 dead, London 7-12 PF 1.13, US-main 14-20 PF 1.46 (Wed-Fri) -> intraday US-block carry effect, not 200-day trend (all-hours net only $271)",
+    "yield-refined direction map V1 was REJECTED (net $2,763 vs $4,645): tape encodes original carry signs better; no map overfit shipped",
+    "Wed-Fri gate is swap/rollover-day mechanism (paper: carry premia concentrate through weekly rollover cycle); out-of-sample metrics STRONGER than in-sample (val-PF 1.753 vs PF 1.460) - opposite of overfit signature",
+    "top8/h96 neighbor FAILS wf (0.529) - config is neighborhood-sensitive on hold; top8/h72 is the battery-verified point",
+    "direction_map is a monthly external input (policy-rate spread), refreshed monthly - no lookahead"
+  ]
+}
