@@ -66,6 +66,11 @@ STRATS = {
         "lot": 0.09, "comment": "CORE_CASCADE_25",
         "sl_tp": {"JPY": (0.40, 0.60), "else": (0.0040, 0.0060)},
     },
+    "london": {
+        "sessions": [7, 8, 9], "lookback": 1440, "top_n": 5, "hold_bars": 12,
+        "lot": 0.30, "comment": "CORE_LONDON_25",
+        "sl_tp": {"JPY": (0.40, 0.60), "else": (0.0040, 0.0060)},
+    },
 }
 
 # $25k funded risk rules
