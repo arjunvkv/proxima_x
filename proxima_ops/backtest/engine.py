@@ -62,7 +62,30 @@ def _session_avg_price(bars: list[dict], i: int, spec: StrategySpec):
     return sum((b["high"] + b["low"] + b["close"]) / 3.0 for b in seg) / len(seg)
 
 
-def signal_score(bars: list[dict], i: int, spec: StrategySpec) -> float:
+def _trailing_atr(bars: list[dict], i: int, n_avg: int = 14, n_range: int = 12):
+    """Simple trailing ATR proxy on OHLC-only bars (no tick volume needed)."""
+    lo = max(0, i - n_avg * n_range)
+    trs = []
+    for k in range(max(lo, 1), i):
+        b, p = bars[k], bars[k - 1]
+        trs.append(max(b["high"] - b["low"], abs(b["high"] - p["close"]),
+                       abs(b["low"] - p["close"])))
+    return (sum(trs) / len(trs)) if trs else 0.0
+
+
+def _wc_gap(bars: list[dict], i: int):
+    """Weekend/session-open gap = (open(i) - close(last prior bar)) / close.
+    Returns None if the prior bar starts the same UTC day (not a gap)."""
+    if i < 1:
+        return None
+    prev, cur = bars[i - 1], bars[i]
+    if cur["ts"] // 86400 == prev["ts"] // 86400:
+        return None
+    return (cur["open"] - prev["close"]) / prev["close"]
+
+
+def signal_score(bars: list[dict], i: int, spec: StrategySpec,
+                 symbol: Optional[str] = None) -> float:
     """Signed cross-sectional edge score for the closed bar i. >0 long, <0 short.
     Uses only bars index <= i (closed) -> no lookahead. Rules are additive:
     add a branch here; it is shared by every Symbol automated via the Spec."""
@@ -112,6 +135,83 @@ def signal_score(bars: list[dict], i: int, spec: StrategySpec) -> float:
         # session (front-bar open) sustained on the current closed bar.
         hi0 = bars[i]["open"]
         return (b["close"] - hi0) / hi0 * 10000.0 if b["close"] != hi0 else 0.0
+    # ---- JOURNAL (peer-reviewed) rules; additive; each a distinct edge class ----
+    if rule == "intraday_momentum":
+        # Gao/Han/Li/Zhou (2018, JFE) — Baltussen et al. (2021, JFE):
+        # the first half-hour return predicts the LAST half-hour. Signal at the
+        # London open (session hour 7); the spec holds to the last 30 min.
+        # Score = sign of the morning first-half-return (lookback bars).
+        if symbol is None:
+            return _ret(bars, i, lb)
+        return _ret(bars, i, lb) * 10000.0
+    if rule == "fix_reversal":
+        # Krohn/Mueller/Whelan (2024, JF): USD depreciates AFTER fixings.
+        # USD-base pairs (USDJPY/USDCAD/USDCHF) FALL when USD weakens -> SHORT;
+        # USD-quote pairs (EURUSD/GBPUSD/AUDUSD/NZDUSD) RISE -> LONG foreign.
+        if symbol is None:
+            return 0.0
+        if symbol.startswith("USD"):
+            return -1.0
+        if symbol.endswith("USD"):
+            return 1.0
+        return 0.0
+    if rule == "round_barrier_fade":
+        # Osler (2003, JF): round numbers attract clustered stops; fade the
+        # touch (wick beyond a .00/.50 level, then close back inside).
+        is_jpy = ("JPY" in symbol) if symbol else False
+        step = 0.50 if is_jpy else 0.0050
+        lvl = round(b["close"] / step) * step
+        eps = step * 0.4
+        pad = (b["high"] - b["low"])
+        if abs(b["close"] - lvl) < eps:
+            if b["low"] < lvl and b["close"] > lvl:
+                return 1.0
+            if b["high"] > lvl and b["close"] < lvl:
+                return -1.0
+        return 0.0 if pad > 0 else 0.0
+    if rule == "domestic_hours":
+        # Ranaldo (2009, JBF): a currency depreciates during its own domestic
+        # hours. Short the home ccy in the pair. JPY ~0-6 UTC, EUR ~7-12,
+        # USD ~12-20.
+        if symbol is None:
+            return 0.0
+        h = bar_hour(b["ts"])
+        if "JPY" in symbol:
+            return 1.0 if h < 6 else 0.0
+        if symbol.startswith("EUR"):
+            return -1.0 if 7 <= h < 12 else 0.0
+        if symbol.endswith("USD"):   # USD at home (US hours 12-21 UTC)
+            return 1.0 if 12 <= h < 21 else 0.0
+        return 0.0
+    if rule == "weekend_gap":
+        # Dao/McGroarty/Urquhart (2016): fade extreme weekend gaps. Open-gap
+        # reversion magnitude as the score (ranked within cross-section).
+        g = _wc_gap(bars, i)
+        if g is None:
+            return 0.0
+        return -g * 10000.0
+    if rule == "cross_momentum":
+        # Menkhoff et al. (2016, JFE): cross-sectional currency momentum.
+        # lookback = M5 bars; long winners (score>0) / short losers (score<0).
+        return _ret(bars, i, lb) * 10000.0
+    if rule == "round_number_bounce":
+        # de Grauwe/Decupere (1992) + Osler (2003): reversal AT a round number.
+        ifjy = ("JPY" in symbol) if symbol else False
+        step = 0.50 if ifjy else 0.0050
+        lvl = round(b["close"] / step) * step
+        if abs(b["close"] - lvl) < step * 0.3:
+            return 1.0 if (b["low"] < lvl and b["close"] >= lvl) else 0.0
+        return 0.0
+    if rule == "big_move_fade":
+        # Curtizier/Tandon/Yu (2006, JFM): fade a large prior-day move overrun.
+        # Score = -normalized prior-lookback return, magnified by |score| so the
+        # most overextended pair in the cross-section ranks first to fade.
+        r1 = _ret(bars, i, lb)
+        atr = _trailing_atr(bars, i) + 1e-12
+        z = r1 / (atr / max(bars[i]["close"], 1e-12))
+        if abs(z) > (spec.signal.lookback / 144.0 + 0.5) * 2.0:
+            return -r1 * 10000.0
+        return 0.0
     # default / future rules: treat as session_exhaustion
     return -_ret(bars, i, lb)
 
@@ -253,17 +353,21 @@ def _run_signed(bars_map: dict[str, list[dict]], spec: StrategySpec,
                 commission_per_lot: Optional[float]) -> list[dict]:
     """Signed-score path for the market-structure rules: signal_score() returns
     a signed edge (positive = long, negative = short); `side` keeps the selected
-    direction(s); candidates rank by |score| and top_n fill per session-day."""
+    direction(s); candidates rank by |score| and top_n fill per session-day (or
+    per session-hour when signal.per_hour is True)."""
     sigs = {s: session_signal_indices(bars_map[s], spec) for s in bars_map}
-    by_day: dict[int, list[tuple[float, str, int, str]]] = {}
+    # bucket key: per_hour -> (day, hour), else day (legacy parity)
+    def bucket(d, h):
+        return (d, h) if spec.signal.per_hour else d
+    by_day: dict = {}
     for sym, idxs in sigs.items():
         for i in idxs:
-            score = signal_score(bars_map[sym], i, spec)
+            score = signal_score(bars_map[sym], i, spec, symbol=sym)
             side = _signal_side(score, spec.signal.side)
             if side == "NONE":
                 continue
-            d = bars_map[sym][i]["ts"] // 86400
-            by_day.setdefault(d, []).append((score, sym, i, side))
+            bb = bucket(bars_map[sym][i]["ts"] // 86400, bar_hour(bars_map[sym][i]["ts"]))
+            by_day.setdefault(bb, []).append((score, sym, i, side))
     trades: list[dict] = []
     entries: list[tuple[str, int, str]] = []
     for day in sorted(by_day):
