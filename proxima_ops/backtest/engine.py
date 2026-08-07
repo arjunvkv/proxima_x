@@ -25,6 +25,7 @@ long side reproduces the original Tokyo_H0 mean-reversion exactly.
 Determinism: pure function over the bar list — same feed + spec => same trades.
 """
 from __future__ import annotations
+import math
 from typing import Optional
 from .spec import StrategySpec
 from .pnl import trade_to_usd
@@ -71,6 +72,29 @@ def _trailing_atr(bars: list[dict], i: int, n_avg: int = 14, n_range: int = 12):
         trs.append(max(b["high"] - b["low"], abs(b["high"] - p["close"]),
                        abs(b["low"] - p["close"])))
     return (sum(trs) / len(trs)) if trs else 0.0
+
+
+def session_start_idx(bars: list[dict], i: int) -> int:
+    """Index of the first bar of the UTC day containing i (session open)."""
+    d = bars[i]["ts"] // 86400
+    j = i
+    while j > 0 and bars[j - 1]["ts"] // 86400 == d:
+        j -= 1
+    return j
+
+
+def _lead_lag_score(bars: list[dict], i: int, symbol: Optional[str]) -> float:
+    """Basnarkov et al. 2020 (Physica A): EUR crosses and the majors lead; the
+    copy/lag intraday in quiet hours. On EUR/GBP/JPY majors we proxy with the
+    pair's OWN recent move signature (lead), fading outsized extension."""
+    if symbol is None:
+        return 0.0
+    r = _ret(bars, i, 6)
+    atr = _trailing_atr(bars, i) + 1e-12
+    z = r / (atr / max(bars[i]["close"], 1e-12))
+    if abs(z) >= 2.0:
+        return -r * 10000.0
+    return 0.0
 
 
 def _wc_gap(bars: list[dict], i: int):
@@ -204,15 +228,69 @@ def signal_score(bars: list[dict], i: int, spec: StrategySpec,
         return 0.0
     if rule == "big_move_fade":
         # Curtizier/Tandon/Yu (2006, JFM): fade a large prior-day move overrun.
-        # Score = -normalized prior-lookback return, magnified by |score| so the
-        # most overextended pair in the cross-section ranks first to fade.
         r1 = _ret(bars, i, lb)
         atr = _trailing_atr(bars, i) + 1e-12
         z = r1 / (atr / max(bars[i]["close"], 1e-12))
         if abs(z) > (spec.signal.lookback / 144.0 + 0.5) * 2.0:
             return -r1 * 10000.0
         return 0.0
-    # default / future rules: treat as session_exhaustion
+    # ---- JOURNAL round 2 (non-hour-0): each distinct class, additive ----
+    if rule == "carry_clock":
+        # Krohn/Mueller/Whelan 2024 (JF): carry premia accrue intraday in US hours.
+        if spec.signal.direction_map:
+            return float(spec.signal.direction_map.get(symbol, 0.0))
+        return 1.0
+    if rule == "intraday_momentum_london":
+        # Gao/Han/Li/Zhou 2018 JFE: first half-hour (07:00-07:30) predicts last.
+        if symbol is None:
+            return _ret(bars, i, lb)
+        d0 = bars[i]["ts"] // 86400
+        anchor = None
+        for k in range(max(0, i - 300), i):
+            if bars[k]["ts"] // 86400 == d0 and bar_hour(bars[k]["ts"]) == 7:
+                anchor = k
+                break
+        if anchor is None or anchor + 5 > i:
+            return 0.0
+        r_first = (bars[anchor + 5]["close"] - bars[anchor]["open"]) / max(bars[anchor]["open"], 1e-12)
+        return math.copysign(10000.0 * max(abs(r_first), 1e-12), r_first) if r_first else 0.0
+    if rule == "day_of_week_usd":
+        # Khademalomoom & Narayan 2020 (EMR): USD-strength day-of-week intraday.
+        if symbol is None:
+            return 0.0
+        wd = (bars[i]["ts"] // 86400 + 3) % 7  # 0=Mon,1=Tue,..,6=Sun
+        if not symbol.endswith("USD"):
+            return 0.0
+        return -1.0 if wd in (0, 1) else 1.0
+    if rule == "vol_compress_fade":
+        # Andersen-Bollerslev 1998 / vol-gate: fade >=2sigma only in low-ATR regime.
+        atr = _trailing_atr(bars, i)
+        hist = [_trailing_atr(bars, k) for k in range(i - lb, i, 6)]
+        if not hist or atr == 0:
+            return 0.0
+        med = sorted(hist)[len(hist) // 2]
+        if atr > 0.7 * med:
+            return 0.0
+        seg = bars[max(0, i - lb):i]
+        if not seg:
+            return 0.0
+        mean = sum(x['close'] for x in seg) / len(seg)
+        std = (sum((x['close'] - mean) ** 2 for x in seg) / len(seg)) ** 0.5 or 1e-12
+        z = (bars[i]["close"] - mean) / std
+        return -z if abs(z) >= 2.0 else 0.0
+    if rule == "lead_lag":
+        # Basnarkov et al. 2020 (Physica A): EUR lead - GBPUSD/USDJPY lag; fade lag.
+        return _lead_lag_score(bars, i, symbol)
+    if rule == "thin_market_fade":
+        # Ito-Lyons-Melvin 1998 / S7: quiet-hours (01-06) move reverts by London.
+        e0 = bars[session_start_idx(bars, i)]["open"]
+        d = (bars[i]["close"] - e0) / max(e0, 1e-12)
+        sg = bars[max(0, i - lb):i]
+        if sg:
+            std = (sum((x['close'] - e0) ** 2 for x in sg) / len(sg)) ** 0.5 or 1e-12
+            z = d / (std / e0)
+            return -d * 10000.0 if abs(z) >= 2.0 else 0.0
+        return 0.0
     return -_ret(bars, i, lb)
 
 
@@ -231,12 +309,18 @@ def session_signal_indices(bars: list[dict], spec: StrategySpec) -> list[int]:
     """Indices of closed bars that may signal (session-qualified, one per day/hour)."""
     lb = spec.signal.lookback
     fb = spec.signal.fill_bar
+    wds = spec.weekdays
     if spec.sessions is None:
-        return [i for i in range(lb, len(bars) - fb)]
+        idxs = [i for i in range(lb, len(bars) - fb)]
+        if wds is None:
+            return idxs
+        return [i for i in idxs if (bars[i]["ts"] // 86400 + 3) % 7 in wds]
     out, seen = [], set()
     for i in range(lb, len(bars) - fb):
         b = bars[i]
         d = b["ts"] // 86400
+        if wds is not None and (d + 3) % 7 not in wds:
+            continue
         key = (d, bar_hour(b["ts"]))
         if bar_hour(b["ts"]) in spec.sessions and key not in seen:
             out.append(i)

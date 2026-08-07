@@ -33,9 +33,17 @@ class SignalSpec:
     top_n: int = 5
     side: str = "long"       # long | short | both
     fill_bar: int = 1        # enter at the OPEN of signal_bar + fill_bar (anti-lookahead; default next bar)
+    per_hour: bool = False   # True: group candidates by (day, hour) — each UTC hour of a
+                             # multi-hour session list opens its own top_n; False: one
+                             # top_n per UTC day (legacy behavior, byte-parity).
+    side_weight: float = 1.0  # asymmetry applied to the signed score (subtle tilts)
+    direction_map: Optional[dict] = None  # static monthly/quarterly sign per symbol
+                               # (e.g. carry basket). NOT tick — a monthly external input.
+                               # {symbol: +1/-1}. Rules: "carry", "day_weight" use it.
 
     @classmethod
     def from_dict(cls, d: dict) -> "SignalSpec":
+        dm = d.get("direction_map")
         return cls(
             rule=d.get("rule", "session_exhaustion"),
             lookback=d.get("lookback", 6),
@@ -43,6 +51,9 @@ class SignalSpec:
             top_n=d.get("top_n", 5),
             side=d.get("side", "long"),
             fill_bar=d.get("fill_bar", 1),
+            per_hour=d.get("per_hour", False),
+            side_weight=d.get("side_weight", 1.0),
+            direction_map=dict(dm) if dm else None,
         )
 
 
@@ -84,6 +95,7 @@ class StrategySpec:
     signal: SignalSpec
     exit: ExitSpec
     sessions: Optional[list[int]] = None     # UTC hour(s) that fire; None = server clock gate any hour
+    weekdays: Optional[list[int]] = None     # day-of-week filter (0=Mon..6=Sun); None = all days
     base_lot: float = 0.15
     comment: str = ""
 
@@ -107,6 +119,7 @@ class StrategySpec:
             signal=SignalSpec.from_dict(d.get("signal", {})),
             exit=ExitSpec.from_dict(d.get("exit", {})),
             sessions=d.get("sessions"),
+            weekdays=d.get("weekdays"),
             base_lot=d.get("base_lot", 0.15),
             comment=d.get("comment", ""),
         )
@@ -115,5 +128,6 @@ class StrategySpec:
         return {
             "name": self.name, "universe": self.universe, "feed": self.feed,
             "signal": asdict(self.signal), "exit": asdict(self.exit),
-            "sessions": self.sessions, "base_lot": self.base_lot, "comment": self.comment,
+            "sessions": self.sessions, "weekdays": self.weekdays,
+            "base_lot": self.base_lot, "comment": self.comment,
         }
