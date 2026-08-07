@@ -32,19 +32,25 @@ SPEC = StrategySpec.from_dict({
     "base_lot": 0.15,
 })
 
-REF = {"trades": 720, "wr": 0.90, "pf": 9.0, "net": 11649.0,
+REF = {"trades": 720, "wr": 0.90, "pf": 9.0, "net": 11649.36,
        "exp_lot": 107.87, "maxdd": 200.0}
+# The audit reference used the conservative $3.5/lot/side gate rate; the live
+# broker charges $3.0. Keep 3.5 here so the parity matches the audit curve.
+AUDIT_COMMISSION = 3.5
 
 def main() -> int:
     bars = build_bars_map(UNIVERSE)
     # determinism: 3 identical runs -> identical trade count
-    runs = [run_strategy(bars, SPEC, volume=SPEC.base_lot) for _ in range(3)]
-    d_ok = determinism(lambda: run_strategy(bars, SPEC, volume=SPEC.base_lot))
+    runs = [run_strategy(bars, SPEC, volume=SPEC.base_lot,
+                         commission_per_lot=AUDIT_COMMISSION) for _ in range(3)]
+    d_ok = determinism(lambda: run_strategy(bars, SPEC, volume=SPEC.base_lot,
+                                            commission_per_lot=AUDIT_COMMISSION))
     usd = runs[0]
     m = metrics(usd)
     g = gate(m, lot=SPEC.base_lot)
     # purple on the raw USD runner
-    purple = purple_edge(bars, lambda bm: run_strategy(bm, SPEC, volume=SPEC.base_lot),
+    purple = purple_edge(bars, lambda bm: run_strategy(bm, SPEC, volume=SPEC.base_lot,
+                                                       commission_per_lot=AUDIT_COMMISSION),
                          m["expectancy"] / SPEC.base_lot, iters=5)
     tr, va = split_by_ts(usd)
     wf = walk_forward(usd, train_size=300, test_size=100, lot=SPEC.base_lot)

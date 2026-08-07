@@ -89,7 +89,8 @@ def simulate_exit(bars: list[dict], entry_idx: int, side: str,
 
 def run_strategy(bars_map: dict[str, list[dict]], spec: StrategySpec,
                  tick_value_map: Optional[dict] = None, volume: float = 0.15,
-                 raw: bool = False) -> list[dict]:
+                 raw: bool = False,
+                 commission_per_lot: Optional[float] = None) -> list[dict]:
     """Run the spec over the bar universe -> list of USD trade dicts (raw if raw)."""
     sigs = {s: session_signal_indices(bars_map[s], spec) for s in bars_map}
     # chronological union of candidate (timestamp, symbol, idx), rank-per-day later
@@ -123,4 +124,4 @@ def run_strategy(bars_map: dict[str, list[dict]], spec: StrategySpec,
         trades.append(simulate_exit(bars_map[sym], eidx, "BUY", spec, sym))
     if raw:
         return trades
-    return [trade_to_usd(t, volume, tick_value_map) for t in trades]
+    return [trade_to_usd(t, volume, tick_value_map, commission_per_lot) for t in trades]
