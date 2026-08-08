@@ -98,6 +98,97 @@ def server_now() -> int:
     return int(time.time())
 
 
+# ----------------------------------------------------------- live journal ----
+# Per-fill evidence for the measured alignment score (_alignment_score.py).
+# Appends one JSON line per real fill / close / hourly spread snapshot.
+JOURNAL = os.path.join(ROOT, "logs", "core_book_trades.jsonl")
+SPREAD_LOG = os.path.join(ROOT, "logs", "core_book_spreads.csv")
+
+
+def pip_size(sym: str) -> float:
+    """1 pip in price terms: 0.01 for JPY pairs, 0.0001 otherwise."""
+    return 0.01 if "JPY" in sym else 0.0001
+
+
+def spread_pips(tick) -> float | None:
+    if tick is None:
+        return None
+    return round((tick.ask - tick.bid) / pip_size(tick.symbol), 2)
+
+
+def journal_write(rec: dict) -> None:
+    try:
+        os.makedirs(os.path.dirname(JOURNAL), exist_ok=True)
+        with open(JOURNAL, "a") as f:
+            f.write(json.dumps(rec) + "\n")
+    except Exception as e:
+        print(f"[journal] write failed: {e}")
+
+
+def journal_entry(name: str, symbol: str, lot: float, side: str,
+                  requested: float, actual: float, sl: float, tp: float,
+                  model_open: float | None, ticket: int) -> None:
+    journal_write({
+        "kind": "entry", "strategy": name, "symbol": symbol, "lot": lot,
+        "side": side, "requested": requested, "actual": actual,
+        "sl": sl, "tp": tp, "model_open": model_open,
+        "requested_pips": round(abs(actual - requested) / pip_size(symbol), 2),
+        "spread_pips_at_fill": spread_pips(mt5.symbol_info_tick(symbol)),
+        "ticket": int(ticket), "ts": server_now(),
+        "utc": datetime.utcfromtimestamp(server_now()).isoformat() + "Z",
+    })
+
+
+def journal_spread() -> None:
+    """One hourly snapshot of UNIVERSE bid/ask spreads → CSV (live envelope)."""
+    try:
+        os.makedirs(os.path.dirname(SPREAD_LOG), exist_ok=True)
+        row = [str(int(server_now()))]
+        for sym in UNIVERSE:
+            t = mt5.symbol_info_tick(sym)
+            row.append(str(round((t.ask - t.bid) / pip_size(sym), 2)) if t else "")
+        with open(SPREAD_LOG, "a") as f:
+            f.write(",".join(row) + "\n")
+    except Exception as e:
+        print(f"[journal-spread] failed: {e}")
+
+
+# trades that closed since last scan, keyed by position ticket
+_ticket_map: dict[int, dict] = {}
+
+
+def journal_closed(now: int) -> None:
+    """Reconcile positions that exited since the last poll (SL/TP/managed)."""
+    try:
+        deals = mt5.history_deals_get(
+            datetime.utcfromtimestamp(now - 7200),
+            datetime.utcfromtimestamp(now))
+    except Exception:
+        return
+    if not deals:
+        return
+    for d in deals:
+        pos = int(d.position)
+        if pos not in _ticket_map:
+            continue
+        if d.entry != mt5.DEAL_ENTRY_OUT:
+            continue
+        pnl = float(d.profit or 0.0)
+        comm = float(d.commission or 0.0)
+        journal_write({
+            "kind": "close", "ticket": pos, "exit": float(d.price),
+            "exit_pips": None, "pnl": pnl, "commission": comm,
+            "reason": getattr(d, "comment", ""), "ts": int(d.time),
+        })
+        _ticket_map.pop(pos, None)
+
+
+def journal_spread_hour(now_hour: int, last_spread_hour: list) -> None:
+    if now_hour != last_spread_hour[0]:
+        last_spread_hour[0] = now_hour
+        journal_spread()
+
+
 def bar_hour(ts: int) -> int:
     return (ts // 3600) % 24
 
@@ -158,7 +249,8 @@ def session_rank(bars_map: dict[str, list[dict]], day: int, cfg: dict) -> list[d
             seen_hours.add(h)
             ret = (b["close"] - bars[i - cfg["lookback"]]["close"]) / bars[i - cfg["lookback"]]["close"]
             candidates.append({"symbol": sym, "ret": ret, "signal_ts": b["ts"],
-                               "fill_ts": bars[i + 1]["ts"] if i + 1 < len(bars) else None})
+                               "fill_ts": bars[i + 1]["ts"] if i + 1 < len(bars) else None,
+                               "model_open": bars[i + 1]["open"] if i + 1 < len(bars) else None})
     if not candidates:
         return []
     candidates.sort(key=lambda x: x["ret"])
@@ -287,6 +379,7 @@ def main() -> None:
     guard = EquityGuard(args.init_balance)
     states = {n: load_state(n) for n in STRATS}
     last_actionable: dict[str, int] = {}
+    last_spread_hour = [None]
     started = server_now()
     while True:
         now = server_now()
@@ -295,6 +388,11 @@ def main() -> None:
             break
         today = now // 86400
         hour = bar_hour(now)
+
+        # ---- 0) live-journal: reconcile closes since last poll + hourly spread
+        if args.execute:
+            journal_closed(now)
+            journal_spread_hour(hour, last_spread_hour)
 
         # ---- 1) hold-managed exits (broker SL/TP handles most; close stragglers)
         if args.manage:
@@ -358,8 +456,13 @@ def main() -> None:
                         res = _order_buy(x["symbol"], fill, sl, tp, cfg, bal)
                         if res:
                             opened += 1
+                            _ticket_map[res["ticket"]] = x
+                            journal_entry(name, x["symbol"], cfg["lot"], "BUY",
+                                          res["requested"], res["actual_fill"],
+                                          sl, tp, x.get("model_open"), res["ticket"])
                             print(f"[FILL {name}] BUY {x['symbol']} {cfg['lot']} "
-                                  f"@ {fill} sl={sl} tp={tp}")
+                                  f"@ {res['actual_fill']} (req {fill}) "
+                                  f"sl={sl} tp={tp} slip={res['actual_fill']-fill:+.5f}")
                         else:
                             print(f"[REJECT {name}] BUY {x['symbol']}")
                         time.sleep(0.4)
@@ -373,13 +476,21 @@ def main() -> None:
 
 
 def _order_buy(symbol: str, fill: float, sl: float, tp: float,
-               cfg: dict, bal: float) -> bool:
+               cfg: dict, bal: float) -> dict | None:
     req = {"action": mt5.TRADE_ACTION_DEAL, "symbol": symbol, "volume": cfg["lot"],
            "type": mt5.ORDER_TYPE_BUY, "price": fill, "sl": sl, "tp": tp,
            "deviation": 5, "magic": 777200, "comment": cfg["comment"],
            "type_time": 0, "type_filling": mt5.ORDER_FILLING_IOC}
     res = mt5.order_send(req)
-    return res is not None and res.retcode == mt5.TRADE_RETCODE_DONE
+    if res is None or res.retcode != mt5.TRADE_RETCODE_DONE:
+        return None
+    deal = getattr(res, "deal", None)
+    return {
+        "order": getattr(res, "order", None),
+        "ticket": int(getattr(deal, "position", 0) or 0) or int(getattr(res, "order", 0) or 0),
+        "actual_fill": float(getattr(deal, "price", fill) or fill),
+        "requested": fill,
+    }
 
 
 def _close(ticket: int) -> None:
