@@ -68,7 +68,7 @@ STRATS = {
     },
     "london": {
         "sessions": [7, 8, 9], "lookback": 1440, "top_n": 5, "hold_bars": 12,
-        "lot": 0.30, "comment": "CORE_LONDON_25",
+        "lot": 0.15, "comment": "CORE_LONDON_25",
         "sl_tp": {"JPY": (0.40, 0.60), "else": (0.0040, 0.0060)},
     },
     "usfade": {
