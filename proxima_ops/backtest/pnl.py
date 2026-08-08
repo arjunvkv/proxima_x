@@ -41,7 +41,8 @@ def pip_value_usd(symbol: str, entry_price: float) -> float:
 
 def trade_to_usd(t: dict, volume: float,
                  tick_value_map: Optional[dict] = None,
-                 commission_per_lot: Optional[float] = None) -> dict:
+                 commission_per_lot: Optional[float] = None,
+                 spread_pips_map: Optional[dict] = None) -> dict:
     """Convert a port trade {symbol, pnl_pts} to USD gross/commission/net.
 
     pnl_pts is in PRICE UNITS (e.g. 0.008 for EURJPY 8 points). With a
@@ -50,6 +51,10 @@ def trade_to_usd(t: dict, volume: float,
         gross = pnl_pts / point_size * tick_value * volume
     Without a map, falls back to audit-classic pip math (parity with the
     validated audit curve). commission_per_lot defaults to the live broker 3.0.
+    spread_pips_map: optional {symbol: spread in pips}; one full spread is
+    charged per round trip (a fill at bar-open + spread/2 on entry, - spread/2
+    at exit) — the engine models offers as open-price so without this it is
+    optimistic by exactly one spread. Default None = zero spread (legacy parity).
     """
     sym = t["symbol"]
     if tick_value_map and sym in tick_value_map:
@@ -60,8 +65,14 @@ def trade_to_usd(t: dict, volume: float,
         gross = (t["pnl_pts"] / pip) * pip_value_usd(sym, t.get("entry") or 1.0) * volume
     rate = commission_per_lot if commission_per_lot is not None else COMMISSION_PER_LOT
     comm = round(2 * rate * volume, 8)
+    spread = 0.0
+    if spread_pips_map and sym in spread_pips_map:
+        spread = round(spread_pips_map[sym] * pip_value_usd(sym, t.get("entry") or 1.0) * volume, 8)
+    net = gross - comm - spread
+    # keep gross intact (P&L before costs); add explicit spread for audit trail
     return {**{"symbol": sym, "pnl_pts": t["pnl_pts"], "entry": t.get("entry"),
                "entry_ts": t.get("entry_ts"), "exit_ts": t.get("exit_ts"),
                "side": t.get("side", "BUY"), "reason": t.get("reason"),
                "gross_usd": round(gross, 8), "commission": comm,
-               "net": round(gross - comm, 8)}}
+               "spread": spread,
+               "net": round(net, 8)}}

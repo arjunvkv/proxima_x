@@ -388,16 +388,20 @@ def _legacy_rule(spec: StrategySpec) -> bool:
 def run_strategy(bars_map: dict[str, list[dict]], spec: StrategySpec,
                  tick_value_map: Optional[dict] = None, volume: float = 0.15,
                  raw: bool = False,
-                 commission_per_lot: Optional[float] = None) -> list[dict]:
+                 commission_per_lot: Optional[float] = None,
+                 spread_pips_map: Optional[dict] = None) -> list[dict]:
     """Run the spec over the bar universe -> list of USD trade dicts (raw if raw)."""
     if _legacy_rule(spec):
-        return _run_legacy(bars_map, spec, tick_value_map, volume, raw, commission_per_lot)
-    return _run_signed(bars_map, spec, tick_value_map, volume, raw, commission_per_lot)
+        return _run_legacy(bars_map, spec, tick_value_map, volume, raw,
+                           commission_per_lot, spread_pips_map)
+    return _run_signed(bars_map, spec, tick_value_map, volume, raw,
+                       commission_per_lot, spread_pips_map)
 
 
 def _run_legacy(bars_map: dict[str, list[dict]], spec: StrategySpec,
                 tick_value_map: Optional[dict], volume: float, raw: bool,
-                commission_per_lot: Optional[float]) -> list[dict]:
+                commission_per_lot: Optional[float],
+                spread_pips_map: Optional[dict] = None) -> list[dict]:
     """EXACT original engine behavior (n_worst/n_best over lookback return, BUY
     only). Do not alter — byte parity is a hard gate."""
     sigs = {s: session_signal_indices(bars_map[s], spec) for s in bars_map}
@@ -429,12 +433,13 @@ def _run_legacy(bars_map: dict[str, list[dict]], spec: StrategySpec,
         trades.append(simulate_exit(bars_map[sym], eidx, "BUY", spec, sym))
     if raw:
         return trades
-    return [trade_to_usd(t, volume, tick_value_map, commission_per_lot) for t in trades]
+    return [trade_to_usd(t, volume, tick_value_map, commission_per_lot, spread_pips_map) for t in trades]
 
 
 def _run_signed(bars_map: dict[str, list[dict]], spec: StrategySpec,
                 tick_value_map: Optional[dict], volume: float, raw: bool,
-                commission_per_lot: Optional[float]) -> list[dict]:
+                commission_per_lot: Optional[float],
+                spread_pips_map: Optional[dict] = None) -> list[dict]:
     """Signed-score path for the market-structure rules: signal_score() returns
     a signed edge (positive = long, negative = short); `side` keeps the selected
     direction(s); candidates rank by |score| and top_n fill per session-day (or
@@ -472,4 +477,4 @@ def _run_signed(bars_map: dict[str, list[dict]], spec: StrategySpec,
         trades.append(simulate_exit(bars_map[sym], eidx, side, spec, sym))
     if raw:
         return trades
-    return [trade_to_usd(t, volume, tick_value_map, commission_per_lot) for t in trades]
+    return [trade_to_usd(t, volume, tick_value_map, commission_per_lot, spread_pips_map) for t in trades]
