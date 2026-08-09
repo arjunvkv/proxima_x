@@ -110,10 +110,10 @@ def pip_size(sym: str) -> float:
     return 0.01 if "JPY" in sym else 0.0001
 
 
-def spread_pips(tick) -> float | None:
+def spread_pips(symbol: str, tick) -> float | None:
     if tick is None:
         return None
-    return round((tick.ask - tick.bid) / pip_size(tick.symbol), 2)
+    return round((tick.ask - tick.bid) / pip_size(symbol), 2)
 
 
 def journal_write(rec: dict) -> None:
@@ -133,7 +133,7 @@ def journal_entry(name: str, symbol: str, lot: float, side: str,
         "side": side, "requested": requested, "actual": actual,
         "sl": sl, "tp": tp, "model_open": model_open,
         "requested_pips": round(abs(actual - requested) / pip_size(symbol), 2),
-        "spread_pips_at_fill": spread_pips(mt5.symbol_info_tick(symbol)),
+        "spread_pips_at_fill": spread_pips(symbol, mt5.symbol_info_tick(symbol)),
         "ticket": int(ticket), "ts": server_now(),
         "utc": datetime.utcfromtimestamp(server_now()).isoformat() + "Z",
     })
