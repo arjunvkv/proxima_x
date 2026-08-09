@@ -168,7 +168,7 @@ def journal_closed(now: int) -> None:
     if not deals:
         return
     for d in deals:
-        pos = int(d.position)
+        pos = int(d.position_id)
         if pos not in _ticket_map:
             continue
         if d.entry != mt5.DEAL_ENTRY_OUT:
@@ -487,7 +487,7 @@ def _order_buy(symbol: str, fill: float, sl: float, tp: float,
     deal = getattr(res, "deal", None)
     return {
         "order": getattr(res, "order", None),
-        "ticket": int(getattr(deal, "position", 0) or 0) or int(getattr(res, "order", 0) or 0),
+        "ticket": int(getattr(deal, "position_id", 0) or 0) or int(getattr(res, "order", 0) or 0),
         "actual_fill": float(getattr(deal, "price", fill) or fill),
         "requested": fill,
     }
