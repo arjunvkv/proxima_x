@@ -58,22 +58,22 @@ UNIVERSE = ["EURUSD", "USDJPY", "GBPUSD", "AUDUSD", "EURJPY", "GBPJPY",
 STRATS = {
     "tokyo": {
         "sessions": [0], "lookback": 6, "top_n": 3, "hold_bars": 12,
-        "lot": 0.35, "comment": "CORE_TOKYO_25",
+        "lot": 0.52, "comment": "CORE_TOKYO_25",
         "sl_tp": {"JPY": (0.50, 0.70), "else": (0.0050, 0.0070)},
     },
     "cascade": {
         "sessions": [2, 3, 4], "lookback": 1440, "top_n": 8, "hold_bars": 24,
-        "lot": 0.09, "comment": "CORE_CASCADE_25",
+        "lot": 0.14, "comment": "CORE_CASCADE_25",
         "sl_tp": {"JPY": (0.40, 0.60), "else": (0.0040, 0.0060)},
     },
     "london": {
         "sessions": [7, 8, 9], "lookback": 1440, "top_n": 5, "hold_bars": 12,
-        "lot": 0.15, "comment": "CORE_LONDON_25",
+        "lot": 0.23, "comment": "CORE_LONDON_25",
         "sl_tp": {"JPY": (0.40, 0.60), "else": (0.0040, 0.0060)},
     },
     "usfade": {
         "sessions": [14, 15, 16, 17, 18, 19], "lookback": 50, "top_n": 5, "hold_bars": 24,
-        "lot": 0.30, "comment": "CORE_USFADE_25",
+        "lot": 0.45, "comment": "CORE_USFADE_25",
         "sl_tp": {"JPY": (0.40, 0.60), "else": (0.0040, 0.0060)},
     },
 }
