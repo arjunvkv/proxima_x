@@ -15,7 +15,7 @@ against the generalized engine (which is batch) is honest.
 from __future__ import annotations
 from typing import Optional
 from .spec import StrategySpec
-from .pnl import trade_to_usd
+from .pnl import trade_to_usd, FTMO_TICK_VALUES
 
 
 def _dist(spec: StrategySpec, symbol: str) -> tuple[float, float]:
@@ -66,7 +66,7 @@ def fire_live(bars_map: dict[str, list[dict]], spec: StrategySpec,
                 continue
             opened.add(sym)
             trades.append(_run_position(bars_map[sym], entry_idx, spec, sym, side))
-    return [trade_to_usd(t, volume, None) for t in trades]
+    return [trade_to_usd(t, volume, FTMO_TICK_VALUES) for t in trades]
 
 
 def _run_position(bars, entry_idx: int, spec: StrategySpec, sym: str, side: str) -> dict:

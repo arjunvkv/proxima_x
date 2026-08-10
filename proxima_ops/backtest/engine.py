@@ -28,7 +28,7 @@ from __future__ import annotations
 import math
 from typing import Optional
 from .spec import StrategySpec
-from .pnl import trade_to_usd
+from .pnl import trade_to_usd, FTMO_TICK_VALUES
 
 
 def bar_hour(ts: int) -> int:
@@ -386,11 +386,15 @@ def _legacy_rule(spec: StrategySpec) -> bool:
 
 
 def run_strategy(bars_map: dict[str, list[dict]], spec: StrategySpec,
-                 tick_value_map: Optional[dict] = None, volume: float = 0.15,
+                 tick_value_map: Optional[dict] = FTMO_TICK_VALUES, volume: float = 0.15,
                  raw: bool = False,
                  commission_per_lot: Optional[float] = None,
                  spread_pips_map: Optional[dict] = None) -> list[dict]:
-    """Run the spec over the bar universe -> list of USD trade dicts (raw if raw)."""
+    """Run the spec over the bar universe -> list of USD trade dicts (raw if raw).
+
+    tick_value_map defaults to the broker-true FTMO per-point values (live PnL
+    parity on crosses; was legacy $10/pip for all non-JPY before 2026-08-10).
+    Pass None explicitly to restore the legacy audit convention."""
     if _legacy_rule(spec):
         return _run_legacy(bars_map, spec, tick_value_map, volume, raw,
                            commission_per_lot, spread_pips_map)

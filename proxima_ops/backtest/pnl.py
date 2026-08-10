@@ -21,6 +21,20 @@ from typing import Optional
 
 COMMISSION_PER_LOT = 3.0   # $/lot per side — live FTMO-Demo broker rate (verified 0.06/0.01 RT)
 
+# Broker-authoritative tick values: USD per machine POINT per 1.0 lot, read live
+# from FTMO-Demo symbol_info.trade_tick_value (2026-08-10). Point = 0.001 on JPY
+# quotes, 0.00001 everywhere else (see point_size); every pip = 10 points, so
+# pip value = tick_value * 10 (EURUSD 1.0 -> $10/pip; EURNZD 0.58816 -> $5.88/pip).
+# REFRESH: run the symbol_info.trade_tick_value probe on the box and update.
+FTMO_TICK_VALUES = {
+    "EURUSD": 1.0, "USDJPY": 0.628895, "GBPUSD": 1.0, "AUDUSD": 1.0,
+    "EURJPY": 0.628895, "GBPJPY": 0.628895, "AUDJPY": 0.628895,
+    "EURAUD": 0.70554, "EURNZD": 0.58816, "GBPAUD": 0.70554,
+    "GBPNZD": 0.58816, "GBPCAD": 0.716759, "USDCAD": 0.716759,
+    "NZDUSD": 1.0, "AUDNZD": 0.58816, "EURGBP": 1.35015,
+    "EURCHF": 1.234751, "USDCHF": 1.234751,
+}
+
 
 def pip_size(symbol: str) -> float:
     return 0.01 if "JPY" in symbol else 0.0001
@@ -67,7 +81,12 @@ def trade_to_usd(t: dict, volume: float,
     comm = round(2 * rate * volume, 8)
     spread = 0.0
     if spread_pips_map and sym in spread_pips_map:
-        spread = round(spread_pips_map[sym] * pip_value_usd(sym, t.get("entry") or 1.0) * volume, 8)
+        if tick_value_map and sym in tick_value_map:
+            # broker-true pip value: every pip = 10 machine points on FTMO quotes
+            pip_usd = tick_value_map[sym] * 10.0
+        else:
+            pip_usd = pip_value_usd(sym, t.get("entry") or 1.0)
+        spread = round(spread_pips_map[sym] * pip_usd * volume, 8)
     net = gross - comm - spread
     # keep gross intact (P&L before costs); add explicit spread for audit trail
     return {**{"symbol": sym, "pnl_pts": t["pnl_pts"], "entry": t.get("entry"),
