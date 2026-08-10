@@ -1,0 +1,734 @@
+{
+ "vol": {
+  "EURUSD": {
+   "5": {
+    "ratio": 1.11,
+    "z": 3.74,
+    "n_hi": 7091,
+    "n_lo": 7091,
+    "null_n": 200
+   },
+   "15": {
+    "ratio": 1.118,
+    "z": 4.21,
+    "n_hi": 7091,
+    "n_lo": 7091,
+    "null_n": 200
+   },
+   "30": {
+    "ratio": 1.073,
+    "z": 2.73,
+    "n_hi": 7091,
+    "n_lo": 7091,
+    "null_n": 200
+   },
+   "60": {
+    "ratio": 1.047,
+    "z": 1.86,
+    "n_hi": 7091,
+    "n_lo": 7091,
+    "null_n": 200
+   }
+  },
+  "GBPUSD": {
+   "5": {
+    "ratio": 1.099,
+    "z": 3.65,
+    "n_hi": 7097,
+    "n_lo": 7097,
+    "null_n": 200
+   },
+   "15": {
+    "ratio": 1.078,
+    "z": 2.5,
+    "n_hi": 7097,
+    "n_lo": 7097,
+    "null_n": 200
+   },
+   "30": {
+    "ratio": 1.008,
+    "z": 0.5,
+    "n_hi": 7097,
+    "n_lo": 7097,
+    "null_n": 200
+   },
+   "60": {
+    "ratio": 1.025,
+    "z": 0.89,
+    "n_hi": 7097,
+    "n_lo": 7097,
+    "null_n": 200
+   }
+  },
+  "USDJPY": {
+   "5": {
+    "ratio": 1.216,
+    "z": 3.48,
+    "n_hi": 7093,
+    "n_lo": 7095,
+    "null_n": 200
+   },
+   "15": {
+    "ratio": 1.175,
+    "z": 2.5,
+    "n_hi": 7093,
+    "n_lo": 7095,
+    "null_n": 200
+   },
+   "30": {
+    "ratio": 1.108,
+    "z": 1.82,
+    "n_hi": 7093,
+    "n_lo": 7095,
+    "null_n": 200
+   },
+   "60": {
+    "ratio": 1.093,
+    "z": 1.31,
+    "n_hi": 7093,
+    "n_lo": 7095,
+    "null_n": 200
+   }
+  },
+  "EURJPY": {
+   "5": {
+    "ratio": 1.294,
+    "z": 5.53,
+    "n_hi": 7128,
+    "n_lo": 7128,
+    "null_n": 200
+   },
+   "15": {
+    "ratio": 1.246,
+    "z": 3.78,
+    "n_hi": 7128,
+    "n_lo": 7128,
+    "null_n": 200
+   },
+   "30": {
+    "ratio": 1.171,
+    "z": 2.76,
+    "n_hi": 7128,
+    "n_lo": 7128,
+    "null_n": 200
+   },
+   "60": {
+    "ratio": 1.113,
+    "z": 1.61,
+    "n_hi": 7128,
+    "n_lo": 7128,
+    "null_n": 200
+   }
+  },
+  "GBPJPY": {
+   "5": {
+    "ratio": 1.252,
+    "z": 5.12,
+    "n_hi": 7146,
+    "n_lo": 7143,
+    "null_n": 200
+   },
+   "15": {
+    "ratio": 1.175,
+    "z": 2.83,
+    "n_hi": 7146,
+    "n_lo": 7143,
+    "null_n": 200
+   },
+   "30": {
+    "ratio": 1.07,
+    "z": 1.62,
+    "n_hi": 7146,
+    "n_lo": 7143,
+    "null_n": 200
+   },
+   "60": {
+    "ratio": 1.056,
+    "z": 0.89,
+    "n_hi": 7146,
+    "n_lo": 7143,
+    "null_n": 200
+   }
+  },
+  "AUDUSD": {
+   "5": {
+    "ratio": 1.059,
+    "z": 2.42,
+    "n_hi": 7091,
+    "n_lo": 7091,
+    "null_n": 200
+   },
+   "15": {
+    "ratio": 1.032,
+    "z": 1.54,
+    "n_hi": 7091,
+    "n_lo": 7091,
+    "null_n": 200
+   },
+   "30": {
+    "ratio": 0.993,
+    "z": 0.42,
+    "n_hi": 7091,
+    "n_lo": 7091,
+    "null_n": 200
+   },
+   "60": {
+    "ratio": 1.031,
+    "z": 1.58,
+    "n_hi": 7091,
+    "n_lo": 7091,
+    "null_n": 200
+   }
+  },
+  "USDCAD": {
+   "5": {
+    "ratio": 1.04,
+    "z": 2.63,
+    "n_hi": 7088,
+    "n_lo": 7087,
+    "null_n": 200
+   },
+   "15": {
+    "ratio": 1.058,
+    "z": 2.84,
+    "n_hi": 7088,
+    "n_lo": 7087,
+    "null_n": 200
+   },
+   "30": {
+    "ratio": 1.045,
+    "z": 1.88,
+    "n_hi": 7088,
+    "n_lo": 7087,
+    "null_n": 200
+   },
+   "60": {
+    "ratio": 1.038,
+    "z": 1.85,
+    "n_hi": 7088,
+    "n_lo": 7087,
+    "null_n": 200
+   }
+  }
+ },
+ "dir": {
+  "EURUSD": {
+   "5": {
+    "pos_pips": 0.065,
+    "neg_pips": -0.005,
+    "n_pos": 13788,
+    "n_neg": 14170,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "15": {
+    "pos_pips": 0.14,
+    "neg_pips": 0.036,
+    "n_pos": 13788,
+    "n_neg": 14170,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "30": {
+    "pos_pips": 0.196,
+    "neg_pips": 0.147,
+    "n_pos": 13788,
+    "n_neg": 14170,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "60": {
+    "pos_pips": 0.41,
+    "neg_pips": 0.267,
+    "n_pos": 13788,
+    "n_neg": 14170,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   }
+  },
+  "GBPUSD": {
+   "5": {
+    "pos_pips": 0.067,
+    "neg_pips": -0.026,
+    "n_pos": 13809,
+    "n_neg": 14256,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "15": {
+    "pos_pips": 0.119,
+    "neg_pips": -0.005,
+    "n_pos": 13809,
+    "n_neg": 14256,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "30": {
+    "pos_pips": 0.109,
+    "neg_pips": 0.122,
+    "n_pos": 13809,
+    "n_neg": 14256,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "60": {
+    "pos_pips": 0.267,
+    "neg_pips": 0.199,
+    "n_pos": 13809,
+    "n_neg": 14256,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   }
+  },
+  "USDJPY": {
+   "5": {
+    "pos_pips": -0.135,
+    "neg_pips": -0.015,
+    "n_pos": 13775,
+    "n_neg": 14204,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "15": {
+    "pos_pips": -0.314,
+    "neg_pips": -0.123,
+    "n_pos": 13775,
+    "n_neg": 14204,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "30": {
+    "pos_pips": -0.575,
+    "neg_pips": -0.287,
+    "n_pos": 13775,
+    "n_neg": 14204,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "60": {
+    "pos_pips": -0.751,
+    "neg_pips": -0.955,
+    "n_pos": 13775,
+    "n_neg": 14204,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   }
+  },
+  "EURJPY": {
+   "5": {
+    "pos_pips": -0.091,
+    "neg_pips": 0.012,
+    "n_pos": 13667,
+    "n_neg": 14465,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "15": {
+    "pos_pips": -0.187,
+    "neg_pips": -0.031,
+    "n_pos": 13667,
+    "n_neg": 14465,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "30": {
+    "pos_pips": -0.353,
+    "neg_pips": -0.105,
+    "n_pos": 13667,
+    "n_neg": 14465,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "60": {
+    "pos_pips": -0.327,
+    "neg_pips": -0.551,
+    "n_pos": 13667,
+    "n_neg": 14465,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   }
+  },
+  "GBPJPY": {
+   "5": {
+    "pos_pips": -0.154,
+    "neg_pips": 0.007,
+    "n_pos": 13817,
+    "n_neg": 14479,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "15": {
+    "pos_pips": -0.296,
+    "neg_pips": -0.095,
+    "n_pos": 13817,
+    "n_neg": 14479,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "30": {
+    "pos_pips": -0.59,
+    "neg_pips": -0.201,
+    "n_pos": 13817,
+    "n_neg": 14479,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "60": {
+    "pos_pips": -0.87,
+    "neg_pips": -0.72,
+    "n_pos": 13817,
+    "n_neg": 14479,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   }
+  },
+  "AUDUSD": {
+   "5": {
+    "pos_pips": 0.054,
+    "neg_pips": -0.013,
+    "n_pos": 13714,
+    "n_neg": 14200,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "15": {
+    "pos_pips": 0.066,
+    "neg_pips": 0.057,
+    "n_pos": 13714,
+    "n_neg": 14200,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "30": {
+    "pos_pips": 0.129,
+    "neg_pips": 0.118,
+    "n_pos": 13714,
+    "n_neg": 14200,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "60": {
+    "pos_pips": 0.277,
+    "neg_pips": 0.233,
+    "n_pos": 13714,
+    "n_neg": 14200,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   }
+  },
+  "USDCAD": {
+   "5": {
+    "pos_pips": -0.046,
+    "neg_pips": -0.031,
+    "n_pos": 13812,
+    "n_neg": 14061,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "15": {
+    "pos_pips": -0.107,
+    "neg_pips": -0.125,
+    "n_pos": 13812,
+    "n_neg": 14061,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "30": {
+    "pos_pips": -0.243,
+    "neg_pips": -0.209,
+    "n_pos": 13812,
+    "n_neg": 14061,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   },
+   "60": {
+    "pos_pips": -0.472,
+    "neg_pips": -0.431,
+    "n_pos": 13812,
+    "n_neg": 14061,
+    "lodo": {
+     "pos": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     },
+     "neg": {
+      "flips": 0,
+      "n_days": 20,
+      "max_swing": 0.0
+     }
+    }
+   }
+  }
+ }
+}
