@@ -1,0 +1,275 @@
+{
+  "tokyo_F3_H15_short_EURUSD": {
+    "n": 7,
+    "full_mean_pips": -0.46,
+    "lodo_min": -1.07,
+    "lodo_max": 0.03,
+    "flips": 2
+  },
+  "tokyo_F3_H15_short_GBPUSD": {
+    "n": 7,
+    "full_mean_pips": -0.75,
+    "lodo_min": -1.68,
+    "lodo_max": -0.15,
+    "flips": 0
+  },
+  "tokyo_F3_H15_short_USDJPY": {
+    "n": 4,
+    "full_mean_pips": 2.85,
+    "lodo_min": -0.68,
+    "lodo_max": 6.43,
+    "flips": 1
+  },
+  "tokyo_F3_H15_short_EURJPY": {
+    "n": 6,
+    "full_mean_pips": 0.29,
+    "lodo_min": -2.67,
+    "lodo_max": 2.38,
+    "flips": 3
+  },
+  "tokyo_F3_H15_short_GBPJPY": {
+    "n": 5,
+    "full_mean_pips": 0.48,
+    "lodo_min": -3.59,
+    "lodo_max": 2.95,
+    "flips": 2
+  },
+  "tokyo_F3_H15_short_AUDUSD": {
+    "n": 9,
+    "full_mean_pips": -0.58,
+    "lodo_min": -1.11,
+    "lodo_max": -0.06,
+    "flips": 0
+  },
+  "tokyo_F3_H15_short_USDCAD": {
+    "n": 4,
+    "full_mean_pips": 1.33,
+    "lodo_min": 0.25,
+    "lodo_max": 2.63,
+    "flips": 0
+  },
+  "tokyo_F3_H60_short_EURUSD": {
+    "n": 7,
+    "full_mean_pips": 1.41,
+    "lodo_min": -0.1,
+    "lodo_max": 2.64,
+    "flips": 1
+  },
+  "tokyo_F3_H60_short_GBPUSD": {
+    "n": 7,
+    "full_mean_pips": -0.79,
+    "lodo_min": -2.72,
+    "lodo_max": 0.95,
+    "flips": 3
+  },
+  "tokyo_F3_H60_short_USDJPY": {
+    "n": 4,
+    "full_mean_pips": -29.91,
+    "lodo_min": -47.03,
+    "lodo_max": 4.78,
+    "flips": 1
+  },
+  "tokyo_F3_H60_short_EURJPY": {
+    "n": 6,
+    "full_mean_pips": -27.09,
+    "lodo_min": -35.55,
+    "lodo_max": -2.67,
+    "flips": 0
+  },
+  "tokyo_F3_H60_short_GBPJPY": {
+    "n": 5,
+    "full_mean_pips": -41.45,
+    "lodo_min": -55.05,
+    "lodo_max": -6.3,
+    "flips": 0
+  },
+  "tokyo_F3_H60_short_AUDUSD": {
+    "n": 9,
+    "full_mean_pips": -0.87,
+    "lodo_min": -2.4,
+    "lodo_max": 0.66,
+    "flips": 1
+  },
+  "tokyo_F3_H60_short_USDCAD": {
+    "n": 4,
+    "full_mean_pips": -1.69,
+    "lodo_min": -4.62,
+    "lodo_max": -0.62,
+    "flips": 0
+  },
+  "wmr_F17_H15_short_EURUSD": {
+    "n": 6,
+    "full_mean_pips": 2.62,
+    "lodo_min": 1.21,
+    "lodo_max": 5.16,
+    "flips": 0
+  },
+  "wmr_F17_H15_short_GBPUSD": {
+    "n": 4,
+    "full_mean_pips": 5.76,
+    "lodo_min": 2.78,
+    "lodo_max": 8.5,
+    "flips": 0
+  },
+  "wmr_F17_H15_short_USDJPY": {
+    "n": 5,
+    "full_mean_pips": -20.86,
+    "lodo_min": -26.83,
+    "lodo_max": -2.06,
+    "flips": 0
+  },
+  "wmr_F17_H15_short_EURJPY": {
+    "n": 6,
+    "full_mean_pips": -13.93,
+    "lodo_min": -20.36,
+    "lodo_max": 7.55,
+    "flips": 1
+  },
+  "wmr_F17_H15_short_GBPJPY": {
+    "n": 6,
+    "full_mean_pips": -21.4,
+    "lodo_min": -29.24,
+    "lodo_max": 0.41,
+    "flips": 1
+  },
+  "wmr_F17_H15_short_AUDUSD": {
+    "n": 7,
+    "full_mean_pips": -1.46,
+    "lodo_min": -3.29,
+    "lodo_max": -0.44,
+    "flips": 0
+  },
+  "wmr_F17_H15_short_USDCAD": {
+    "n": 5,
+    "full_mean_pips": 1.68,
+    "lodo_min": 0.0,
+    "lodo_max": 2.95,
+    "flips": 1
+  },
+  "wmr_F17_H60_long_EURUSD": {
+    "n": 5,
+    "full_mean_pips": -6.46,
+    "lodo_min": -9.72,
+    "lodo_max": 0.48,
+    "flips": 1
+  },
+  "wmr_F17_H60_long_GBPUSD": {
+    "n": 7,
+    "full_mean_pips": 2.19,
+    "lodo_min": -3.72,
+    "lodo_max": 5.88,
+    "flips": 1
+  },
+  "wmr_F17_H60_long_USDJPY": {
+    "n": 6,
+    "full_mean_pips": 9.75,
+    "lodo_min": 8.44,
+    "lodo_max": 13.29,
+    "flips": 0
+  },
+  "wmr_F17_H60_long_EURJPY": {
+    "n": 5,
+    "full_mean_pips": 13.6,
+    "lodo_min": 11.49,
+    "lodo_max": 16.44,
+    "flips": 0
+  },
+  "wmr_F17_H60_long_GBPJPY": {
+    "n": 5,
+    "full_mean_pips": 15.25,
+    "lodo_min": 5.8,
+    "lodo_max": 20.52,
+    "flips": 0
+  },
+  "wmr_F17_H60_long_AUDUSD": {
+    "n": 4,
+    "full_mean_pips": -2.35,
+    "lodo_min": -5.13,
+    "lodo_max": 1.9,
+    "flips": 1
+  },
+  "wmr_F17_H60_long_USDCAD": {
+    "n": 6,
+    "full_mean_pips": -0.92,
+    "lodo_min": -4.41,
+    "lodo_max": 1.22,
+    "flips": 3
+  },
+  "tokyo_F3_H60_long_USDJPY": {
+    "n": 6,
+    "full_mean_pips": 7.35,
+    "lodo_min": 1.96,
+    "lodo_max": 12.74,
+    "flips": 0
+  },
+  "tokyo_F3_H60_long_EURJPY": {
+    "n": 5,
+    "full_mean_pips": 6.26,
+    "lodo_min": -0.01,
+    "lodo_max": 9.21,
+    "flips": 1
+  },
+  "tokyo_F3_H60_long_GBPJPY": {
+    "n": 6,
+    "full_mean_pips": 5.36,
+    "lodo_min": -2.31,
+    "lodo_max": 8.21,
+    "flips": 1
+  },
+  "tokyo_F3_H60_long_USDCAD": {
+    "n": 5,
+    "full_mean_pips": 0.95,
+    "lodo_min": -1.2,
+    "lodo_max": 2.44,
+    "flips": 1
+  },
+  "wmr_F17_H30_long_EURUSD": {
+    "n": 5,
+    "full_mean_pips": -2.05,
+    "lodo_min": -4.6,
+    "lodo_max": 1.49,
+    "flips": 1
+  },
+  "wmr_F17_H30_long_GBPUSD": {
+    "n": 7,
+    "full_mean_pips": 0.22,
+    "lodo_min": -3.32,
+    "lodo_max": 2.17,
+    "flips": 2
+  },
+  "wmr_F17_H30_long_USDJPY": {
+    "n": 6,
+    "full_mean_pips": 2.31,
+    "lodo_min": 0.44,
+    "lodo_max": 3.65,
+    "flips": 0
+  },
+  "wmr_F17_H30_long_EURJPY": {
+    "n": 5,
+    "full_mean_pips": 5.59,
+    "lodo_min": 2.77,
+    "lodo_max": 8.01,
+    "flips": 0
+  },
+  "wmr_F17_H30_long_GBPJPY": {
+    "n": 5,
+    "full_mean_pips": 4.9,
+    "lodo_min": 0.41,
+    "lodo_max": 7.32,
+    "flips": 0
+  },
+  "wmr_F17_H30_long_AUDUSD": {
+    "n": 4,
+    "full_mean_pips": -2.9,
+    "lodo_min": -4.58,
+    "lodo_max": -1.88,
+    "flips": 0
+  },
+  "wmr_F17_H30_long_USDCAD": {
+    "n": 6,
+    "full_mean_pips": 0.04,
+    "lodo_min": -0.62,
+    "lodo_max": 0.8,
+    "flips": 3
+  }
+}

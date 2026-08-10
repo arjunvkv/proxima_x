@@ -1,0 +1,92 @@
+{
+  "hypotheses": [
+    "A: long vs short asymmetry",
+    "B: F+5 window"
+  ],
+  "cells": {
+    "tokyo_F3_H15": {
+      "False": {
+        "n": 276,
+        "long_only_mean": 0.00119948,
+        "short_only_mean": 0.00122889,
+        "signed_T1_mean": 4.688e-05
+      },
+      "True": {
+        "n": 275,
+        "long_only_mean": 0.00081146,
+        "short_only_mean": 0.0017656,
+        "signed_T1_mean": -0.00028496
+      }
+    },
+    "tokyo_F3_H30": {
+      "False": {
+        "n": 276,
+        "long_only_mean": 0.00640607,
+        "short_only_mean": -0.03790821,
+        "signed_T1_mean": 0.02135817
+      },
+      "True": {
+        "n": 275,
+        "long_only_mean": 0.0040818,
+        "short_only_mean": -0.04002051,
+        "signed_T1_mean": 0.01937209
+      }
+    },
+    "tokyo_F3_H60": {
+      "False": {
+        "n": 276,
+        "long_only_mean": 0.01050979,
+        "short_only_mean": -0.03288496,
+        "signed_T1_mean": 0.02112989
+      },
+      "True": {
+        "n": 275,
+        "long_only_mean": 0.01826509,
+        "short_only_mean": -0.04846504,
+        "signed_T1_mean": 0.0311138
+      }
+    },
+    "wmr_F17_H15": {
+      "False": {
+        "n": 293,
+        "long_only_mean": 0.007047,
+        "short_only_mean": -0.02350301,
+        "signed_T1_mean": 0.01507843
+      },
+      "True": {
+        "n": 292,
+        "long_only_mean": 0.00525443,
+        "short_only_mean": -0.02376199,
+        "signed_T1_mean": 0.01368425
+      }
+    },
+    "wmr_F17_H30": {
+      "False": {
+        "n": 293,
+        "long_only_mean": 0.01335693,
+        "short_only_mean": 0.00066699,
+        "signed_T1_mean": 0.00651249
+      },
+      "True": {
+        "n": 292,
+        "long_only_mean": 0.01186745,
+        "short_only_mean": 0.00141737,
+        "signed_T1_mean": 0.00581649
+      }
+    },
+    "wmr_F17_H60": {
+      "False": {
+        "n": 293,
+        "long_only_mean": 0.0187972,
+        "short_only_mean": 0.01003052,
+        "signed_T1_mean": 0.0047277
+      },
+      "True": {
+        "n": 292,
+        "long_only_mean": 0.01608472,
+        "short_only_mean": 0.01270925,
+        "signed_T1_mean": 0.00296966
+      }
+    }
+  }
+}
