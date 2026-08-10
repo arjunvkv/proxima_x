@@ -420,6 +420,18 @@ def main() -> None:
             if st.get("last_entry_day") == today:
                 continue
             bars_map = {sym: fetch_bars(sym, cfg["lookback"] + 4) for sym in UNIVERSE}
+            # M5-boundary ragged-pool guard (2026-08-10 usfade): a per-symbol
+            # copy_rates call at the bar rollover can miss the just-opened fill
+            # bar. The signal bar then becomes the LAST fetched bar and
+            # session_rank drops the symbol as unfillable — the day's pool ends
+            # up short of its true top rankers (USDCAD -0.114% and GBPCAD
+            # -0.062% were absent that day while two POSITIVE-ret symbols rode
+            # in as top-5). Refetch once if any symbol's window is stale.
+            last_ts = [b[-1]["ts"] for b in bars_map.values() if b]
+            if last_ts and min(last_ts) < now - 120:
+                time.sleep(1.5)
+                bars_map = {sym: fetch_bars(sym, cfg["lookback"] + 4) for sym in UNIVERSE}
+                print(f"[fetch-retry {name}] stale pool refetched")
             rank = session_rank(bars_map, today, cfg)
             if not rank:
                 continue
