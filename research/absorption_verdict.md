@@ -15,8 +15,8 @@ an episodic artifact of two outlier days.**
 | Item | Status |
 |---|---|
 | Data | Real FTMO MT5 quote ticks, EURJPY, 2,123,678 ticks / 28 days (archive `data/ticks/EURJPY/2026`), 100% carry genuine bid/ask, ~2 quotes/sec median |
-| True volume | IMPOSSIBLE — all `volume`/`volume_real` = 0 on this broker feed. Flow measured as **quote-pressure proxy** (ask-up/bid-up vs ask-dn/bid-dn revision counts) — the brief's explicitly authorized fallback |
-| Coverage | Only EURJPY archived at month depth; EURUSD 1h only. Other 5 universe pairs NOT tested (see §Extension) |
+| True volume | IMPOSSIBLE — all `volume`/`volume_real` = 0 on this broker feed. Flow measured as **quote-pressure proxy** (ask-up/bid-up vs ask-dn/bid-dn revision counts) — the brief's explicitly authorized fallback. Tick-rule aggressor inference ALSO impossible: FTMO-Demo history carries the LAST *flag bit* (~97% of ticks) but the `last` VALUE is 0.0 in every archived row — no tradeprint price exists to compare against bid/ask |
+| Coverage | Only EURJPY archived at month depth; EURUSD 1h only. Other 5 universe pairs NOT tested (see §Extension). Prior bar-level study (`scripts/_absorb/`, commit `345b8cb`) tested all 18 pairs at M5 resolution — same null (max |t| 1.85, max z 1.58) |
 | Observable spread | EURJPY median 12 pts (price units 0.012, point 0.001) → $7.57/lot RT + $6.00 comm = **$13.57/lot round trip** |
 
 ## Measurement (causal, non-repainting, distribution-based)
