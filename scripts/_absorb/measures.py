@@ -22,13 +22,21 @@ import numpy as np
 EPS = 1e-12
 
 
-def build_arrays(bars: list[dict]) -> dict:
-    n = len(bars)
-    ts = np.array([b["ts"] for b in bars], dtype=np.int64)
-    o = np.array([b["open"] for b in bars], dtype=np.float64)
-    h = np.array([b["high"] for b in bars], dtype=np.float64)
-    l = np.array([b["low"] for b in bars], dtype=np.float64)
-    c = np.array([b["close"] for b in bars], dtype=np.float64)
+def build_arrays(bars) -> dict:
+    """bar arrays from either list-of-dicts (engine tape) or dict-of-arrays."""
+    if isinstance(bars, dict):
+        ts = np.asarray(bars["ts"], dtype=np.int64)
+        o = np.asarray(bars["open"], dtype=np.float64)
+        h = np.asarray(bars["high"], dtype=np.float64)
+        l = np.asarray(bars["low"], dtype=np.float64)
+        c = np.asarray(bars["close"], dtype=np.float64)
+    else:
+        ts = np.array([b["ts"] for b in bars], dtype=np.int64)
+        o = np.array([b["open"] for b in bars], dtype=np.float64)
+        h = np.array([b["high"] for b in bars], dtype=np.float64)
+        l = np.array([b["low"] for b in bars], dtype=np.float64)
+        c = np.array([b["close"] for b in bars], dtype=np.float64)
+    n = len(ts)
     rng = h - l
     cs = np.concatenate([[0.0], np.cumsum(rng)])          # cs[j] = sum rng[0:j]
     return {"ts": ts, "o": o, "h": h, "l": l, "c": c, "rng": rng, "cs": cs}
@@ -64,7 +72,7 @@ class AbsorbSignals:
         self.W, self.T, self.D = W, T, D
         a = build_arrays(bars)
         self.a = a
-        n = len(bars)
+        n = len(a["ts"])
         ts, o, c, cs = a["ts"], a["o"], a["c"], a["cs"]
         self.n = n
 
