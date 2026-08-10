@@ -41,10 +41,10 @@ def pip_size(sym: str) -> float:
     return 0.01 if "JPY" in sym else 0.0001
 
 
-def load_journal() -> tuple[list[dict], list[dict]]:
-    entries, closes = [], []
+def load_journal() -> tuple[list[dict], list[dict], list[dict]]:
+    entries, closes, rejects = [], [], []
     if not os.path.exists(JOURNAL):
-        return entries, closes
+        return entries, closes, rejects
     with open(JOURNAL) as f:
         for line in f:
             try:
@@ -55,7 +55,9 @@ def load_journal() -> tuple[list[dict], list[dict]]:
                 entries.append(rec)
             elif rec.get("kind") == "close":
                 closes.append(rec)
-    return entries, closes
+            elif rec.get("kind") == "reject":
+                rejects.append(rec)
+    return entries, closes, rejects
 
 
 def load_spreads() -> list[list[float]]:
@@ -71,10 +73,26 @@ def load_spreads() -> list[list[float]]:
 
 
 def main() -> None:
-    entries, closes = load_journal()
+    entries, closes, rejects = load_journal()
     spreads = load_spreads()
-    print(f"journal: {len(entries)} entries, {len(closes)} closes | "
-          f"spread snapshots: {len(spreads)}")
+    print(f"journal: {len(entries)} entries, {len(closes)} closes, "
+          f"{len(rejects)} rejects | spread snapshots: {len(spreads)}")
+
+    if rejects:
+        r_by: dict[str, int] = {}
+        for r in rejects:
+            k = str(r.get("strategy", "?"))
+            r_by[k] = r_by.get(k, 0) + 1
+        print("\n== REJECTED orders (signals that never became trades) ==")
+        print("  Every reject is a selection-bias risk in the journal:")
+        print("  the backtest has a trade; live has none.")
+        for n, c in sorted(r_by.items()):
+            print(f"  {n:<10} {c} reject(s)")
+        print("  ⚠ Phase-B gate: rejects must be 0 — check retcode/"
+              "market-hours/margin before any scaling")
+    else:
+        print("REJECTED orders: 0 (Phase-B gate condition met ✅)")
+
     if not entries:
         print("ALIGNMENT: n/a (no fills journaled yet)")
         return

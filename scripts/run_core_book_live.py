@@ -139,6 +139,23 @@ def journal_entry(name: str, symbol: str, lot: float, side: str,
     })
 
 
+def journal_reject(name: str, symbol: str, lot: float, requested: float,
+                   retcode, comment: str) -> None:
+    """ORDER-DIARY: record an order that never became a trade (reject/fail).
+
+    Every reject is a signal that existed but produced no fill — the
+    selection-bias class that silently distorts the alignment journal if
+    ignored ("signal existed, trade never existed"). The alignment tool
+    counts these; the Phase-B scaling gate requires rejects == 0.
+    """
+    journal_write({
+        "kind": "reject", "strategy": name, "symbol": symbol, "lot": lot,
+        "requested": requested, "retcode": str(retcode), "comment": comment,
+        "ts": server_now(),
+        "utc": datetime.utcfromtimestamp(server_now()).isoformat() + "Z",
+    })
+
+
 def journal_spread() -> None:
     """One hourly snapshot of UNIVERSE bid/ask spreads → CSV (live envelope)."""
     try:
@@ -499,6 +516,14 @@ def _order_buy(symbol: str, fill: float, sl: float, tp: float,
            "type_time": 0, "type_filling": mt5.ORDER_FILLING_IOC}
     res = mt5.order_send(req)
     if res is None or res.retcode != mt5.TRADE_RETCODE_DONE:
+        # ORDER-DIARY: journal the reject — a signal that never became a
+        # trade (selection-bias class; Phase-B gate requires rejects == 0).
+        _name = next((nm for nm, c in STRATS.items()
+                      if c.get("comment") == cfg.get("comment")),
+                     cfg.get("comment", "?"))
+        _rc = res.retcode if res is not None else "NONE"
+        _cm = res.comment if res is not None else "order_send returned None"
+        journal_reject(_name, symbol, cfg["lot"], fill, _rc, _cm)
         return None
     deal = getattr(res, "deal", None)
     return {
