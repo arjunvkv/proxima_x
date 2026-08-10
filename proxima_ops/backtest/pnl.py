@@ -71,7 +71,14 @@ def trade_to_usd(t: dict, volume: float,
     optimistic by exactly one spread. Default None = zero spread (legacy parity).
     """
     sym = t["symbol"]
-    if tick_value_map and sym in tick_value_map:
+    if tick_value_map is not None:
+        if sym not in tick_value_map:
+            raise ValueError(
+                f"tick_value_map provided but missing symbol {sym!r} — its PnL would "
+                "silently fall back to legacy $10/pip math (wrong for crosses/exotics, "
+                "up to ~1.7x overstatement). Add the broker trade_tick_value to "
+                "FTMO_TICK_VALUES (probe: mt5.symbol_info(...).trade_tick_value), or "
+                "pass tick_value_map=None to explicitly keep legacy parity.")
         pts = t["pnl_pts"] / point_size(sym)
         gross = pts * tick_value_map[sym] * volume
     else:
