@@ -247,10 +247,14 @@ def session_rank(bars_map: dict[str, list[dict]], day: int, cfg: dict) -> list[d
             if i < cfg["lookback"]:
                 continue
             seen_hours.add(h)
+            if i + 1 >= len(bars):
+                # signal on the last fetched bar: no next bar to fill on,
+                # unfillable by contract — skip (also avoids None fill_ts)
+                continue
             ret = (b["close"] - bars[i - cfg["lookback"]]["close"]) / bars[i - cfg["lookback"]]["close"]
             candidates.append({"symbol": sym, "ret": ret, "signal_ts": b["ts"],
-                               "fill_ts": bars[i + 1]["ts"] if i + 1 < len(bars) else None,
-                               "model_open": bars[i + 1]["open"] if i + 1 < len(bars) else None})
+                               "fill_ts": bars[i + 1]["ts"],
+                               "model_open": bars[i + 1]["open"]})
     if not candidates:
         return []
     candidates.sort(key=lambda x: x["ret"])
