@@ -1,16 +1,20 @@
 """Replay book-v2 live fires on 2026-08-11 — verify the EXACT live trades
 against the deployed model (run_core_book_live.session_rank as the daemon
-evaluated): rank symbol-set vs journal fills, model_open vs actual fill,
-exit walk (stop-first SL/TP, else hold_bars close) vs live exits, net P&L
-(engine trade_to_usd @ live commission 2.5 + TYPICAL/MEASURED spreads)
-vs live journaled net.
+evaluated): rank symbol-set vs daemon-printed rank + journal fills,
+model_open vs actual fill, exit walk (stop-first SL/TP, else hold_bars
+close) vs live exits, net P&L (engine trade_to_usd @ live commission 2.5 +
+TYPICAL/MEASURED spreads) vs live journaled net.
 
-Legs fired today (daemon log): cascade 02:05:08Z, london 07:05:07Z,
-usfade 14:05:03Z. tokyo = INFORMATIONAL ONLY (disabled in STRATS — replay
-confirms the SL hit the model would also take). gold_s3 = no fill (300s
-guard skipped; log signal 16:25/fill 16:30) — rank shown for reference.
+V2 fixes:
+- journal entries filtered to TODAY's server day (yesterday's usfade rows
+  were polluting the live comparison)
+- walk reports DATA-HOLE when the fetched terminal history misses a bar
+  mid-hold (terminal history for some crosses has vendor gaps — e.g.
+  14:35-14:40 on 2026-08-11) instead of silently skipping
+- daemon-printed [signal] top lists are parsed from the daemon log and
+  compared against the clean-window replay rank (ragged-pool divergence)
 """
-import sys, os, datetime, json
+import sys, os, datetime, json, re
 sys.path.insert(0, "/home/ubuntu/proxima_x/scripts")
 sys.path.insert(0, "/home/ubuntu/proxima_x/proxima_ops/backtest")
 import MetaTrader5 as mt5
@@ -31,11 +35,22 @@ SPREAD_TYP = {"EURUSD": 0.8, "USDJPY": 1.2, "GBPUSD": 1.5, "AUDUSD": 1.1,
               "USDCAD": 1.8, "NZDUSD": 1.4, "EURGBP": 1.2, "EURCHF": 1.8,
               "USDCHF": 1.4, "AUDJPY": 1.8}
 
-# ---- live journal (fills + closes) ----
+# ---- fetch bars (18 FX + gold) ----
+syms = list(R.UNIVERSE) + ["XAUUSD", "XAGUSD"]
+bars = {s: R.fetch_bars(s, NB) for s in syms}
+latest = [b[-1]["ts"] for b in bars.values() if b]
+day = max(latest) // 86400 if latest else None
+DAY0 = day * 86400
+print("feed latest bar ts:", datetime.datetime.utcfromtimestamp(max(latest)),
+      "| day:", day)
+
+# ---- live journal, filtered to today ----
 journal = []
 try:
     for line in open(R.JOURNAL):
-        journal.append(json.loads(line))
+        r = json.loads(line)
+        if r.get("ts", 0) >= DAY0 - 300:   # today only (server day)
+            journal.append(r)
 except Exception as e:
     print("journal read fail:", e)
 
@@ -51,13 +66,22 @@ def j_close_for_ticket(t):
     return None
 
 
-# ---- fetch bars (18 FX + gold) ----
-syms = list(R.UNIVERSE) + ["XAUUSD", "XAGUSD"]
-bars = {s: R.fetch_bars(s, NB) for s in syms}
-latest = [b[-1]["ts"] for b in bars.values() if b]
-day = max(latest) // 86400 if latest else None
-print("feed latest bar ts:", datetime.datetime.utcfromtimestamp(max(latest)),
-      "| day:", day)
+# ---- daemon-printed ranks (ragged-pool ground truth at eval instant) ----
+daemon_rank = {}
+try:
+    cur = None
+    for line in open(os.path.join(R.ROOT, "logs", "core_book_daemon.log"), errors="ignore"):
+        m = re.search(r"\[signal (\w+) 2026-08-11", line)
+        if m:
+            cur = m.group(1); daemon_rank[cur] = []
+            continue
+        m2 = re.match(r"\s+([A-Z]{6})\s+ret=", line)
+        if m2 and cur is not None:
+            daemon_rank[cur].append(m2.group(1))
+        if re.search(r"\[(FILL|done|skip) ", line):
+            cur = None
+except Exception as e:
+    print("daemon log parse fail:", e)
 
 
 def win(sym, ts_end, n):
@@ -94,7 +118,8 @@ def walk(sym, fill_ts, entry, sl, tp, hold_bars):
     for step in range(hold_bars + 2):
         b = by_ts.get(ts)
         if b is None:
-            return None, f"no-bar@{ts}"
+            hole = datetime.datetime.utcfromtimestamp(ts).strftime("%H:%M")
+            return None, f"DATA-HOLE@{hole}"
         if b["low"] <= sl:
             return sl, "SL"
         if b["high"] >= tp:
@@ -105,7 +130,6 @@ def walk(sym, fill_ts, entry, sl, tp, hold_bars):
     return None, "exhausted"
 
 
-DAY0 = day * 86400
 # tokyo cfg (disabled in STRATS — informational only)
 TOKYO_CFG = {"sessions": [0], "lookback": 6, "top_n": 3, "hold_bars": 12,
              "lot": 0.52, "comment": "CORE_TOKYO_25",
@@ -128,10 +152,12 @@ def replay_one(name, cfg, ts_end, uni, live_entries, informational=False):
         return 0.0
     ranked_syms = [x["symbol"] for x in rank[: cfg["top_n"]]]
     live_syms = [e["symbol"] for e in live_entries]
-    print(f"rank top-{cfg['top_n']}: {ranked_syms}")
-    print(f"LIVE filled:    {live_syms}")
-    same = sorted(ranked_syms) == sorted(live_syms)
-    print(f"SYMBOL-SET MATCH: {'YES' if same else '*** NO ***'}")
+    dr = daemon_rank.get(name, [])
+    print(f"replay rank top-{cfg['top_n']}: {ranked_syms}")
+    print(f"daemon rank top-{cfg['top_n']}: {dr[:cfg['top_n']]}")
+    print(f"LIVE filled:        {live_syms}")
+    print(f"replay==LIVE set: {'YES' if sorted(ranked_syms) == sorted(live_syms) else '*** NO ***'}   "
+          f"daemon==LIVE set: {'YES' if sorted(dr[:cfg['top_n']]) == sorted(live_syms) else 'NO'}")
     tot = 0.0
     for x in rank[: cfg["top_n"]]:
         sym = x["symbol"]
@@ -140,7 +166,7 @@ def replay_one(name, cfg, ts_end, uni, live_entries, informational=False):
         exit_p, reason = walk(sym, x["fill_ts"], entry, sl, tp, cfg["hold_bars"])
         live_e = next((e for e in live_entries if e["symbol"] == sym), None)
         if exit_p is None:
-            print(f"  {sym:<8} walk {reason} — SKIP")
+            print(f"  {sym:<8} {reason} — walk impossible (terminal history gap), model fill {entry:.5f}")
             continue
         sp = spread_at(sym, x["fill_ts"])
         sp_t = SPREAD_TYP.get(sym)
@@ -167,7 +193,7 @@ def replay_one(name, cfg, ts_end, uni, live_entries, informational=False):
                         f"live exit {live_exit} vs walk {exit_p} ({reason}) | "
                         f"live net {live_net if live_net is not None else '?'}")
         sp_txt = f"{sp}" if sp is not None else "TYP"
-        print(f"  {sym:<8} {reason:<4} modelEntry={entry:.5f} modelExit={exit_p:.5f} "
+        print(f"  {sym:<8} {reason:<9} modelEntry={entry:.5f} modelExit={exit_p:.5f} "
               f"netTYP(2.5)={u_t['net']:+8.2f} netENG(3.0)={u3['net']:+8.2f} "
               f"[spreadMEAS={sp_txt} netMEAS={u['net']:+.2f}]")
         print(f"            {live_txt}")
