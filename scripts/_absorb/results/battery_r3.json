@@ -1,0 +1,24 @@
+{
+ "A1": {
+  "label": "A1 USD-regime fade BTC-only",
+  "gate": false,
+  "n": 36846,
+  "exp": 33.02507300656781,
+  "pf": 1.1608397419602763
+ },
+ "A2": {
+  "label": "A2 USD-regime fade XAU-only (filtered)",
+  "gate": false,
+  "n": 26882,
+  "exp": 120.95182650100446,
+  "pf": 1.1185948498150262
+ },
+ "B": {
+  "label": "B index gap-follow (4 indices pooled)",
+  "gate": true,
+  "n": 154,
+  "exp": 51.660519480519596,
+  "pf": 1.8216240555534935
+ },
+ "jaccard_day": 0.39072847682119205
+}

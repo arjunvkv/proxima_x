@@ -1,0 +1,107 @@
+{
+ "EURUSD": {
+  "tv": 1.0,
+  "ts": 1e-05,
+  "pt": 1e-05,
+  "digits": 5,
+  "contract": 100000.0
+ },
+ "USDJPY": {
+  "tv": 0.6276084978190605,
+  "ts": 0.001,
+  "pt": 0.001,
+  "digits": 3,
+  "contract": 100000.0
+ },
+ "XAUUSD": {
+  "tv": 1.0,
+  "ts": 0.01,
+  "pt": 0.01,
+  "digits": 2,
+  "contract": 100.0
+ },
+ "XAGUSD": {
+  "tv": 5.0,
+  "ts": 0.001,
+  "pt": 0.001,
+  "digits": 3,
+  "contract": 5000.0
+ },
+ "US30.cash": {
+  "tv": 0.01,
+  "ts": 0.01,
+  "pt": 0.01,
+  "digits": 2,
+  "contract": 1.0
+ },
+ "US500.cash": {
+  "tv": 0.01,
+  "ts": 0.01,
+  "pt": 0.01,
+  "digits": 2,
+  "contract": 1.0
+ },
+ "GER40.cash": {
+  "tv": 0.0115341,
+  "ts": 0.01,
+  "pt": 0.01,
+  "digits": 2,
+  "contract": 1.0
+ },
+ "UK100.cash": {
+  "tv": 0.013498000000000001,
+  "ts": 0.01,
+  "pt": 0.01,
+  "digits": 2,
+  "contract": 1.0
+ },
+ "JP225.cash": {
+  "tv": 0.0006276084978190605,
+  "ts": 0.01,
+  "pt": 0.01,
+  "digits": 2,
+  "contract": 10.0
+ },
+ "HK50.cash": {
+  "tv": 0.0012744438327114047,
+  "ts": 0.01,
+  "pt": 0.01,
+  "digits": 2,
+  "contract": 1.0
+ },
+ "USOIL.cash": {
+  "tv": 0.1,
+  "ts": 0.001,
+  "pt": 0.001,
+  "digits": 3,
+  "contract": 100.0
+ },
+ "UKOIL.cash": {
+  "tv": 0.1,
+  "ts": 0.001,
+  "pt": 0.001,
+  "digits": 3,
+  "contract": 100.0
+ },
+ "DXY.cash": {
+  "tv": 0.1,
+  "ts": 0.001,
+  "pt": 0.001,
+  "digits": 3,
+  "contract": 100.0
+ },
+ "BTCUSD": {
+  "tv": 0.01,
+  "ts": 0.01,
+  "pt": 0.01,
+  "digits": 2,
+  "contract": 1.0
+ },
+ "ETHUSD": {
+  "tv": 0.1,
+  "ts": 0.01,
+  "pt": 0.01,
+  "digits": 2,
+  "contract": 10.0
+ }
+}
