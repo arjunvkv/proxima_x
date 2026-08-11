@@ -1,0 +1,24 @@
+{
+ "pulled": {
+  "US30.cash": 40629,
+  "US500.cash": 40629,
+  "GER40.cash": 39749,
+  "UK100.cash": 39465,
+  "JP225.cash": 40604,
+  "HK50.cash": 26144,
+  "USOIL.cash": 40501,
+  "UKOIL.cash": 36981,
+  "DXY.cash": 37092
+ },
+ "spread_pts": {
+  "US30.cash": 210.0,
+  "US500.cash": 60.0,
+  "GER40.cash": 113.0,
+  "UK100.cash": 75.0,
+  "JP225.cash": 1000.0,
+  "HK50.cash": 600.0,
+  "USOIL.cash": 68.0,
+  "UKOIL.cash": 67.0,
+  "DXY.cash": 17.0
+ }
+}
