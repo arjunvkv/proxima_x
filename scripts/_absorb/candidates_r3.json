@@ -1,0 +1,28 @@
+{
+  "FX22": ["EURUSD","USDJPY","GBPUSD","AUDUSD","EURJPY","GBPJPY","EURAUD","EURGBP","USDCAD","USDCHF","NZDUSD","AUDJPY","CADJPY","AUDCAD","AUDCHF","AUDNZD","EURCAD","EURNZD","GBPAUD","GBPCAD","GBPNZD","EURCHF"],
+  "GOLD": ["XAUUSD","XAGUSD"],
+  "IND": ["US30.cash","US500.cash","GER40.cash","UK100.cash","JP225.cash","HK50.cash"],
+  "CRYPTO": ["BTCUSD","ETHUSD"],
+  "candidates": [
+    {"name": "london_breakout_eu", "rule": "range_breakout", "universe": "FX22", "sessions": [7,8,9,10,11,12]},
+    {"name": "asia_range_fade", "rule": "range_reversion", "universe": "FX22", "sessions": [0,1,2,3,4,5,6]},
+    {"name": "ny_open_momentum_gold", "rule": "session_open_breakout", "universe": "GOLD", "sessions": [13,14,15]},
+    {"name": "ny_open_breakout_ind", "rule": "range_breakout", "universe": "IND", "sessions": [13,14,15]},
+    {"name": "liquidity_sweep_fx", "rule": "liquidity_sweep", "universe": "FX22", "sessions": "full"},
+    {"name": "liquidity_sweep_gold", "rule": "liquidity_sweep", "universe": "GOLD", "sessions": "full"},
+    {"name": "macd_reversion_fx", "rule": "session_reversion", "universe": "FX22", "sessions": [7,8,9,10,11,12]},
+    {"name": "exhaustion_fade_fx", "rule": "session_exhaustion", "universe": "FX22", "sessions": [7,8,9,10,11,12]},
+    {"name": "weekend_gap_fx", "rule": "weekend_gap", "universe": "FX22", "sessions": "full"},
+    {"name": "monday_gap_ind", "rule": "weekend_gap", "universe": "IND", "sessions": "full"},
+    {"name": "vol_compress_fx", "rule": "vol_compress_fade", "universe": "FX22", "sessions": "full"},
+    {"name": "round_number_fx", "rule": "round_number_bounce", "universe": "FX22", "sessions": "full"},
+    {"name": "carry_clock_fx", "rule": "carry_clock", "universe": "FX22", "sessions": "full"},
+    {"name": "big_move_fade_fx", "rule": "big_move_fade", "universe": "FX22", "sessions": "full"},
+    {"name": "session_momentum_fx", "rule": "session_momentum", "universe": "FX22", "sessions": [7,8,9,10,11,12]},
+    {"name": "thin_market_asia_fx", "rule": "thin_market_fade", "universe": "FX22", "sessions": [0,1,2,3,4,5,6]},
+    {"name": "day_of_week_usd", "rule": "day_of_week_usd", "universe": "FX22", "sessions": "full"},
+    {"name": "CONTROL_exhaustion_gold", "rule": "session_exhaustion", "universe": "GOLD", "sessions": "full"},
+    {"name": "CONTROL_exhaustion_ind_us", "rule": "session_exhaustion", "universe": "IND", "sessions": [13,14,15,16,17,18,19,20,21]},
+    {"name": "CONTROL_big_move_btc", "rule": "big_move_fade", "universe": "CRYPTO", "sessions": "full"}
+  ]
+}
