@@ -1,25 +1,26 @@
 {
-  "book": "core_book_final_v1",
+  "book": "core_book_final_v2",
   "account": {"currency": "USD", "funded_balance": 25000, "daily_loss_limit": 1250, "max_dd_limit": 2500},
   "generated": "2026-08-11",
   "engine": "proxima_ops (legacy M5 worker; NOVA parity verified for all legs)",
+  "revision": "v2 = tokyo EXCLUDED per live-spread hour-shift probe (2026-08-10)",
   "evidence": {
     "window_days": 151,
-    "net_usd": 164615,
-    "worst_day_usd": 465,
-    "worst_day_pct_daily_limit": 37,
-    "max_dd_usd": 465,
-    "max_dd_pct_limit": 19,
-    "green_days_pct": 95.4,
-    "max_loss_streak_days": 1,
-    "cost_model": "busy-typical spread (costmaps_r3) + $3.0/lot comm, 1.5x spread stress stable (net $161k@1.5x, maxDD unchanged)"
+    "net_usd": 141236,
+    "worst_day_usd": 727,
+    "worst_day_pct_daily_limit": 58,
+    "max_dd_usd": 751,
+    "max_dd_pct_limit": 30,
+    "green_days_pct": 88.1,
+    "max_loss_streak_days": 2,
+    "cost_model": "busy-typical spread (costmaps_r3) + $3.0/lot comm; 1.5x spread stress stable (net $135,227, worstDay $768 = 61%, maxDD $833 = 33%)",
+    "worst_combined_day": "all 4 legs red: gold -303 + usfade -294 + cascade -101 + london -29 = -$727"
   },
   "tier_now": [
-    {"leg": "tokyo",     "rule": "session_exhaustion", "sessions": [0],                   "lookback": 6,    "top_n": 3, "hold_bars": 12, "universe": "FX18", "lot": 0.52, "sl_tp": "BIG(hold-only)", "net_7mo": 23380, "worst_day": 283},
-    {"leg": "cascade",   "rule": "session_exhaustion", "sessions": [2,3,4],               "lookback": 1440, "top_n": 8, "hold_bars": 24, "universe": "FX18", "lot": 0.14, "sl_tp": "BIG(hold-only)", "net_7mo": 3044,  "worst_day": 381},
-    {"leg": "london",    "rule": "session_exhaustion", "sessions": [7,8,9],               "lookback": 1440, "top_n": 5, "hold_bars": 12, "universe": "FX18", "lot": 0.23, "sl_tp": "BIG(hold-only)", "net_7mo": 2958,  "worst_day": 255},
-    {"leg": "usfade",    "rule": "session_exhaustion", "sessions": [14,15,16,17,18,19],   "lookback": 50,   "top_n": 5, "hold_bars": 24, "universe": "FX18", "lot": 0.45, "sl_tp": "BIG(hold-only)", "net_7mo": 14495, "worst_day": 581},
-    {"leg": "gold_s3",   "rule": "session_exhaustion", "sessions": "all",                 "lookback": 50,   "top_n": 3, "hold_bars": 12, "universe": ["XAUUSD","XAGUSD"], "lot": 0.15, "sl_tp": "BIG(hold-only)", "net_7mo": 120739, "worst_day": 318,
+    {"leg": "cascade",   "rule": "session_exhaustion", "sessions": [2,3,4],             "lookback": 1440, "top_n": 8, "hold_bars": 24, "universe": "FX18", "lot": 0.14, "sl_tp": "BIG(hold-only)", "net_7mo": 3044,  "worst_day": 381},
+    {"leg": "london",    "rule": "session_exhaustion", "sessions": [7,8,9],             "lookback": 1440, "top_n": 5, "hold_bars": 12, "universe": "FX18", "lot": 0.23, "sl_tp": "BIG(hold-only)", "net_7mo": 2958,  "worst_day": 255},
+    {"leg": "usfade",    "rule": "session_exhaustion", "sessions": [14,15,16,17,18,19], "lookback": 50,   "top_n": 5, "hold_bars": 24, "universe": "FX18", "lot": 0.45, "sl_tp": "BIG(hold-only)", "net_7mo": 14495, "worst_day": 581},
+    {"leg": "gold_s3",   "rule": "session_exhaustion", "sessions": "all",               "lookback": 50,   "top_n": 3, "hold_bars": 12, "universe": ["XAUUSD","XAGUSD"], "lot": 0.15, "sl_tp": "BIG(hold-only)", "net_7mo": 120739, "worst_day": 318,
      "status": "NEEDS USER APPROVAL (spec-only heritage) + worker gold branch (fetch XAUUSD/XAGUSD bars, gold sl_tp)",
      "certificate_discrepancy": "R3 certificate said exp $1,296/lot; current verified pipeline (NOVA==legacy, 0 mismatches, gold costs $45/lot RT ~ real 47pt) says $2,683/lot. Re-certified in place; R3 number was older-map era."}
   ],
@@ -36,6 +37,8 @@
      "blocker": "Needs new signal rule in engine (user-approved engine addition)."}
   ],
   "excluded": [
+    {"name": "tokyo", "reason": "LIVE-SPREAD VERIFIED DEAD (2026-08-10 hour-shift probe on daemon-measured spreads): edge exists only at server hour 0, exactly where the rollover spread tax lives. Hour 0: gross +$22,883 vs spread tax $39,514 -> net -$16,630 @0.52 lots. Hours 1/2/3: no edge (-$242/-$117/-$6,118 gross). No hour slot viable; a spread guard would skip every hour-0 trade and no other hour has an edge.",
+     "backtest_only_note": "backtest cost model (busy-typical spread) does NOT capture the hour-0 rollover blowout — why v1 kept it. Lesson: fire-hour spread-envelope gate BEFORE shipping any window."},
     {"name": "triangulation_residual", "verdict": "PF 0.52"},
     {"name": "equity_divergence", "verdict": "PF 1.04"},
     {"name": "london_fix_fade", "verdict": "-0.45bp/trade pre-costs"},
@@ -43,8 +46,9 @@
     {"name": "signed_rule_candidates_r3b", "verdict": "causal-replay gate failed (R3-3b) - none ship until worker signed path + gate pass"}
   ],
   "shipping_requirements": {
-    "tier_now_fx": "config-only: no worker change for the 4 FX legs (already live)",
+    "tier_now_fx": "config-only for cascade/london/usfade (already live). VPS deploy delta: REMOVE tokyo entry from STRATS + daemon restart (next tokyo window 21:05 UTC; no rush but do not fire into it).",
     "gold_s3": ["USER APPROVAL (spec-only heritage)", "worker gold branch: fetch XAUUSD/XAGUSD bars", "worker gold sl_tp resolution (3.0, 6.0) or BIG", "gold cost maps already in costmaps_r3.py (research-side)"],
-    "tier_next": ["worker signed-rule firing path (per-hour |score| rank, causal)", "causal-replay gate per candidate (R3-3b)", "NOVA live mode P3 for daily-cadence S4"]
+    "tier_next": ["worker signed-rule firing path (per-hour |score| rank, causal)", "causal-replay gate per candidate (R3-3b)", "NOVA live mode P3 for daily-cadence S4"],
+    "onboarding_gate": "measure the fire hour's live spreads BEFORE shipping any session window (tokyo is the case study)"
   }
 }

@@ -38,9 +38,11 @@ def leg(rule, sessions, lb, tn, hold, univ, side="long"):
                  "jpy_sl_tp": BIG, "non_jpy_sl_tp": BIG},
         "sessions": sessions, "base_lot": 0.15})
 
-# ---- Tier NOW: live legs (STRATS truth) + S3 gold ----
+# ---- Tier NOW: live legs (STRATS truth, tokyo EXCLUDED) + S3 gold ----
+# tokyo removed per hour-shift probe (2026-08-10, live daemon spreads):
+# hour-0 rollover spread tax $39,514 > edge $22,883 -> net -$16,630 @0.52 lots;
+# hours 1-3 have no edge at all. Not viable in any hour slot.
 LIVE = {
-    "tokyo":   {"rule": "session_exhaustion", "sessions": [0],       "lb": 6,    "tn": 3, "hold": 12, "lot": 0.52, "univ": FX18},
     "cascade": {"rule": "session_exhaustion", "sessions": [2, 3, 4], "lb": 1440, "tn": 8, "hold": 24, "lot": 0.14, "univ": FX18},
     "london":  {"rule": "session_exhaustion", "sessions": [7, 8, 9], "lb": 1440, "tn": 5, "hold": 12, "lot": 0.23, "univ": FX18},
     "usfade":  {"rule": "session_exhaustion", "sessions": [14, 15, 16, 17, 18, 19], "lb": 50, "tn": 5, "hold": 24, "lot": 0.45, "univ": FX18},
