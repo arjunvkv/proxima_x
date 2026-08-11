@@ -77,15 +77,22 @@ negative edge. Removing it is strictly better.
 The worker fires **legacy session_rank only**. Signed-rule and daily-cadence
 strategies need a worker extension (per-hour |score| rank with causal
 semantics) or NOVA live mode (P3). Nothing ships until that path exists AND
-each candidate passes the causal-replay gate (R3-3b).
+each candidate passes the causal-replay gate (R3-3b). **S4 was the first
+candidate to hit the gate — and FAILED (see Excluded): its certified PF 11.8
+was a stale-cache alignment artifact, not an edge.**
 
 | leg | rule | evidence | lot @25k (30% budget) | blocker |
 |---|---|---|---|---|
 | big_move_fade_fx | big_move_fade (signed) | exp $49/lot PF 5.3, plateau 9/9, FTMO sim 4.65 lots @100k | 0.35 | worker signed path + causal gate |
 | big_move_btc | big_move_fade (signed) | PF 3.2, sim 2.1 lots @100k (BTC=73% of net caveat) | 0.16 | same |
-| s4_dxy_divergence | dxy-implied divergence (new) | exp $370/lot PF 11.8, LODO 33/33, 7/7 months, plateau 9/9, MC 0% breach | 0.14 | DAILY cadence → NOVA P3 |
 | s1_btc_usd_regime | usd-regime fade (new) | exp $38/lot PF 1.16 | — | new signal rule = engine addition |
 | s2_index_break_gap | break-gap follow (new) | exp $52/lot PF 1.82, 4/4 indices | — | new signal rule = engine addition |
+
+## Excluded (causal-replay gate)
+
+| candidate | verdict |
+|---|---|
+| **s4_dxy_divergence** | **REJECTED 2026-08-11.** Certified battery (exp $370/lot, PF 11.8, LODO 33/33) was a STALE-FILE ARTIFACT: `residual()` positional-aligned `dc[-n:]+ec[-n:]` assuming both caches end the same day, but the cached EURUSD file ended 3 trading days before DXY.cash → every trade paired DXY(t) with EURUSD(t−3), a lagged cross-correlation. Honest day-intersect alignment: PF 1.00, exp $0.2/lot, win 49%, LODO 27/50, negative at 1.25× spread stress. Live terminal (DXY.cash closes byte-identical to cache, corr 0.99995) same-day signal: PF 0.80. **Lesson: cross-symbol daily residual batteries MUST day-intersect (never positional-align), and MUST be replayed against the live feed before shipping.** `battery_dxy.py` fixed accordingly. |
 
 ---
 

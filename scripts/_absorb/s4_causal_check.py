@@ -36,9 +36,13 @@ def lastc(s):
 def residual_dxy():
     dd, od, dc = lastc("DXY.cash")
     de, oe, ec = lastc("EURUSD")
-    n = min(len(dc), len(ec))
-    r = np.log(dc[-n:]) + 0.576 * np.log(ec[-n:])
-    return de[-n:], oe[-n:], ec[-n:], r - np.mean(r)
+    # DAY-INTERSECT alignment — see battery_dxy.py note: positional dc[-n:]+ec[-n:]
+    # paired DXY(t) with EURUSD(t-3) because the EURUSD cache lagged DXY by 3
+    # trading days (2026-08-11). The certified PF 11.8 was that artifact.
+    common = np.intersect1d(dd, de)
+    i1 = np.searchsorted(dd, common); i2 = np.searchsorted(de, common)
+    r = np.log(dc[i1]) + 0.576 * np.log(ec[i2])
+    return common, oe[i2], ec[i2], r - np.mean(r)
 
 
 def residual_rec():
@@ -65,12 +69,12 @@ def residual_rec():
 def main():
     de, oe, ec, r1 = residual_dxy()
     days2, r2 = residual_rec()
-    # intersect on days
-    common = np.intersect1d(de[-len(r1):], days2)
-    i1 = np.searchsorted(de[-len(r1):], common)
+    # intersect on days (de is now already the common day axis)
+    common = np.intersect1d(de, days2)
+    i1 = np.searchsorted(de, common)
     i2 = np.searchsorted(days2, common)
     r1c, r2c = r1[i1], r2[i2]
-    oe_c = oe[-len(r1):][i1]
+    oe_c = oe[i1]
     corr = np.corrcoef(r1c, r2c)[0, 1]
     print(f"days common={len(common)}  corr(r_dxy, r_rec)={corr:.4f}")
 

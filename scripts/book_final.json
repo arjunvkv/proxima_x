@@ -29,8 +29,14 @@
      "blocker": "SIGNED rule - current worker fires legacy session_rank only. Needs worker signed-rule path + causal-replay gate (R3-3b) before shipping."},
     {"leg": "big_move_btc", "rule": "big_move_fade", "universe": ["BTCUSD","ETHUSD"], "evidence": "CONTROL battery ALL-GREEN: PF 3.2, FTMO sim 2.1 lots @100k, caveat BTC=73% of net", "proposed_lot_25k_30pct": 0.16,
      "blocker": "SIGNED rule - same worker signed-rule path required."},
-    {"leg": "s4_dxy_divergence", "rule": "dxy_implied_divergence (new)", "universe": ["EURUSD"], "evidence": "deep battery ALL-GREEN: exp $370/lot PF 11.8, LODO 33/33, 7/7 months, plateau 9/9, regime halves, MC 0% breach", "proposed_lot_25k_30pct": 0.14,
-     "blocker": "DAILY-cadence signal - cannot run on M5 worker. Needs NOVA live mode (P3) daily leg."},
+    {
+      "leg": "s4_dxy_divergence",
+      "rule": "dxy_implied_divergence (new)",
+      "universe": ["EURUSD"],
+      "evidence": "REJECTED by causal-replay gate (R3-3b equivalent, 2026-08-11). Certified battery (exp $370/lot PF 11.8, LODO 33/33) was a STALE-FILE ARTIFACT: residual() positional-aligned dc[-n:]+ec[-n:], but the EURUSD cache ended 3 trading days before DXY.cash, so every trade paired DXY(t) with EURUSD(t-3) -> lagged cross-correlation, not a same-day divergence. Honest day-intersect alignment: PF 1.00, exp $0.2/lot, win 49%, LODO 27/50, negative at 1.25x spread stress. Live terminal confirmation: DXY.cash closes byte-identical to cache (corr 0.99995) but same-day terminal signal PF 0.80. S4 does NOT ship; battery_dxy.py fixed to day-intersect.",
+      "proposed_lot_25k_30pct": 0.14,
+      "blocker": "NO EDGE under honest alignment - rejected."
+    },
     {"leg": "s1_btc_usd_regime", "rule": "usd_regime_fade (new)", "evidence": "spec delivered; exp $38/lot PF 1.16", "proposed_lot_25k_30pct": null,
      "blocker": "Needs new signal rule in engine (user-approved engine addition)."},
     {"leg": "s2_index_break_gap", "rule": "break_gap_follow (new)", "evidence": "spec delivered; exp $52/lot PF 1.82 n=154, 4/4 indices", "proposed_lot_25k_30pct": null,
@@ -43,12 +49,13 @@
     {"name": "equity_divergence", "verdict": "PF 1.04"},
     {"name": "london_fix_fade", "verdict": "-0.45bp/trade pre-costs"},
     {"name": "commodity_momentum_audnzd", "verdict": "borderline +$50-68/lot, not book-grade"},
-    {"name": "signed_rule_candidates_r3b", "verdict": "causal-replay gate failed (R3-3b) - none ship until worker signed path + gate pass"}
+    {"name": "signed_rule_candidates_r3b", "verdict": "causal-replay gate failed (R3-3b) - none ship until worker signed path + gate pass"},
+    {"name": "s4_dxy_divergence", "verdict": "REJECTED 2026-08-11 causal-replay gate: certified PF 11.8 was a stale-cache alignment artifact (EURUSD cache 3 trading days older than DXY.cash; positional dc[-n:]+ec[-n:] paired DXY(t) with EURUSD(t-3)). Honest day-intersect alignment: PF 1.00/exp $0.2 per lot, LODO 27/50, negative at 1.25x stress. Live terminal same-day signal: PF 0.80. Lesson: cross-symbol daily residual batteries MUST day-intersect (never positional-align) and MUST be replayed against the live feed before shipping."}
   ],
   "shipping_requirements": {
     "tier_now_fx": "config-only for cascade/london/usfade (already live). VPS deploy delta: REMOVE tokyo entry from STRATS + daemon restart (next tokyo window 21:05 UTC; no rush but do not fire into it).",
     "gold_s3": ["USER APPROVAL (spec-only heritage)", "worker gold branch: fetch XAUUSD/XAGUSD bars", "worker gold sl_tp resolution (3.0, 6.0) or BIG", "gold cost maps already in costmaps_r3.py (research-side)"],
-    "tier_next": ["worker signed-rule firing path (per-hour |score| rank, causal)", "causal-replay gate per candidate (R3-3b)", "NOVA live mode P3 for daily-cadence S4"],
+    "tier_next": ["worker signed-rule firing path (per-hour |score| rank, causal)", "causal-replay gate per candidate (R3-3b) - S4 FAILED this gate 2026-08-11 (see excluded)"],
     "onboarding_gate": "measure the fire hour's live spreads BEFORE shipping any session window (tokyo is the case study)"
   }
 }

@@ -39,10 +39,17 @@ def lastc(s):
 def residual():
     dd, od, dc = lastc("DXY.cash")
     de, oe, ec = lastc("EURUSD")
-    n = min(len(dc), len(ec))
-    r = np.log(dc[-n:]) + 0.576 * np.log(ec[-n:])
+    # DAY-INTERSECT alignment (never positional): cached files can end on
+    # different days (EURUSD cache was 3 trading days stale vs DXY on 2026-08-11);
+    # positional dc[-n:]+ec[-n:] silently pairs DXY(t) with EURUSD(t-3) ->
+    # a lagged cross-correlation, NOT a same-day divergence (PF 11.8 -> 1.06).
+    common = np.intersect1d(dd, de)
+    if len(common) < 40:
+        raise ValueError(f"residual: insufficient overlap {len(common)} between DXY.cash and EURUSD caches")
+    i1 = np.searchsorted(dd, common); i2 = np.searchsorted(de, common)
+    r = np.log(dc[i1]) + 0.576 * np.log(ec[i2])
     r = r - np.mean(r)
-    return de[-n:], oe[-n:], ec[-n:], r
+    return common, oe[i2], ec[i2], r
 
 
 def trades(sig, oe, n, entry_shift=0):
