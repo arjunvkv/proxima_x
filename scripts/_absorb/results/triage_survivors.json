@@ -142,29 +142,6 @@
   ]
  },
  {
-  "name": "CONTROL_exhaustion_ind_us",
-  "rule": "session_exhaustion",
-  "universe": [
-   "US30.cash",
-   "US500.cash",
-   "GER40.cash",
-   "UK100.cash",
-   "JP225.cash",
-   "HK50.cash"
-  ],
-  "sessions": [
-   13,
-   14,
-   15,
-   16,
-   17,
-   18,
-   19,
-   20,
-   21
-  ]
- },
- {
   "name": "CONTROL_big_move_btc",
   "rule": "big_move_fade",
   "universe": [
