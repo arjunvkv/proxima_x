@@ -56,11 +56,6 @@ UNIVERSE = ["EURUSD", "USDJPY", "GBPUSD", "AUDUSD", "EURJPY", "GBPJPY",
 
 # ---- strategy configs (identical to the $25k live manifests) -------------
 STRATS = {
-    "tokyo": {
-        "sessions": [0], "lookback": 6, "top_n": 3, "hold_bars": 12,
-        "lot": 0.52, "comment": "CORE_TOKYO_25",
-        "sl_tp": {"JPY": (0.50, 0.70), "else": (0.0050, 0.0070)},
-    },
     "cascade": {
         "sessions": [2, 3, 4], "lookback": 1440, "top_n": 8, "hold_bars": 24,
         "lot": 0.14, "comment": "CORE_CASCADE_25",
@@ -75,6 +70,17 @@ STRATS = {
         "sessions": [14, 15, 16, 17, 18, 19], "lookback": 50, "top_n": 5, "hold_bars": 24,
         "lot": 0.45, "comment": "CORE_USFADE_25",
         "sl_tp": {"JPY": (0.40, 0.60), "else": (0.0040, 0.0060)},
+    },
+    # S3: session_exhaustion GOLD — certified (book_final v2): XAUUSD+XAGUSD,
+    # sessions all (signal self-selects; hour 0 never qualified in 150d),
+    # top_n 3 (degenerate on 2 metals = buy both on exhaustion), hold 12,
+    # no stops in backtest -> (100.0, 100.0) is a far disaster net only;
+    # hold-managed exit (--manage) closes at 12 bars. 0.15 lots = 30%-budget
+    # sizing: worstDay $318 (25% of daily cap), combined maxDD 30% of cap.
+    "gold_s3": {
+        "sessions": list(range(24)), "lookback": 50, "top_n": 3, "hold_bars": 12,
+        "lot": 0.15, "comment": "CORE_GOLD_25", "universe": ["XAUUSD", "XAGUSD"],
+        "sl_tp": {"GOLD": (100.0, 100.0)},
     },
 }
 
@@ -338,7 +344,13 @@ class EquityGuard:
 
 
 def sl_tp_abs(sym: str, fill: float, side: str, cfg: dict) -> tuple[float, float]:
-    d_sl, d_tp = cfg["sl_tp"]["JPY"] if "JPY" in sym else cfg["sl_tp"]["else"]
+    st = cfg["sl_tp"]
+    if "GOLD" in st and ("XAU" in sym or "XAG" in sym):
+        d_sl, d_tp = st["GOLD"]
+    elif "JPY" in sym:
+        d_sl, d_tp = st["JPY"]
+    else:
+        d_sl, d_tp = st["else"]
     if side == "BUY":
         return fill - d_sl, fill + d_tp
     return fill + d_sl, fill - d_tp
@@ -350,7 +362,7 @@ def replay(day_str: str) -> None:
     ds = int(datetime(day.year, day.month, day.day, tzinfo=timezone.utc).timestamp()) // 86400
     for name, cfg in STRATS.items():
         live, cached = {}, {}
-        for sym in UNIVERSE:
+        for sym in cfg.get("universe", UNIVERSE):
             live[sym] = fetch_day_bars(sym, day)
             cached[sym] = load_cached_day(sym, day)
         rl = session_rank(live, ds, cfg)
@@ -436,7 +448,7 @@ def main() -> None:
             st = states[name]
             if st.get("last_entry_day") == today:
                 continue
-            bars_map = {sym: fetch_bars(sym, cfg["lookback"] + 4) for sym in UNIVERSE}
+            bars_map = {sym: fetch_bars(sym, cfg["lookback"] + 4) for sym in cfg.get("universe", UNIVERSE)}
             # M5-boundary ragged-pool guard (2026-08-10 usfade): a per-symbol
             # copy_rates call at the bar rollover can miss the just-opened fill
             # bar. The signal bar then becomes the LAST fetched bar and
@@ -447,7 +459,7 @@ def main() -> None:
             last_ts = [b[-1]["ts"] for b in bars_map.values() if b]
             if last_ts and min(last_ts) < now - 120:
                 time.sleep(1.5)
-                bars_map = {sym: fetch_bars(sym, cfg["lookback"] + 4) for sym in UNIVERSE}
+                bars_map = {sym: fetch_bars(sym, cfg["lookback"] + 4) for sym in cfg.get("universe", UNIVERSE)}
                 print(f"[fetch-retry {name}] stale pool refetched")
             rank = session_rank(bars_map, today, cfg)
             if not rank:
